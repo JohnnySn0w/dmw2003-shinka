@@ -8,6 +8,13 @@ The pinned runtime already reads SDL gamepads, supports configurable logical bin
 
 `build-windows/Release/input.ini` contains gamepad bindings; `keybinds.ini` contains keyboard bindings. They are created by the runtime and are separate from `game.toml`. SDL hardware mappings translate device buttons/axes to logical controls; `input.ini` translates those controls to PlayStation buttons. The final settings screen must expose both recovery from unknown hardware and ordinary rebinding without requiring file editing.
 
+`game.toml` explicitly sets `[controller] p1_device = "auto"` so the build without
+the launcher selects the first available SDL gamepad. Keyboard bindings stay live
+alongside it, and connecting a recognized controller after startup follows the
+same selection path. Without this setting, the pinned frontend defaults to
+keyboard-only routing even when `input.ini` enables controllers. A saved
+`build-windows/Release/settings.toml` controller selection takes precedence.
+
 SDL supports many controllers through its built-in database and accepts custom mappings. See the [SDL gamepad overview](https://wiki.libsdl.org/SDL3/CategoryGamepad) and [mapping-file hint](https://wiki.libsdl.org/SDL3/SDL_HINT_GAMECONTROLLERCONFIG_FILE).
 
 For a controller requiring an SDL mapping file:

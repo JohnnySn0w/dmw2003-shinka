@@ -21,6 +21,7 @@ psxrecomp_add_game_runtime(shinka
     EXE_NAME "dmw2003-shinka"
     DEFAULT_GAME_CONFIG_PATH "game.toml"
     MAX_PLAYERS 1
+    APP_ICON "${CMAKE_CURRENT_SOURCE_DIR}/assets/shinka.ico"
     GAME_OVERLAY_STATIC_C "${SHINKA_OVERLAY_SOURCE}"
     GEN_MARKER "output/recompiled/SLES_039.36_dispatch.c"
     GEN_FULL_GLOB "output/recompiled/SLES_039.36_full_*.c"
@@ -39,5 +40,8 @@ if(SHINKA_BUILD_TESTS)
     add_test(NAME overlay_guard COMMAND shinka_overlay_guard_test)
 endif()
 add_custom_command(TARGET shinka POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E make_directory "$<TARGET_FILE_DIR:shinka>/assets"
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different
+        "${CMAKE_CURRENT_SOURCE_DIR}/assets/shinka.png" "$<TARGET_FILE_DIR:shinka>/assets/psxrecomp.png"
     COMMAND ${CMAKE_COMMAND} -E copy_if_different
         "${CMAKE_CURRENT_SOURCE_DIR}/game.toml" "$<TARGET_FILE_DIR:shinka>/game.toml")

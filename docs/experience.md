@@ -160,3 +160,12 @@ at-least-10 floor: a naturally larger award is also replaced with 10.
 Validation covers guarded instruction generation, exclusive patch selection,
 switching modes, and preservation of normal EXP. Fixed mode has not yet received
 a live battle test. The local setting now uses normal EXP 3x plus fixed DV 10.
+
+## Live settings
+
+With the expanded English field menu enabled, SETTINGS changes normal EXP and
+DV EXP without restarting. It persists the same package options used by these
+CLI tools and updates validated prefetched reward data as well as future disc
+reads. See [field menu controls and implementation](field-menu.md). The CLI
+still requires a restart because it changes the state file outside the running
+process.

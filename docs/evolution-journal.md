@@ -7,8 +7,8 @@ hints for locked forms. Preserve the feeling that training and experimenting
 reveal possibilities. Do not display numeric thresholds, completion percentages,
 checklists of satisfied conditions, or an upfront list of every future form.
 
-The first implementation opens the original chart through Square on STATUS in
-the field menu. It asks which partner to view and returns to Status's partner
+The expanded field menu opens the original chart through DIGIVOLUTIONS. It
+replaces the earlier Square-on-STATUS prototype. It asks which partner to view and returns to Status's partner
 selection on exit. Direct entry from an already selected partner, retaining that
 selection on return, remains a refinement.
 
@@ -51,10 +51,10 @@ with `--disable`. The PowerShell launcher accepts `-EvolutionJournal` or
 `-EvolutionJournal:$false`. The option is independent of normal and DV EXP.
 Fresh configurations leave it disabled; the current local test setup enables it.
 
-In an English field menu, highlight STATUS and press Square. Choose a partner
+In an English field menu, highlight DIGIVOLUTIONS and press X. Choose a partner
 with left/right and X. Use the original D-pad and L1/R1 chart controls. Triangle
 returns to Status; back out of Status normally to resume exploration. The
-shortcut exposes chart viewing, with switching partners and equipping forms
+entry exposes chart viewing, with switching partners and equipping forms
 remaining in their existing menus. The source is `src/journal_menu.c`.
 
 Directional clues are **not rendered in the game yet**. The requirement reader
@@ -81,7 +81,7 @@ across these overlays while one is still executing.
   `0x58`, with STATUS at index 4. Its existing transition call returns to
   `0x80013334`.
 
-The shortcut runs that normal menu close sequence before changing the queued
+The DIGIVOLUTIONS entry runs that normal menu close sequence before changing the queued
 stage to a dedicated `0x0d01` journal variant. This matters: directly queuing the
 lab from an arbitrary field left the return context pointing to the previous
 area in the first diagnostic experiment. That experiment was discarded.
@@ -93,15 +93,15 @@ Status through the resident setter. The normal lab variant retains its original
 callbacks. All code sites are checked before any are changed, including after
 savestate loads; unsupported overlay bytes are left alone.
 
-Two small hooks are added to generated copies of the game code by
-`tools/journal_hooks.cmake`. The pinned dependency and original generated files
-remain intact. Explicit frontend registration is necessary because the pinned
-framework's unused C CRT constructor was removed by this MSVC release build.
+Guarded hooks are added to copies of the generated game code by
+`tools/journal_hooks.cmake` and `tools/generate_menu_hooks.py`. The pinned
+dependency and original generated files remain intact. Explicit frontend
+registration survives MSVC's removal of unused C CRT constructors.
 
-The English menu prompt replaces one string within its existing 28-byte
-allocation. Its disc patch is revision-guarded. A matching cached resource is
-also updated because pre-feature savestates may already contain the old text.
-Other languages retain their original menu behavior.
+The menu now allocates additional text children and builds its panel from the
+original tiles. It no longer replaces a disc-resource prompt in place. See
+[expanded field menu](field-menu.md) for allocation, live EXP settings and
+savestate compatibility. Other languages retain their original menu behavior.
 
 ## Coverage and remaining work
 
@@ -109,7 +109,7 @@ Local live checks use `output/menu-test-saves`, a copy of the diagnostic saves.
 The original player memory cards are not used for these checks. Captures and
 extracted game data stay ignored.
 
-Live verification covered opening from Asuka Bridge and Central Park; Kumamon,
+The earlier chart-route verification covered opening from Asuka Bridge and Central Park; Kumamon,
 Guilmon and Patamon; all four pages; cancelling the initial partner chooser;
 saving/loading a state within the chart; returning through Status to the same
 Central Park position; and the normal lab's Switch Digimon screen. The menu
@@ -123,13 +123,13 @@ Room. Face the transition and press X; walking into it alone does not enter.
 Diagnostic slot 9 is the lab entrance and slot 7 its action menu in the copied
 menu-test save directory.
 
-The new native regression test checks inactive-package behavior, unrelated menu
-and transition guards, the guest-state entry marker, field-context preservation,
+The chart native regression test checks inactive-package behavior, unrelated menu
+and transition guards, the selected DIGIVOLUTIONS row, field-context preservation,
 unknown-overlay rejection, and restoration of the normal lab callbacks. Python
 checks cover mod-state changes without disturbing the EXP options. The build
-script runs both Shinka native tests rather than unrelated dependency examples.
+script runs all three Shinka native tests rather than unrelated dependency examples.
 
 Before promoting this developer feature, expand coverage to progressed parties,
 locked and unlocked branches, unlocked chart pages, all field families and languages.
 Add selected-partner retention and the directional hint panel. Map teleportation
-and encounter settings are separate outstanding features.
+and encounter settings are separate outstanding features; EXP settings are now available.

@@ -1,0 +1,57 @@
+{
+  "date": "2026-09-09",
+  "feature": "Expanded English field menu and live EXP settings",
+  "runtime": "Windows x64 Release",
+  "disc_sha256": "fb70dc9a995aed628cf515cabc87c7b14e5142559076ec394dfe793ec3e26a04",
+  "test_save_directory": "output/menu-test-saves (diagnostic copy)",
+  "verified": [
+    "Eight visible rows with Card Folders, seven with its availability flag disabled in the copied save",
+    "Original panel tiles and separators repeat at 14-pixel spacing; SETTINGS uses three rows",
+    "Normal confirm opens DIGIVOLUTIONS, including when Card Folders is unavailable",
+    "Original partner chooser and Kumamon chart open; Triangle returns to Status",
+    "SETTINGS D-pad navigation, left/right changes, confirm changes and Triangle return",
+    "Live normal EXP cycle 4 to 1 to 2 to 3 to 4, then back to 3",
+    "Live DV cycle fixed 10 to 1x to 2x to 3x to 4x to fixed 10",
+    "Settings persisted in existing mods/state.toml and survived process restart",
+    "Restoring the older 4x SETTINGS state refreshed its labels to current persisted 3x",
+    "Loaded a copied battle state after changing rates without restarting; Kunemon reward screen showed 18 EXP",
+    "All 335 normal reward cells in both executing and prefetched reward overlays matched original values times 3",
+    "Both reward copies contained the recognized fixed-10 DV delivery instructions",
+    "Original lab action callbacks and chart-return instructions restored in normal lab mode",
+    "Legacy open-menu savestate closed and reopened successfully with the expanded layout",
+    "Original player card remained unchanged"
+  ],
+  "live_reward_bases": [
+    "0x80082cb0",
+    "0x800bbc8c"
+  ],
+  "final_settings": {
+    "normal_multiplier": 3,
+    "dv_multiplier": 1,
+    "dv_fixed_award": 10
+  },
+  "automated_checks": {
+    "python_tests": 23,
+    "shinka_native_tests": 3,
+    "reward_combinations": 20
+  },
+  "original_card_sha256_after": "bdf44e30f7e5a041c3d28ad328c5c231e964fa01461dda89c648df0f8f64b7f5",
+  "captures": [
+    "output/menu-expanded-tiled.png",
+    "output/settings-final.png",
+    "output/settings-restored-current-rates.png",
+    "output/menu-without-card-folders.png",
+    "output/menu-final-chart.png",
+    "output/settings-battle-reward.png",
+    "output/menu-old-state-reopened.png"
+  ],
+  "not_claimed": [
+    "Campaign-wide coverage",
+    "Physical controller testing",
+    "Other language menus",
+    "Natural fixed-10 award on an unlocked form in this menu test",
+    "Directional hint UI",
+    "Map teleportation",
+    "Encounter-rate control"
+  ]
+}

@@ -4,7 +4,7 @@
 #include "cpu_state.h"
 #include "mod_plugins.h"
 
-static unsigned char ram[2097152];
+static unsigned char ram[8388608];
 static unsigned writes;
 static PSXModActivationCallback activate;
 static PSXModVBlankCallback tick;
@@ -26,6 +26,15 @@ void shinka_register_journal(void);
 #define W psx_mod_write_word
 #define R psx_mod_read_word
 
+static int battle_rate = 3, dv_rate = 1, fixed_rate = 10, fail_save;
+uint32_t psx_mod_alloc_guest_memory(uint32_t size, uint32_t alignment) { return 0x80400000; }
+void shinka_rates_get(int* battle, int* dv, int* fixed) { *battle=battle_rate; *dv=dv_rate; *fixed=fixed_rate; }
+int shinka_rates_set(int battle, int dv, int fixed) { if (fail_save) return 0; battle_rate=battle; dv_rate=dv; fixed_rate=fixed; return 1; }
+void shinka_rewards_refresh(void) {}
+void shinka_rewards_tick(void) {}
+void shinka_rewards_activate(void) {}
+uint32_t shinka_menu_slot(uint32_t, uint32_t);
+
 int main(void) {
     CPUState cpu = {0};
     shinka_register_journal();
@@ -42,12 +51,28 @@ int main(void) {
     CHECK(activate && tick); activate();
     W(0x8004b3fcu, 0x700);
     writes = 0; shinka_journal_quick_menu(&cpu); CHECK(writes == 0);
-    W(0x8004b3fcu, 0); W(menu + 0x58, 2);
-    writes = 0; shinka_journal_quick_menu(&cpu); CHECK(writes == 0);
-    W(menu + 0x58, 4);
+    W(0x8004b3fcu, 0); W(menu + 0x20, 0x2d); W(menu + 0x60, 1);
+    W(menu + 0x24, 0x80100000);
+    CHECK(shinka_menu_slot(menu, 0x80100020) == 0x80100020);
+    CHECK(shinka_menu_slot(menu, 0x80100024) == 0x801000ac);
+    CHECK(shinka_menu_slot(menu, 0x80100028) == 0x801000b0);
+    W(menu + 0x58, 4); shinka_journal_quick_menu(&cpu);
+    CHECK(R(menu + 0x58) == 4); /* Square no longer changes STATUS */
+    W(menu + 0x58, 7); psx_mod_write_half(0x8004b818, 0xa000);
     shinka_journal_quick_menu(&cpu);
-    CHECK(R(menu + 0x58) == 6 && psx_mod_read_half(0x8004b818u) == 0x2000);
-    /* Marker resides in guest RAM, including a state restored mid-transition. */
+    CHECK(R(menu + 0xa0) == 1 && R(menu + 0x58) == 0 && R(menu + 0x10) == 0);
+    W(menu + 0xa4, 0x11300); W(menu + 0x10, 3); ram[0x4b879] = 5;
+    psx_mod_write_half(0x8004b818, 0x20); shinka_journal_quick_menu(&cpu);
+    CHECK(battle_rate == 4); CHECK(R(menu + 0x10) == 0);
+    W(menu + 0xa4, 0x11400); W(menu + 0x10, 3); W(menu + 0x58, 1); psx_mod_write_half(0x8004b818, 0x20);
+    shinka_journal_quick_menu(&cpu); CHECK(dv_rate == 1 && fixed_rate == 0);
+    /* Combined confirm inputs must never send the SETTINGS index to Status.
+     * A persistence failure keeps the old rates and makes the error visible. */
+    W(menu + 0xa4, 0x1400); W(menu + 0x10, 3); fail_save = 1;
+    psx_mod_write_half(0x8004b818, 0xa020); shinka_journal_quick_menu(&cpu);
+    CHECK(dv_rate == 1 && (R(menu + 0xa4) & 1) && R(menu + 0x10) == 0);
+    fail_save = 0;
+    W(menu + 0x58, 6);
     cpu.gpr[4] = 0x1000; cpu.gpr[17] = menu; cpu.gpr[31] = 0x80013334u;
     shinka_journal_transition(&cpu);
     CHECK(cpu.gpr[4] == 0xd01 && R(menu + 0x58) == 4);

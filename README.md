@@ -6,9 +6,9 @@ Mod development for Digimon World 2003, targeting the European multilingual Play
 
 An experimental Windows x64 build supports the tested early-game exploration, battles, shops, gym and saves. Main-executable code and captured overlays compile locally through the pinned PSXRecomp framework, with interpreter fallback. Campaign coverage remains incomplete, and movie playback is jittery.
 
-The first gameplay feature is optional **1â€“4x normal battle EXP**, applied through guarded disc-read patches. See [EXP configuration and validation](docs/experience.md). Money is unchanged; an in-game settings entry remains planned. See the [progression formulas](docs/progression.md) and [menu/map groundwork](docs/menu-map.md).
+The first gameplay feature is optional **1â€“4x normal battle EXP**, applied through guarded disc-read patches. See [EXP configuration and validation](docs/experience.md). Money is unchanged; the expanded field menu now includes live EXP settings. See the [progression formulas](docs/progression.md) and [menu/map groundwork](docs/menu-map.md).
 
-An experimental English **evolution chart shortcut** opens with Square on STATUS in the field menu. Enable it with `python tools/configure_journal.py --enable` and restart. The original chart is connected; directional hints remain pending. See [controls and validation limits](docs/evolution-journal.md).
+An experimental English field menu adds **DIGIVOLUTIONS** and **SETTINGS** as selectable rows. Enable it with `python tools/configure_journal.py --enable` and restart. The original chart is connected; directional hints remain pending. See [menu controls and implementation](docs/field-menu.md) and [chart validation limits](docs/evolution-journal.md).
 
 See [Windows build, launch, and overlay-capture instructions](docs/windows-baseline.md) for the runnable baseline and current validation limits.
 
@@ -19,7 +19,7 @@ See the [groundwork audit and port milestones](docs/groundwork-audit.md) for pin
 - Expand EXP validation across party splits, later enemies and progression caps.
 - Expand DV validation across later forms, participation splits and natural growth limits.
 - Investigate music extraction and replacement instrument samples; compare a single track before expanding the work.
-- Add directional hints and selected-partner retention to the evolution chart shortcut; see [design and hint groundwork](docs/evolution-journal.md).
+- Add directional hints and selected-partner retention to the DIGIVOLUTIONS entry; see [design and hint groundwork](docs/evolution-journal.md).
 - Travel from visited map icons using X, with story and destination safeguards.
 - In-menu random-encounter adjustment, including disabling random encounters while preserving scripted fights.
 

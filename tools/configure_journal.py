@@ -1,4 +1,4 @@
-"""Enable or disable the experimental English evolution-chart menu shortcut."""
+"""Enable or disable the experimental English DIGIVOLUTIONS and SETTINGS menu."""
 import argparse
 import re
 import tomllib
@@ -61,7 +61,7 @@ def main():
     temporary = mods / 'state.toml.journal-tmp'
     temporary.write_text(content, encoding='utf-8')
     temporary.replace(state)
-    print(f"Evolution chart shortcut {'enabled' if args.enable else 'disabled'}. Restart to apply.")
+    print(f"Expanded field menu {'enabled' if args.enable else 'disabled'}. Restart to apply.")
 
 
 if __name__ == '__main__':

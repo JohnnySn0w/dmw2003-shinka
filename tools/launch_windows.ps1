@@ -5,6 +5,7 @@ param(
     [ValidateSet(1,2,3,4)][int]$ExpMultiplier,
     [ValidateSet(1,2,3,4)][int]$DvExpMultiplier,
     [switch]$DvFixed10,
+    [switch]$EvolutionJournal,
     [string]$Python = 'python',
     [switch]$Headless,
     [switch]$HoldOnGuestExit,
@@ -18,6 +19,14 @@ $projectRoot = Split-Path $PSScriptRoot -Parent
 $disc = (Resolve-Path -LiteralPath $DiscCue).Path
 $runtime = Join-Path $projectRoot 'build-windows/Release/dmw2003-shinka.exe'
 if (-not (Test-Path -LiteralPath $runtime)) { throw 'Run tools/build_windows.ps1 first.' }
+if ($PSBoundParameters.ContainsKey('EvolutionJournal')) {
+    if (Get-Process -Name 'dmw2003-shinka' -ErrorAction SilentlyContinue) {
+        throw 'Close the game before changing the evolution journal setting.'
+    }
+    $journalMode = if ($EvolutionJournal) { '--enable' } else { '--disable' }
+    & $Python (Join-Path $PSScriptRoot 'configure_journal.py') $journalMode
+    if ($LASTEXITCODE -ne 0) { throw 'Evolution journal configuration failed; game was not launched.' }
+}
 if ($PSBoundParameters.ContainsKey('ExpMultiplier') -or $PSBoundParameters.ContainsKey('DvExpMultiplier') -or $DvFixed10) {
     if (Get-Process -Name 'dmw2003-shinka' -ErrorAction SilentlyContinue) {
         throw 'Close the game before changing the EXP setting.'

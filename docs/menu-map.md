@@ -1,4 +1,4 @@
-# Menu and map groundwork — September 9, 2026
+# Menu and map groundwork â€” September 9, 2026
 
 The native runtime displays the original status menu and Asuka map correctly.
 The Wire Forest Entrance icon and location label were inspected in a copied
@@ -27,4 +27,4 @@ No replacement game module from that package has been installed or copied into
 the repository. The selected-icon variable, transition entry point and visited
 flags remain to be identified locally.
 
-Evolution-tree access and directional hints are specified in [the evolution journal design](evolution-journal.md). The requirement reader and hint formatter are implemented as tooling; the game-menu entry remains pending.
+Evolution-tree access and directional hints are specified in [the evolution journal design](evolution-journal.md). The original lab chart now has an experimental English shortcut through Square on STATUS in the field menu. The requirement reader and hint formatter are implemented as tooling; in-game clues remain pending. See the evolution journal document for the verified overlay dispatcher and field-return context.

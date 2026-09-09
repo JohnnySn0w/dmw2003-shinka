@@ -37,6 +37,15 @@ if(_commit_position EQUAL -1)
     message(FATAL_ERROR "Pinned frontend mod-commit site changed; review the CLI disc fix")
 endif()
 string(REPLACE "${_commit_old}" "${_commit_new}" _frontend_text "${_frontend_text}")
+set(_main_entry "int main(int argc, char** argv) {")
+string(FIND "${_frontend_text}" "${_main_entry}" _main_position)
+if(_main_position EQUAL -1)
+    message(FATAL_ERROR "Review the pinned frontend's journal registration site")
+endif()
+# Explicit registration survives MSVC's removal of unused C CRT constructors.
+string(REPLACE "${_main_entry}"
+    "extern \"C\" void shinka_register_journal(void);\n${_main_entry}\n    shinka_register_journal();"
+    _frontend_text "${_frontend_text}")
 file(MAKE_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/shinka-runtime")
 file(CONFIGURE OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/shinka-runtime/main.cpp"
     CONTENT "${_frontend_text}" @ONLY)
@@ -45,6 +54,7 @@ list(REMOVE_ITEM _runtime_sources "${_frontend}")
 set_property(TARGET shinka PROPERTY SOURCES "${_runtime_sources}")
 target_sources(shinka PRIVATE "${CMAKE_CURRENT_BINARY_DIR}/shinka-runtime/main.cpp")
 target_include_directories(shinka PRIVATE "${PSXRECOMP_ROOT}/runtime/src")
+include("${CMAKE_CURRENT_SOURCE_DIR}/tools/journal_hooks.cmake")
 if(SHINKA_OVERLAY_SOURCE)
     # Redirect only generated static-overlay calls; keep upstream sources intact.
     set_property(SOURCE "${SHINKA_OVERLAY_SOURCE}" APPEND PROPERTY
@@ -57,8 +67,15 @@ if(SHINKA_BUILD_TESTS)
     add_executable(shinka_overlay_guard_test tests/test_overlay_guard.c src/overlay_guard.c)
     target_link_libraries(shinka_overlay_guard_test PRIVATE ZLIB::ZLIB)
     add_test(NAME overlay_guard COMMAND shinka_overlay_guard_test)
+    add_executable(shinka_journal_menu_test tests/test_journal_menu.c src/journal_menu.c)
+    target_include_directories(shinka_journal_menu_test PRIVATE "${PSXRECOMP_ROOT}/runtime/include")
+    add_test(NAME journal_menu COMMAND shinka_journal_menu_test)
 endif()
 add_custom_command(TARGET shinka POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E make_directory "$<TARGET_FILE_DIR:shinka>/mods/packages/shinka.evolution-journal/0.1.0"
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different
+        "${CMAKE_CURRENT_SOURCE_DIR}/mods/evolution-journal/manifest.toml"
+        "$<TARGET_FILE_DIR:shinka>/mods/packages/shinka.evolution-journal/0.1.0/manifest.toml"
     COMMAND ${CMAKE_COMMAND}
         "-DSOURCE=${CMAKE_CURRENT_SOURCE_DIR}/output/exp-mod"
         "-DDESTINATION=$<TARGET_FILE_DIR:shinka>/mods/packages/shinka.experience/0.1.0"

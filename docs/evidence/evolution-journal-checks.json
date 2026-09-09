@@ -1,0 +1,37 @@
+{
+  "date": "2026-09-09",
+  "feature": "English field-menu evolution chart",
+  "runtime": "Windows x64 Release",
+  "disc_sha256": "fb70dc9a995aed628cf515cabc87c7b14e5142559076ec394dfe793ec3e26a04",
+  "test_save_directory": "output/menu-test-saves (diagnostic copy)",
+  "verified": [
+    "Square on STATUS opens the chart through the existing menu close sequence",
+    "Asuka Bridge and Central Park entry",
+    "Kumamon, Guilmon and Patamon charts",
+    "Patamon pages 1 through 4",
+    "Triangle from the initial partner chooser returns to Status",
+    "Triangle from the chart returns to Status",
+    "Savestate save/load inside a journal chart, followed by successful return",
+    "Central Park field mode and player position preserved on return",
+    "Original lab action callbacks restored; Switch Digimon chooser opens normally",
+    "English Square prompt renders when loading a pre-feature savestate"
+  ],
+  "central_park_cached_context_hex": "1d02000064f503005632020001000000",
+  "original_card_sha256_after": "bdf44e30f7e5a041c3d28ad328c5c231e964fa01461dda89c648df0f8f64b7f5",
+  "automated_checks": {
+    "python_tests": 23,
+    "shinka_native_tests": 2
+  },
+  "not_yet_verified": [
+    "progressed/unlocked branches",
+    "later field families",
+    "other languages",
+    "physical controller hardware"
+  ],
+  "not_implemented": [
+    "in-game directional clues",
+    "selected-partner retention",
+    "map teleportation",
+    "encounter settings"
+  ]
+}

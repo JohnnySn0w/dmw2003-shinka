@@ -51,6 +51,8 @@ Supply the same optional `-RetailBios` choice as the first build. This generates
 
 ## Validation and remaining work
 
+The first user playthrough reached partner selection with apparently correct cutscenes, dialogue, and effects, then exited while Tab was held as that screen loaded. See [partner-selection exit triage](partner-selection-exit.md). This is the current progression blocker; turbo's causal role is unproven.
+
 - Main EXE: 23 translated C shards, 1,230 dispatch entries. These counts do not measure decompilation completeness.
 - Windows Release compilation and linking succeeded with MSVC 14.44 and SDK 10.0.26100.0.
 - Language screen rendered; D-pad changed selection; Start entered the opening movie.

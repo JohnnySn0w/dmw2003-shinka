@@ -3,6 +3,7 @@ param(
     [string]$RetailBios = '',
     [string]$ControllerMappings = '',
     [switch]$Headless,
+    [switch]$HoldOnGuestExit,
     [int]$DebugPort = 4380
 )
 $ErrorActionPreference = 'Stop'
@@ -16,13 +17,18 @@ if ($RetailBios) { $arguments += @('--bios', (Resolve-Path -LiteralPath $RetailB
 if ($Headless) { $arguments += '--headless' }
 $mappingFile = if ($ControllerMappings) { (Resolve-Path -LiteralPath $ControllerMappings).Path } else { '' }
 $previousMappingFile = [Environment]::GetEnvironmentVariable('SDL_GAMECONTROLLERCONFIG_FILE', 'Process')
+$previousExitHalt = [Environment]::GetEnvironmentVariable('PSX_EXIT_HALT', 'Process')
 Push-Location $projectRoot
 try {
     if ($mappingFile) { $env:SDL_GAMECONTROLLERCONFIG_FILE = $mappingFile }
+    if ($HoldOnGuestExit) { $env:PSX_EXIT_HALT = '1' }
     & $runtime @arguments
 } finally {
     if ($mappingFile) {
         [Environment]::SetEnvironmentVariable('SDL_GAMECONTROLLERCONFIG_FILE', $previousMappingFile, 'Process')
+    }
+    if ($HoldOnGuestExit) {
+        [Environment]::SetEnvironmentVariable('PSX_EXIT_HALT', $previousExitHalt, 'Process')
     }
     Pop-Location
 }

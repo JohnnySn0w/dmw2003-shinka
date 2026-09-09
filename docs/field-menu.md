@@ -7,9 +7,10 @@ are seven rows before it unlocks and eight afterward. Enable with
 `python tools/configure_journal.py --enable`, or launch with `-EvolutionJournal`.
 Restart after changing that feature selection.
 
-Use the existing D-pad and confirm/cancel mappings. DIGIVOLUTIONS opens the
-original lab chart and partner chooser. Triangle returns through Status, as in
-the previous prototype. Square on STATUS is no longer the entry point.
+Use the existing D-pad and confirm/cancel mappings. DIGIVOLUTIONS opens the full
+lab interface: Switch Digimon, Digivolve and Digivolve Chart. Triangle backs out
+through those menus, then returns to the full-screen root with DIGIVOLUTIONS
+highlighted. Square on STATUS is no longer the entry point.
 
 SETTINGS has three rows:
 
@@ -48,11 +49,12 @@ Allocation expands in English field modes (`0x02xx`) and full-screen Status
 (`0x1000`). Confirm normally hands a Status-root index to the original submenu
 table. DIGIVOLUTIONS instead records page marker 3 in the task, uses the complete
 Status close animation, and redirects the resident transition at return address
-`0x80013318` to the chart overlay. The original six-entry submenu table never
+`0x80013318` to the lab overlay. The original six-entry submenu table never
 receives the new index. SETTINGS stays within either root widget. Cancelling a
 normal root still follows its original route; cancelling SETTINGS returns to
 that same root. A pending chart exit restored with the feature disabled routes
-back to Status.
+back to Status. Leaving the remote lab uses a guest return marker to construct
+the root directly and highlight DIGIVOLUTIONS; see the [lab integration notes](evolution-journal.md).
 
 `tools/generate_menu_hooks.py` adds verified entry hooks and row accesses to
 copies of the locally generated CPS code. The original output and pinned

@@ -1,4 +1,4 @@
-# Evolution tree in the field menu
+# Portable Digimon Lab and evolution hints
 
 ## Accepted direction
 
@@ -7,10 +7,12 @@ hints for locked forms. Preserve the feeling that training and experimenting
 reveal possibilities. Do not display numeric thresholds, completion percentages,
 checklists of satisfied conditions, or an upfront list of every future form.
 
-The expanded field menu opens the original chart through DIGIVOLUTIONS. It
-replaces the earlier Square-on-STATUS prototype. It asks which partner to view and returns to Status's partner
-selection on exit. Direct entry from an already selected partner, retaining that
-selection on return, remains a refinement.
+The expanded menu opens the full original lab interface through DIGIVOLUTIONS:
+Switch Digimon, Digivolve and Digivolve Chart. This provides party management,
+selection of the forms available in battle, and technique loading away from the
+physical lab. The original ownership and unlock rules still apply. Cancelling
+lab submenus returns through the lab's own menus; leaving the lab interface
+returns directly to the full-screen root with DIGIVOLUTIONS highlighted.
 
 Hints come from that rookie's own requirement table. A form can have different
 requirements for different partners; a global hint attached only to the final
@@ -41,7 +43,7 @@ policy already reveals them. Use a silhouette or an unknown node as appropriate
 to the eventual view. Selecting a locked node displays its clues; discovered
 forms retain their identity. Unlocks remain surprises without numeric proximity
 indicators. The inspected early-game lab chart uses question marks for locked forms and
-shows four pages. Deeper-path visibility still needs a progressed save. This
+shows four pages. Broader discovery behavior still needs additional coverage. This
 feature does not introduce a new persistent discovery flag.
 
 ## Experimental menu connection
@@ -51,11 +53,11 @@ with `--disable`. The PowerShell launcher accepts `-EvolutionJournal` or
 `-EvolutionJournal:$false`. The option is independent of normal and DV EXP.
 Fresh configurations leave it disabled; the current local test setup enables it.
 
-In an English field menu, highlight DIGIVOLUTIONS and press X. Choose a partner
-with left/right and X. Use the original D-pad and L1/R1 chart controls. Triangle
-returns to Status; back out of Status normally to resume exploration. The
-entry exposes chart viewing, with switching partners and equipping forms
-remaining in their existing menus. The source is `src/journal_menu.c`.
+In either English menu root, highlight DIGIVOLUTIONS and press X. Select the
+desired lab action, then use its original partner, form and technique controls.
+The chart retains D-pad and L1/R1 navigation. Triangle backs out one level at a
+time; leaving Select Action returns to DIGIVOLUTIONS in the full-screen root.
+Triangle there resumes exploration. The source is `src/journal_menu.c`.
 
 Directional clues are **not rendered in the game yet**. The requirement reader
 and formatter in `tools/evolution_hints.py` cover all 352 original requirements,
@@ -82,16 +84,24 @@ across these overlays while one is still executing.
   `0x80013334`.
 
 The DIGIVOLUTIONS entry runs that normal menu close sequence before changing the queued
-stage to a dedicated `0x0d01` journal variant. This matters: directly queuing the
+stage to a dedicated `0x0d01` remote lab variant. This matters: directly queuing the
 lab from an arbitrary field left the return context pointing to the previous
 area in the first diagnostic experiment. That experiment was discarded.
 
-The journal variant selects the chart through the original action-panel close
-animation. Its guarded callback table permits only chart viewing while this
-variant is active. When the chart task finishes, four guest instructions queue
-Status through the resident setter. The normal lab variant retains its original
-callbacks. All code sites are checked before any are changed, including after
-savestate loads; unsupported overlay bytes are left alone.
+The remote lab variant retains all original action callbacks. The earlier
+prototype's chart-only callback substitutions and four-instruction child-exit
+patch are recognized and restored when loading an old savestate. Fresh lab code
+requires no action patches or automatic confirmation. All restoration sites are
+checked before any are changed; unsupported overlay bytes are left alone.
+
+The original lab-exit transition (return address `0x8008ee8c`) queues Status with
+a private return marker in the guest transition parameter. Once the Status root
+controller (`0x80099894`) finishes loading, a hook after the resident task-advance
+substate reset at `0x800142b8` selects its root-creation state. It then selects
+the DIGIVOLUTIONS row, accounting for Card Folders availability, and consumes
+the marker. This avoids passing the added row to the original submenu table or
+briefly opening the STATUS partner chooser. Return state lives in guest RAM,
+including across savestates; the physical lab follows its original exit route.
 
 Guarded hooks are added to copies of the generated game code by
 `tools/journal_hooks.cmake` and `tools/generate_menu_hooks.py`. The pinned
@@ -123,13 +133,14 @@ Room. Face the transition and press X; walking into it alone does not enter.
 Diagnostic slot 9 is the lab entrance and slot 7 its action menu in the copied
 menu-test save directory.
 
-The chart native regression test checks inactive-package behavior, unrelated menu
+The lab native regression test checks inactive-package behavior, unrelated menu
 and transition guards, the selected DIGIVOLUTIONS row, field-context preservation,
-unknown-overlay rejection, and restoration of the normal lab callbacks. Python
+unknown-overlay rejection, restoration of all lab callbacks, and one-time root
+return with and without Card Folders. Python
 checks cover mod-state changes without disturbing the EXP options. The build
 script runs all three Shinka native tests rather than unrelated dependency examples.
 
-Before promoting this developer feature, expand coverage to progressed parties,
+Before promoting this developer feature, expand coverage across party combinations,
 locked and unlocked branches, unlocked chart pages, all field families and languages.
 Add selected-partner retention and the directional hint panel. Map teleportation
 and encounter settings are separate outstanding features; EXP settings are now available.

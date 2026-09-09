@@ -23,6 +23,7 @@ void psx_mod_write_code_word(uint32_t a, uint32_t v) { psx_mod_write_word(a, v);
 void shinka_journal_quick_menu(CPUState *cpu);
 void shinka_journal_transition(CPUState *cpu);
 void shinka_menu_allocate(CPUState *cpu);
+void shinka_menu_task_ready(CPUState *cpu);
 void shinka_register_journal(void);
 #define W psx_mod_write_word
 #define R psx_mod_read_word
@@ -118,31 +119,62 @@ int main(void) {
     cpu.gpr[4] = 0x21d; cpu.gpr[31] = 0x8008ee8cu;
     shinka_journal_transition(&cpu);
     CHECK(cpu.gpr[4] == 0x1000 && R(0x80048d68u) == 0x21d);
+    CHECK(cpu.gpr[5] == 0x53484c42); /* marked return, not a stock submenu index */
+    W(0x8004b3f8, 0xd00); cpu.gpr[4] = 0x21d; cpu.gpr[5] = 0;
+    shinka_journal_transition(&cpu);
+    CHECK(cpu.gpr[4] == 0x21d && cpu.gpr[5] == 0); /* physical lab exits normally */
+    {
+        const uint32_t root = 0x800e0000;
+        unsigned cards;
+        W(root + 0x28, 0x80014274); W(root + 0x48, 0x80099894);
+        W(root + 0xc, 0); W(root + 0x20, 2); cpu.gpr[4] = root;
+        W(0x8004b3f8, 0x1000); W(0x8004b400, 0xd01);
+        W(0x8004b404, 0); writes = 0; shinka_menu_task_ready(&cpu);
+        CHECK(writes == 0); /* ordinary Status opening is unchanged */
+        W(0x8004b404, 0x53484c42); W(root + 0x48, 0x80099890);
+        writes = 0; shinka_menu_task_ready(&cpu); CHECK(writes == 0);
+        W(root + 0x48, 0x80099894);
+        for (cards = 0; cards < 2; ++cards) {
+            ram[0x48f42] = (unsigned char)cards; W(root + 0x10, 0);
+            W(0x8004b404, 0x53484c42); shinka_menu_task_ready(&cpu);
+            CHECK(R(root + 0x10) == 1 && R(0x8005ccf0) == 5 + cards);
+            CHECK(R(0x8004b404) == 0);
+            writes = 0; shinka_menu_task_ready(&cpu); CHECK(writes == 0);
+        }
+        W(0x8005cca8, 3); W(0x8004b404, 0x53484c42);
+        shinka_menu_task_ready(&cpu); CHECK(R(0x8005ccf0) == 4);
+        W(0x8005cca8, 2); W(0x8004b400, 0xd00); W(0x8004b404, 0x53484c42);
+        writes = 0; shinka_menu_task_ready(&cpu); CHECK(writes == 0);
+    }
+    W(0x8004b3f8, 0xd01);
     W(0x80055d28u, 13); W(0x80083040u, 0x27bdffe8u); W(0x8008efd0u, 0x27bdffe8u);
     W(0x8008f4b8u, 0x8008c230u); W(0x8008f4bcu, 0x80088694u); W(0x8008f4c0u, 0x80085408u);
     W(0x8008ec04u, 0xae050010u); W(0x8008ec08u, 0x8e220000u);
     W(0x8008ec0cu, 0x08023b0fu); W(0x8008ec10u, 0xac400054u);
+    writes = 0; tick(); CHECK(writes == 0); /* fresh full lab remains stock */
+    W(0x8008ec04u, 0x24041000u); W(0x8008ec08u, 0x0c005ae2u);
+    W(0x8008ec0cu, 0x00002821u); W(0x8008ec10u, 0x08023b0fu);
+    W(0x8008f4b8u, 0x80085408u); W(0x8008f4bcu, 0x80085408u);
     W(0x8008ec10u, 0xdeadbeefu);
     writes = 0; tick(); CHECK(writes == 0); /* reject whole unknown variant */
-    W(0x8008ec10u, 0xac400054u); tick();
-    CHECK(R(0x8008ec04u) == 0x24041000u && R(0x8008f4b8u) == 0x80085408u);
-    W(0x8004b3f8u, 0xd00); tick();
-    CHECK(R(0x8008ec04u) == 0xae050010u && R(0x8008f4b8u) == 0x8008c230u);
-    /* Enter via the normal close animation; cancelling the partner chooser
-     * must not loop back into it or overwrite an already queued transition. */
+    W(0x8008ec10u, 0x08023b0fu); tick();
+    CHECK(R(0x8008ec04u) == 0xae050010u && R(0x8008ec08u) == 0x8e220000u);
+    CHECK(R(0x8008ec0cu) == 0x08023b0fu && R(0x8008ec10u) == 0xac400054u);
+    CHECK(R(0x8008f4b8u) == 0x8008c230u && R(0x8008f4bcu) == 0x80088694u);
+    W(0x8004b3f8u, 0xd00); writes = 0; tick(); CHECK(writes == 0);
+    /* The old auto-confirm probe's objects remain idle for all three actions;
+     * cancelling a child must let the original Select Action menu reopen. */
     W(0x8004b3f8u, 0xd01);
     W(0x80090028u, 0x80014274u); W(0x80090048u, 0x8008ed0cu);
     W(0x80090074u, 0x8008ec50u); W(0x8009000cu, 1); W(0x80090010u, 1);
     W(0x80090024u, 0x80091000u); W(0x80091000u, 0x80092000u);
     W(0x80092028u, 0x80014274u); W(0x80092048u, 0x8008a51cu);
-    W(0x8009200cu, 1); W(0x80092010u, 3);
-    tick(); CHECK(R(0x80092060u) == 2 && R(0x80092010u) == 4);
-    CHECK(R(0x80092054u) == 0); /* confirmation flag follows actual animation */
-    W(0x80092010u, 3); W(0x8004b3fcu, 0x700);
-    tick(); CHECK(R(0x8004b3fcu) == 0x700);
-    W(0x8004b3fcu, 0); tick();
-    CHECK(R(0x8004b3fcu) == 0x1000 && R(0x80048d68u) == 0x21d);
+    W(0x8009200cu, 1); W(0x80092010u, 3); W(0x8004b3fcu, 0);
+    for (unsigned action = 0; action < 3; ++action) {
+        W(0x80092060, action); writes = 0; tick();
+        CHECK(writes == 0 && R(0x8004b3fc) == 0);
+    }
     W(0x8004b3f8u, 0x700); writes = 0; tick(); CHECK(writes == 0);
-    puts("Journal context, input, return, revision rejection and restore checks passed.");
+    puts("Full lab actions, legacy restoration, root return and menu input checks passed.");
     return 0;
 }

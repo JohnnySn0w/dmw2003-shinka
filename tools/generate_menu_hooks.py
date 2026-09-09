@@ -23,6 +23,12 @@ def shard(code, number):
             raise ValueError(f'Review entry {address}: expected one real CPS entry')
         code = code.replace(needle, needle + f'\n    {callback}(cpu);')
         declarations.append(f'extern void {callback}(CPUState*);')
+    if number == '01':
+        needle = '    PGXP_STORE(0xAC800018u, _pgxa, cpu->gpr[0]); }  /* 0x800142B8: 0xAC800018 */'
+        if code.count(needle) != 1:
+            raise ValueError('Review resident task-advance substate reset')
+        code = code.replace(needle, needle + '\n    shinka_menu_task_ready(cpu);')
+        declarations.append('extern void shinka_menu_task_ready(CPUState*);')
     # Slots 6 and 7 are appended after the existing cursor and party widgets.
     # Change only the address expression, including PGXP's matching address.
     sites = [('80012230', 18, 22), ('80012920', 6, 17), ('80012DBC', 2, 17)]

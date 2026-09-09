@@ -41,6 +41,20 @@ void shinka_menu_construct(CPUState* cpu) {
     if (READ(p + 0x58) >= READ(p + 0x5c)) WRITE(p + 0x58, 0);
 }
 
+void shinka_menu_task_ready(CPUState* cpu) {
+    uint32_t p = cpu->gpr[4];
+    /* Called after the resident task-advance method clears substates, before
+     * it increments lifecycle 0 -> 1. The Status controller's substate 1
+     * creates its root list; substate 0 would dispatch a stock submenu. */
+    if (READ(MODE) != STATUS || READ(0x8004b400) != JOURNAL
+        || READ(0x8004b404) != LAB_ROOT_RETURN
+        || !object(p, 0x80099894) || READ(p + 0xc) != 0 || READ(p + 0x20) != 2) return;
+    WRITE(p + 0x10, 1);
+    WRITE(0x8005ccf0, enabled && READ(0x8005cca8) == 2
+        ? 5 + (psx_mod_read_byte(0x80048f42) != 0) : 4);
+    WRITE(0x8004b404, 0); /* consumed once; all return state lives in guest RAM */
+}
+
 static uint32_t encode(const char* text) {
     uint32_t out;
     if (!text_scratch || READ(text_scratch) != 0x53484d55) {
@@ -223,5 +237,6 @@ void shinka_journal_transition(CPUState* cpu) {
     } else if (mode == JOURNAL && cpu->gpr[31] == 0x8008ee8c
                && cpu->gpr[4] == READ(0x80048d68) && (cpu->gpr[4] >> 8) == 2) {
         WRITE(0x8005ccf0, 4); cpu->gpr[4] = STATUS;
+        cpu->gpr[5] = LAB_ROOT_RETURN;
     }
 }

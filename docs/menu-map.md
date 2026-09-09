@@ -139,3 +139,9 @@ and underwater/underground crashes. Expanding this network therefore requires
 validated arrival points and current story/server access, rather than simply
 enabling every previously visited icon. Next work includes more surface locations,
 safe dungeon exits, later campaign transitions and post-game boundaries.
+
+The [walkthrough and story-gate audit](travel-story-audit.md) scopes the campaign
+checkpoints, reference-code predicates and before/after tests needed for that
+expansion. Its first priorities are the Seiryu departure event and Asuka's
+story-dependent approaches. Proposed restrictions in that audit are not yet
+runtime policy.

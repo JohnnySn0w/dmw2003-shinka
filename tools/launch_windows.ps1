@@ -3,6 +3,7 @@ param(
     [string]$RetailBios = '',
     [string]$ControllerMappings = '',
     [ValidateSet(1,2,3,4)][int]$ExpMultiplier,
+    [ValidateSet(1,2,3,4)][int]$DvExpMultiplier,
     [string]$Python = 'python',
     [switch]$Headless,
     [switch]$HoldOnGuestExit,
@@ -13,7 +14,7 @@ $projectRoot = Split-Path $PSScriptRoot -Parent
 $disc = (Resolve-Path -LiteralPath $DiscCue).Path
 $runtime = Join-Path $projectRoot 'build-windows/Release/dmw2003-shinka.exe'
 if (-not (Test-Path -LiteralPath $runtime)) { throw 'Run tools/build_windows.ps1 first.' }
-if ($PSBoundParameters.ContainsKey('ExpMultiplier')) {
+if ($PSBoundParameters.ContainsKey('ExpMultiplier') -or $PSBoundParameters.ContainsKey('DvExpMultiplier')) {
     if (Get-Process -Name 'dmw2003-shinka' -ErrorAction SilentlyContinue) {
         throw 'Close the game before changing the EXP setting.'
     }
@@ -21,7 +22,10 @@ if ($PSBoundParameters.ContainsKey('ExpMultiplier')) {
     $files = [regex]::Matches($cueText, '(?im)^\s*FILE\s+"([^"]+)"\s+BINARY\s*$')
     if ($files.Count -ne 1) { throw 'EXP configuration requires the supported single-BIN CUE.' }
     $discBin = Join-Path (Split-Path $disc -Parent) $files[0].Groups[1].Value
-    & $Python (Join-Path $PSScriptRoot 'configure_exp.py') --disc-bin $discBin --multiplier $ExpMultiplier
+    $expArgs = @('--disc-bin', $discBin)
+    if ($PSBoundParameters.ContainsKey('ExpMultiplier')) { $expArgs += @('--multiplier', "$ExpMultiplier") }
+    if ($PSBoundParameters.ContainsKey('DvExpMultiplier')) { $expArgs += @('--dv-multiplier', "$DvExpMultiplier") }
+    & $Python (Join-Path $PSScriptRoot 'configure_exp.py') @expArgs
     if ($LASTEXITCODE -ne 0) { throw 'EXP configuration failed; game was not launched.' }
 }
 $arguments = @('--game', (Join-Path $projectRoot 'game.toml'), '--disc', $disc,

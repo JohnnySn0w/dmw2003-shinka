@@ -1,9 +1,9 @@
-# Battle EXP multiplier
+# Battle and Digivolution EXP multipliers
 
 The first EXP feature scales the normal battle reward table by 1, 2, 3 or 4.
 Scaling happens **before** the original participation split and rounding. It
-does not enable reserve EXP, change BIT rewards, or change Digivolution EXP and
-its cap. For split rewards, rounding means the final displayed award need not
+does not enable reserve EXP or change BIT rewards. Independent DV scaling
+multiplies the final DV award after original rounding, minimum and caps. For split rewards, rounding means the final displayed award need not
 be exactly the multiplier times the original rounded award.
 
 ## Usage
@@ -11,17 +11,17 @@ be exactly the multiplier times the original rounded award.
 Build the current Windows runtime, then close it before changing the setting:
 
 ```powershell
-./tools/launch_windows.ps1 -DiscCue 'PATH\TO\game.cue' -RetailBios 'PATH\TO\bios.bin' -ExpMultiplier 3
+./tools/launch_windows.ps1 -DiscCue 'PATH\TO\game.cue' -RetailBios 'PATH\TO\bios.bin' -ExpMultiplier 3 -DvExpMultiplier 3
 ```
 
-`-ExpMultiplier 1` disables the feature. Omitting the parameter retains the
-previous setting. `-Python 'PATH\TO\python.exe'` selects a Python 3.11+ runtime.
+`-ExpMultiplier 1` disables normal scaling; `-DvExpMultiplier 1` disables DV
+scaling. Omitting either parameter retains its previous setting. `-Python 'PATH\TO\python.exe'` selects a Python 3.11+ runtime.
 There is no in-game settings entry yet.
 
 To configure without launching:
 
 ```powershell
-python tools/configure_exp.py --disc-bin 'PATH\TO\game.bin' --multiplier 3
+python tools/configure_exp.py --disc-bin 'PATH\TO\game.bin' --multiplier 3 --dv-multiplier 3
 ```
 
 The generator verifies the supported BIN hash and reward-overlay hash, locates
@@ -33,8 +33,9 @@ patch manifests contain disc-derived expected values and remain ignored.
 The runtime checks the exact disc hash and each original field before applying
 patches to disc reads. Original game code still performs the award, level-up and
 save operations. Restoring a state that already contains the reward overlay may
-retain its old reward values; use a pre-reward battle checkpoint or a normal
-card save when comparing settings. Disabling the feature does not undo EXP
+retain its old code or reward values. Even a battle-entry state can contain
+prefetched reward code: restart and load a normal memory-card save after changing
+DV settings. A menu round trip is not sufficient to invalidate that prefetch. Disabling the feature does not undo EXP
 already earned and saved.
 
 ## Reconstruction evidence
@@ -101,3 +102,37 @@ a savestate prefetch bug. The battle checkpoint worked after staging was fixed.
 Remaining coverage includes two/three participating rookies, evolved forms,
 level caps, multiple level gains, later enemies, and a card save/reload of
 multiplied progression. These are not implied by the early-game comparison.
+
+
+## Independent DV multiplier
+
+The guarded 16-byte delivery call at overlay offset `0x1388` originally loads
+its function pointer, waits one instruction, calls it, and moves the calculated
+award into argument register a2 in the call's delay slot. The 3x patch uses the
+wait slot for `a2 = v0 << 1` and the delay slot for `a2 += v0`. The pointer load,
+call, and other registers remain unchanged. 2x and 4x use a single shift in the
+delay slot. No enemy DV fields or normal EXP fields are altered by this feature.
+
+Scaling after the original cap is intentional: an original award of 10 becomes
+30 at 3x, rather than hitting the original cap again. The original accumulation,
+level-up, carry-over and maximum-level checks still run. See
+[progression formulas](progression.md) for the differing curves and later-form
+natural limits.
+
+A controlled replay used level-5 Kumamon with Grizzmon participating alone
+against Kunemon. Original DV total went from 0 to 2; the 3x instructions changed
+it from 0 to 6. The old checkpoint contained prefetched original code, so the
+comparison explicitly replaced that guarded 16-byte code span in the diagnostic
+RAM copy before the game loaded it. This checks execution and award behavior,
+not fresh disc-read integration. Original player memory cards were untouched.
+
+Automated instruction checks cover final awards 1-50 for all modified factors
+and verify preservation of other registers. Settings tests ensure normal and DV
+selections do not overwrite each other. Live later-form, participation-split,
+multiple-level and DV save/reload coverage remains outstanding.
+
+A fresh runtime also loaded the copied normal memory-card save successfully.
+No evolved-form battle was completed from that fresh load; the live 2-to-6 DV
+comparison above remains the controlled checkpoint test, not a cold-load battle
+comparison. Seventeen Python tests pass. The local configuration is left at 3x
+normal EXP and 3x DV EXP.

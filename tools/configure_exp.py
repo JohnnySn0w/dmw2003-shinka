@@ -37,13 +37,36 @@ def exp_patches(data, lba, multiplier):
     return patches
 
 
+def dv_patches(data, lba, multiplier):
+    """Scale the final DV award argument after original rounding/minimum/caps."""
+    if multiplier not in (1, 2, 3, 4):
+        raise ValueError('DV multiplier must be 1, 2, 3 or 4')
+    if hashlib.sha256(data).hexdigest() != OVERLAY_SHA256:
+        raise ValueError('Unsupported reward overlay')
+    offset = 0x1388
+    original = data[offset:offset + 16]
+    # lw v1,0x20(s0); nop; jalr v1; move a2,v0
+    expected = struct.pack('<4I', 0x8E030020, 0, 0x0060F809, 0x00403021)
+    if original != expected:
+        raise ValueError('DV delivery call signature changed')
+    if multiplier == 1:
+        return []
+    words = list(struct.unpack('<4I', original))
+    if multiplier == 3:
+        words[1] = 0x00023040  # sll a2,v0,1
+        words[3] = 0x00C23021  # addu a2,a2,v0 (call delay slot)
+    else:
+        words[3] = 0x00023000 | ((1 if multiplier == 2 else 2) << 6)
+    return [(lba * 2048 + offset, original, struct.pack('<4I', *words))]
+
+
 def manifest(data, lba):
     text = f'''format_version = 5
 id = "{PACKAGE}"
 version = "{VERSION}"
 name = "Shinka Experience"
 channel = "developer"
-description = "Multiply base battle EXP before the original participation split."
+description = "Independent normal battle and Digivolution EXP multipliers."
 resolver = "declarative"
 
 [[target]]
@@ -65,11 +88,29 @@ max = 4
 step = 1
 default = 1
 '''
-    for factor in (2, 3, 4):
-        for offset, expected, replacement in exp_patches(data, lba, factor):
-            text += f'''
+    text += '''
+[[feature]]
+id = "dv-exp"
+name = "Digivolution EXP multiplier"
+description = "Multiply the final DV award after original rounding and caps."
+default_enabled = false
+
+[[option]]
+feature = "dv-exp"
+id = "multiplier"
+label = "DV EXP multiplier"
+type = "integer"
+min = 1
+max = 4
+step = 1
+default = 1
+'''
+    for feature_id, generate in [('battle-exp', exp_patches), ('dv-exp', dv_patches)]:
+        for factor in (2, 3, 4):
+            for offset, expected, replacement in generate(data, lba, factor):
+                text += f'''
 [[patch]]
-feature = "battle-exp"
+feature = "{feature_id}"
 target = "disc_user"
 offset = {offset}
 expected = "{expected.hex(' ')}"
@@ -79,8 +120,10 @@ when = {{ multiplier = "{factor}" }}
     return text
 
 
-def select_feature(text, multiplier):
+def select_feature(text, multiplier, feature_id='battle-exp'):
     """Preserve other packages/features verbatim, replacing only our records."""
+    if feature_id not in ('battle-exp', 'dv-exp') or multiplier not in (1, 2, 3, 4):
+        raise ValueError('Unsupported EXP feature or multiplier')
     parsed = tomllib.loads(text) if text.strip() else {'format_version': 2}
     if parsed.get('format_version') != 2:
         raise ValueError('Only mod state format 2 is supported; no state was changed')
@@ -91,7 +134,7 @@ def select_feature(text, multiplier):
         package = record.get('package', [{}])[0]
         feature = record.get('feature', [{}])[0]
         if package.get('id') == PACKAGE or (
-                feature.get('package_id') == PACKAGE and feature.get('id') == 'battle-exp'):
+                feature.get('package_id') == PACKAGE and feature.get('id') == feature_id):
             continue
         kept.append(chunk)
     result = ''.join(kept).strip() or 'format_version = 2'
@@ -103,7 +146,7 @@ version = "{VERSION}"
 
 [[feature]]
 package_id = "{PACKAGE}"
-id = "battle-exp"
+id = "{feature_id}"
 enabled = {'true' if multiplier != 1 else 'false'}
 [feature.values]
 multiplier = "{multiplier}"
@@ -114,7 +157,7 @@ multiplier = "{multiplier}"
         state = dict(state)
         state['package'] = [p for p in state.get('package', []) if p.get('id') != PACKAGE]
         state['feature'] = [f for f in state.get('feature', []) if not (
-            f.get('package_id') == PACKAGE and f.get('id') == 'battle-exp')]
+            f.get('package_id') == PACKAGE and f.get('id') == feature_id)]
         return state
     if unrelated(parsed) != unrelated(updated):
         raise ValueError('Unrecognized mod state layout; no state was changed')
@@ -124,8 +167,11 @@ multiplier = "{multiplier}"
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--disc-bin', type=Path, required=True)
-    parser.add_argument('--multiplier', type=int, choices=(1, 2, 3, 4), required=True)
+    parser.add_argument('--multiplier', type=int, choices=(1, 2, 3, 4))
+    parser.add_argument('--dv-multiplier', type=int, choices=(1, 2, 3, 4))
     args = parser.parse_args()
+    if args.multiplier is None and args.dv_multiplier is None:
+        parser.error('Specify --multiplier and/or --dv-multiplier')
     root = Path(__file__).resolve().parents[1]
     destination = root / 'output/exp-audit'
     with contextlib.redirect_stdout(io.StringIO()):
@@ -143,7 +189,10 @@ def main():
     mods = root / 'build-windows/Release/mods'
     state = mods / 'state.toml'
     previous = state.read_text(encoding='utf-8') if state.exists() else ''
-    selected = select_feature(previous, args.multiplier)
+    selected = previous
+    for feature_id, factor in [('battle-exp', args.multiplier), ('dv-exp', args.dv_multiplier)]:
+        if factor is not None:
+            selected = select_feature(selected, factor, feature_id)
     package = mods / 'packages' / PACKAGE / VERSION
     package.mkdir(parents=True, exist_ok=True)
     (package / 'manifest.toml').write_text(content, encoding='utf-8')
@@ -152,8 +201,11 @@ def main():
     temporary = mods / 'state.toml.shinka-tmp'
     temporary.write_text(selected, encoding='utf-8')
     temporary.replace(state)
-    print(f'Selected {args.multiplier}x base battle EXP. Restart the game to apply.')
-    print('The stock disc is unchanged. Use 1x to disable this feature.')
+    if args.multiplier is not None:
+        print(f'Selected {args.multiplier}x base battle EXP.')
+    if args.dv_multiplier is not None:
+        print(f'Selected {args.dv_multiplier}x final DV EXP.')
+    print('Restart to apply. The stock disc is unchanged; 1x disables each feature independently.')
 
 
 if __name__ == '__main__':

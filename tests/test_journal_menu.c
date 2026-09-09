@@ -139,7 +139,7 @@ int main(void) {
     CHECK(cpu.gpr[4] == 0x21d && cpu.gpr[5] == 0); /* physical lab exits normally */
     {
         const uint32_t root = 0x800e0000;
-        unsigned cards;
+        unsigned cards, layout;
         W(root + 0x28, 0x80014274); W(root + 0x48, 0x80099894);
         W(root + 0xc, 0); W(root + 0x20, 2); cpu.gpr[4] = root;
         W(0x8004b3f8, 0x1000); W(0x8004b400, 0xd01);
@@ -148,7 +148,8 @@ int main(void) {
         W(0x8004b404, 0x53484c42); W(root + 0x48, 0x80099890);
         writes = 0; shinka_menu_task_ready(&cpu); CHECK(writes == 0);
         W(root + 0x48, 0x80099894);
-        for (cards = 0; cards < 2; ++cards) {
+        for (layout = 2; layout <= 3; ++layout) for (cards = 0; cards < 2; ++cards) {
+            W(root + 0x20, layout); /* original and map-travel controller allocations */
             ram[0x48f42] = (unsigned char)cards; W(root + 0x10, 0);
             W(0x8004b404, 0x53484c42); shinka_menu_task_ready(&cpu);
             CHECK(R(root + 0x10) == 1 && R(0x8005ccf0) == 5 + cards);

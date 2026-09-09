@@ -12,6 +12,11 @@ An experimental English menu adds **DIGIVOLUTIONS** and **SETTINGS** as selectab
 
 See [Windows build, launch, and overlay-capture instructions](docs/windows-baseline.md) for the runnable baseline and current validation limits.
 
+The original map now offers **X: Travel** between six visited Asuka locations:
+Asuka City bridge, Central Park, Wire Forest Entrance, Wire Forest, Seiryu City and Pelche Oasis.
+The menu closes automatically before loading the destination. See
+[availability rules and current coverage](docs/menu-map.md).
+
 Existing DuckStation memory cards can be copied into isolated test profiles; see [save imports and profile selection](docs/save-profiles.md).
 
 See the [groundwork audit and port milestones](docs/groundwork-audit.md) for pinned sources, verified findings, feature analysis, and reproduction commands.
@@ -22,7 +27,7 @@ See the [groundwork audit and port milestones](docs/groundwork-audit.md) for pin
 - Expand DV validation across later forms, participation splits and natural growth limits.
 - Investigate music extraction and replacement instrument samples; compare a single track before expanding the work.
 - Add selected-partner retention to the DIGIVOLUTIONS entry; see [design and hint groundwork](docs/evolution-journal.md).
-- Travel from visited map icons using X, with story and destination safeguards.
+- Expand the initial map travel network with validated destinations and later story/server access rules.
 
 Fresh configurations retain original EXP until enabled. The current local setup selects 3x normal EXP and fixed 10-point DV awards.
 

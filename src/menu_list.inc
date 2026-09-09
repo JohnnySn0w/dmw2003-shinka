@@ -51,7 +51,8 @@ void shinka_menu_task_ready(CPUState* cpu) {
      * creates its root list; substate 0 would dispatch a stock submenu. */
     if (READ(MODE) != STATUS || READ(0x8004b400) != JOURNAL
         || READ(0x8004b404) != LAB_ROOT_RETURN
-        || !object(p, 0x80099894) || READ(p + 0xc) != 0 || READ(p + 0x20) != 2) return;
+        || !object(p, 0x80099894) || READ(p + 0xc) != 0
+        || (READ(p + 0x20) != 2 && READ(p + 0x20) != 3)) return;
     WRITE(p + 0x10, 1);
     WRITE(0x8005ccf0, enabled && READ(0x8005cca8) == 2
         ? 5 + (psx_mod_read_byte(0x80048f42) != 0) : 4);
@@ -171,6 +172,7 @@ void shinka_journal_quick_menu(CPUState* cpu) {
     uint32_t p = cpu->gpr[4], row, count;
     uint16_t pressed;
     if (!expanded(p) || READ(0x8004b3fc)) return;
+    if (READ(MODE) == STATUS && READ(p + 0xa0) == 5) return; /* map's stock close path */
     if (READ(MODE) == STATUS && READ(p + 0xc) == 1 && READ(p + 0x10) == 4
         && READ(p + 0x14) == 1 && READ(p + 0xa0) == 0
         && READ(p + 0x58) == 5 + (READ(p + 0x60) != 0)) {

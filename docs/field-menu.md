@@ -30,7 +30,8 @@ to subsequent rewards; encounter changes apply at the next movement check.
 At 0%, the random encounter countdown pauses; scripted fights retain their
 original entry path. See [encounter behavior and validation](encounters.md).
 The screen reports a save failure and retains the previous settings if validation
-or persistence fails. Map teleportation remains unimplemented.
+or persistence fails. The [initial map travel network](menu-map.md) supports X on
+eligible visited icons, with availability hints in the original name panel.
 
 ## Implementation
 

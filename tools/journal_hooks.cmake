@@ -37,6 +37,16 @@ if(NOT _encounter_result EQUAL 0)
     message(FATAL_ERROR "Extract the supported FIELDSTG.PRO and review encounter data: ${_encounter_error}")
 endif()
 get_target_property(_sources shinka SOURCES)
+set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS
+    "${CMAKE_CURRENT_SOURCE_DIR}/tools/generate_map_data.py"
+    "${CMAKE_CURRENT_SOURCE_DIR}/extracted/audit/STSTATUS.PRO")
+execute_process(COMMAND "${Python3_EXECUTABLE}"
+    "${CMAKE_CURRENT_SOURCE_DIR}/tools/generate_map_data.py"
+    "${CMAKE_CURRENT_SOURCE_DIR}/extracted/audit/STSTATUS.PRO" "${_generated}/map_data.h"
+    RESULT_VARIABLE _map_result ERROR_VARIABLE _map_error)
+if(NOT _map_result EQUAL 0)
+    message(FATAL_ERROR "Extract the supported STSTATUS.PRO and review map data: ${_map_error}")
+endif()
 foreach(_shard 00 01 02 03 05)
     set(_original "${CMAKE_CURRENT_SOURCE_DIR}/output/recompiled/SLES_039.36_full_${_shard}.c")
     set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS "${_original}")
@@ -64,5 +74,5 @@ list(APPEND _sources "${_generated}/mod_runtime.cpp")
 set_property(TARGET shinka PROPERTY SOURCES "${_sources}")
 set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS
     "${_runtime}" "${CMAKE_CURRENT_SOURCE_DIR}/src/menu_settings_bridge.inc")
-target_sources(shinka PRIVATE src/journal_menu.c src/menu_exp.c src/evolution_chart.c src/encounters.c)
+target_sources(shinka PRIVATE src/journal_menu.c src/menu_exp.c src/evolution_chart.c src/encounters.c src/map_travel.c)
 target_include_directories(shinka PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/output/recompiled" "${_generated}")

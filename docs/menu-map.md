@@ -26,3 +26,5 @@ supports the interaction design but does not validate Shinka's transition hooks.
 No replacement game module from that package has been installed or copied into
 the repository. The selected-icon variable, transition entry point and visited
 flags remain to be identified locally.
+
+Evolution-tree access and directional hints are specified in [the evolution journal design](evolution-journal.md). The requirement reader and hint formatter are implemented as tooling; the game-menu entry remains pending.

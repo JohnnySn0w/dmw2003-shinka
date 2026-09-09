@@ -1,6 +1,6 @@
 # Experimental Windows baseline
 
-Shinka now has a Windows x64 build that runs locally translated game code through the pinned PSXRecomp runtime. It is an early hybrid native/interpreter build, not a completed source reconstruction. Gameplay modifications are not enabled.
+Shinka now has a Windows x64 build that runs locally translated game code through the pinned PSXRecomp runtime. It is an early hybrid native/interpreter build, not a completed source reconstruction. Optional EXP modifications and an expanded field menu are available.
 
 ## Build from your own data
 
@@ -29,7 +29,9 @@ Keyboard defaults: arrows = D-pad, Enter = Start, X/S/Z/A = Cross/Circle/Square/
 
 See [controller compatibility](controller-support.md) for the native SDL3 input decision, optional mapping files, Steam Input path, and required hardware tests.
 
-Optional normal EXP scaling is available through `-ExpMultiplier 1`, `2`, `3` or `4` on the launch script. See [configuration and battle comparisons](experience.md). Changing the setting requires restarting the game.
+Optional normal EXP scaling is available through `-ExpMultiplier 1`, `2`, `3` or `4` on the launch script. See [configuration and battle comparisons](experience.md). Launch flags require the game to be closed; the expanded menu's SETTINGS entry can change normal and DV EXP rates during play.
+
+Use `-SaveDirectory 'output/profile-name'` for a separate test profile. The default remains `output/player-saves`. See [copying DuckStation cards and loading profiles](save-profiles.md).
 
 ## Capture and compile overlays
 
@@ -63,7 +65,7 @@ The first user playthrough exited at the registration/partner-selection transiti
 - The user confirmed hearing the opening movie through speakers, describing it as very jittery. Audible output is confirmed; playback quality remains a failure.
 - Native savestate save/load succeeded during the movie. Blank local memory-card files were created. This does not establish in-game card save/load compatibility.
 - After the overlay fix, the user reported that Central Park, a normal battle, the gym, and shops worked. These are user playtest results; broader progression coverage remains open.
-- The user reported successful in-game saving/loading and savestates, with slow card save/load screens. Disk inspection confirmed a 128 KiB card with an allocated `BESLES-03936DMW3-EUR` entry (32 KiB). A stable-read backup is preserved locally under `output/save-backups/first-guardromon-save/`. An independently recorded cold-start Continue test remains open.
+- The user reported successful in-game saving/loading and savestates, with slow card save/load screens. Disk inspection confirmed a 128 KiB card with an allocated `BESLES-03936DMW3-EUR` entry (32 KiB). A stable-read backup is preserved locally under `output/save-backups/first-guardromon-save/`.
 - A subsequent agent-controlled test used copied cards in `output/performance-saves/`, restored the inn checkpoint, traversed Asuka City, Asuka Bridge and Central Park, and triggered a Kunemon encounter in Wire Forest Entrance. The battle scene, party switching and combat ran, followed by return to a responsive field. The reward/result screen was not separately captured. Local diagnostic slots 2, 3 and 4 preserve the park, battle-entry and post-battle states; `output/encounter-entry.png` and `output/encounter-return.png` record the endpoints. This is one encounter, not broad combat coverage.
 - A Guardromon overwrite trace observed 80 successful sector writes spanning approximately 29 seconds while the guest ran at 50 frames/second. The Saved message appeared around 30 seconds. See [save timing evidence and sampling limitations](save-timing.md); no save-speed patch has been applied.
 - The initial overlay-fallback movie run measured approximately 0.31–0.34 times real time. The lowered overlay floor allowed interpreter-local chaining; performance remains a validation target.

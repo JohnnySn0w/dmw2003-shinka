@@ -8,9 +8,11 @@ An experimental Windows x64 build supports the tested early-game exploration, ba
 
 The first gameplay feature is optional **1â€“4x normal battle EXP**, applied through guarded disc-read patches. See [EXP configuration and validation](docs/experience.md). Money is unchanged; the expanded field menu now includes live EXP settings. See the [progression formulas](docs/progression.md) and [menu/map groundwork](docs/menu-map.md).
 
-An experimental English field menu adds **DIGIVOLUTIONS** and **SETTINGS** as selectable rows. Enable it with `python tools/configure_journal.py --enable` and restart. The original chart is connected; directional hints remain pending. See [menu controls and implementation](docs/field-menu.md) and [chart validation limits](docs/evolution-journal.md).
+An experimental English menu adds **DIGIVOLUTIONS** and **SETTINGS** as selectable rows in both the world overlay and the full-screen root reached after leaving a submenu. Enable it with `python tools/configure_journal.py --enable` and restart. The original chart is connected; directional hints remain pending. See [menu controls and implementation](docs/field-menu.md) and [chart validation limits](docs/evolution-journal.md).
 
 See [Windows build, launch, and overlay-capture instructions](docs/windows-baseline.md) for the runnable baseline and current validation limits.
+
+Existing DuckStation memory cards can be copied into isolated test profiles; see [save imports and profile selection](docs/save-profiles.md).
 
 See the [groundwork audit and port milestones](docs/groundwork-audit.md) for pinned sources, verified findings, feature analysis, and reproduction commands.
 

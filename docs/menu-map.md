@@ -28,4 +28,9 @@ No replacement game module from that package has been installed or copied into
 the repository. The selected-icon variable, transition entry point and visited
 flags remain to be identified locally.
 
+The map interaction uses a freely movable cursor that gravitates toward nearby
+icons, disappears after snapping, and leaves that icon selected. Travel should
+consume the game's selected icon after this snap behavior; the hit-test radius
+and selected-icon variable still require tracing.
+
 Evolution-tree access and directional hints are specified in [the evolution journal design](evolution-journal.md). The original lab chart now has an experimental English DIGIVOLUTIONS entry in the field menu. The requirement reader and hint formatter are implemented as tooling; in-game clues remain pending. See the evolution journal document for the verified overlay dispatcher and field-return context.

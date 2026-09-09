@@ -22,6 +22,7 @@ void psx_mod_write_byte(uint32_t a, uint8_t v) { ram[offset(a)] = v; ++writes; }
 void psx_mod_write_code_word(uint32_t a, uint32_t v) { psx_mod_write_word(a, v); }
 void shinka_journal_quick_menu(CPUState *cpu);
 void shinka_journal_transition(CPUState *cpu);
+void shinka_menu_allocate(CPUState *cpu);
 void shinka_register_journal(void);
 #define W psx_mod_write_word
 #define R psx_mod_read_word
@@ -49,6 +50,23 @@ int main(void) {
     shinka_journal_quick_menu(&cpu);
     CHECK(writes == 0); /* unselected package is inert */
     CHECK(activate && tick); activate();
+    /* Both roots share the resident widget; unrelated scenes and non-English
+     * menus must retain their original allocations. */
+    {
+        const uint32_t modes[] = {0x21d, 0x1000, 0xd00, 0x700};
+        unsigned i;
+        for (i = 0; i < 4; ++i) {
+            W(0x8004b3f8, modes[i]);
+            cpu.gpr[4] = 0x8001270c; cpu.gpr[5] = 0xa0; cpu.gpr[6] = 0xac;
+            shinka_menu_allocate(&cpu);
+            CHECK(cpu.gpr[5] == (i < 2 ? 0xa8 : 0xa0));
+            CHECK(cpu.gpr[6] == (i < 2 ? 0xb4 : 0xac));
+        }
+        W(0x8004b3f8, 0x1000); W(0x8005cca8, 3);
+        cpu.gpr[5] = 0xa0; cpu.gpr[6] = 0xac;
+        shinka_menu_allocate(&cpu); CHECK(cpu.gpr[5] == 0xa0);
+        W(0x8005cca8, 2); W(0x8004b3f8, 0x21d); cpu.gpr[4] = menu;
+    }
     W(0x8004b3fcu, 0x700);
     writes = 0; shinka_journal_quick_menu(&cpu); CHECK(writes == 0);
     W(0x8004b3fcu, 0); W(menu + 0x20, 0x2d); W(menu + 0x60, 1);
@@ -77,6 +95,25 @@ int main(void) {
     shinka_journal_transition(&cpu);
     CHECK(cpu.gpr[4] == 0xd01 && R(menu + 0x58) == 4);
     cpu.gpr[4] = 0x1000; shinka_journal_transition(&cpu); CHECK(cpu.gpr[4] == 0x1000);
+    /* Full-screen root SETTINGS stays within the widget. DIGIVOLUTIONS must
+     * finish its close animation without indexing the original submenu table. */
+    W(0x8004b3f8, 0x1000); W(menu + 0xa0, 0); W(menu + 0x10, 3);
+    W(menu + 0x58, 7); cpu.gpr[4] = menu;
+    psx_mod_write_half(0x8004b818, 0x2000); shinka_journal_quick_menu(&cpu);
+    CHECK(R(menu + 0xa0) == 1 && R(menu + 0x58) == 0);
+    W(menu + 0xa0, 0); W(menu + 0x10, 3); W(menu + 0x58, 6);
+    psx_mod_write_half(0x8004b818, 0xa000); shinka_journal_quick_menu(&cpu);
+    CHECK(R(menu + 0xa0) == 0); /* stock navigation/confirm decides first */
+    W(menu + 0x10, 4); W(menu + 0x14, 0); shinka_journal_quick_menu(&cpu);
+    CHECK(R(menu + 0xa0) == 0); /* cancelling on the chart row is not entry */
+    W(menu + 0x10, 4); W(menu + 0x14, 1); W(0x8005ccf0, 6);
+    shinka_journal_quick_menu(&cpu);
+    CHECK(R(menu + 0xa0) == 3 && R(menu + 0x14) == 0 && R(0x8005ccf0) == 4);
+    W(0x80048d68, 0x21d); cpu.gpr[4] = 0x21d; cpu.gpr[31] = 0x80013318;
+    shinka_journal_transition(&cpu);
+    CHECK(cpu.gpr[4] == 0xd01 && R(menu + 0x58) == 4);
+    W(menu + 0xa0, 0); cpu.gpr[4] = 0x21d;
+    shinka_journal_transition(&cpu); CHECK(cpu.gpr[4] == 0x21d);
     W(0x8004b3f8u, 0xd01); W(0x80048d68u, 0x21d);
     cpu.gpr[4] = 0x21d; cpu.gpr[31] = 0x8008ee8cu;
     shinka_journal_transition(&cpu);

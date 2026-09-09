@@ -25,7 +25,8 @@ uint32_t shinka_menu_slot(uint32_t p, uint32_t address) {
 }
 
 void shinka_menu_allocate(CPUState* cpu) {
-    if (enabled && READ(0x8005cca8) == 2 && (READ(MODE) >> 8) == 2
+    uint32_t mode = READ(MODE);
+    if (enabled && READ(0x8005cca8) == 2 && ((mode >> 8) == 2 || mode == STATUS)
         && cpu->gpr[4] == QUICK_MENU && cpu->gpr[5] == 0xa0 && cpu->gpr[6] == 0xac) {
         cpu->gpr[5] = 0xa8; /* +a0 page, +a4 persistence error; zeroed by allocator */
         cpu->gpr[6] = 0xb4;
@@ -71,7 +72,8 @@ void shinka_menu_text(CPUState* cpu) {
     if (!expanded(p)) return;
     if (cpu->gpr[31] == 0x8001288c) {
         label = READ(p + 0xa4) & 1 ? "Settings save failed" : READ(p + 0xa0) == 1
-            ? "SETTINGS: Left Right" : "Triangle: Close Menu";
+            ? "SETTINGS: Left Right" : READ(MODE) == STATUS
+            ? "Triangle: Close Status" : "Triangle: Close Menu";
     } else if (cpu->gpr[31] == 0x80012938) {
         row = READ(p + 0x18);
         if (row >= 8) return;
@@ -149,7 +151,23 @@ static void refresh_menu(uint32_t p, unsigned page, unsigned selection) {
 void shinka_journal_quick_menu(CPUState* cpu) {
     uint32_t p = cpu->gpr[4], row, count;
     uint16_t pressed;
-    if (!expanded(p) || READ(p + 0xc) != 1 || READ(0x8004b3fc)) return;
+    if (!expanded(p) || READ(0x8004b3fc)) return;
+    if (READ(MODE) == STATUS && READ(p + 0xc) == 1 && READ(p + 0x10) == 4
+        && READ(p + 0x14) == 1 && READ(p + 0xa0) == 0
+        && READ(p + 0x58) == 5 + (READ(p + 0x60) != 0)) {
+        /* Mark only after stock input has accepted confirm. Navigation has
+         * priority in the original handler, including held-key repetition. */
+        WRITE(p + 0xa0, 3);
+    }
+    if (READ(MODE) == STATUS && READ(p + 0xa0) == 3) {
+        /* Confirm normally destroys this root and sends its index to the
+         * stock six-entry submenu table. Close the entire Status overlay
+         * instead; the resident transition hook selects the journal. */
+        WRITE(p + 0x14, 0);
+        WRITE(0x8005ccf0, 4);
+        return;
+    }
+    if (READ(p + 0xc) != 1) return;
     count = 7 + (READ(p + 0x60) != 0);
     if (!enabled) {
         /* A save made with this layout still owns the appended children.
@@ -197,6 +215,11 @@ void shinka_journal_transition(CPUState* cpu) {
     if ((mode >> 8) == 2 && cpu->gpr[4] == STATUS && cpu->gpr[31] == 0x80013334
         && expanded(p) && READ(p + 0x58) == 5 + (READ(p + 0x60) != 0)) {
         WRITE(p + 0x58, 4); cpu->gpr[4] = enabled ? JOURNAL : STATUS;
+    } else if (mode == STATUS && cpu->gpr[31] == 0x80013318
+               && cpu->gpr[4] == READ(0x80048d68) && (cpu->gpr[4] >> 8) == 2
+               && expanded(p) && READ(p + 0xa0) == 3) {
+        WRITE(0x8005ccf0, 4); WRITE(p + 0x58, 4);
+        cpu->gpr[4] = enabled ? JOURNAL : STATUS;
     } else if (mode == JOURNAL && cpu->gpr[31] == 0x8008ee8c
                && cpu->gpr[4] == READ(0x80048d68) && (cpu->gpr[4] >> 8) == 2) {
         WRITE(0x8005ccf0, 4); cpu->gpr[4] = STATUS;

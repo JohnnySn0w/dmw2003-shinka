@@ -2,6 +2,7 @@ param(
     [Parameter(Mandatory=$true)][string]$DiscCue,
     [string]$RetailBios = '',
     [string]$ControllerMappings = '',
+    [string]$SaveDirectory = '',
     [ValidateSet(1,2,3,4)][int]$ExpMultiplier,
     [ValidateSet(1,2,3,4)][int]$DvExpMultiplier,
     [switch]$DvFixed10,
@@ -17,6 +18,7 @@ if ($DvFixed10 -and $PSBoundParameters.ContainsKey('DvExpMultiplier')) {
 }
 $projectRoot = Split-Path $PSScriptRoot -Parent
 $disc = (Resolve-Path -LiteralPath $DiscCue).Path
+$savePath = if ($SaveDirectory) { $ExecutionContext.SessionState.Path.GetUnresolvedProviderPathFromPSPath($SaveDirectory) } else { Join-Path $projectRoot 'output/player-saves' }
 $runtime = Join-Path $projectRoot 'build-windows/Release/dmw2003-shinka.exe'
 if (-not (Test-Path -LiteralPath $runtime)) { throw 'Run tools/build_windows.ps1 first.' }
 if ($PSBoundParameters.ContainsKey('EvolutionJournal')) {
@@ -43,7 +45,7 @@ if ($PSBoundParameters.ContainsKey('ExpMultiplier') -or $PSBoundParameters.Conta
     if ($LASTEXITCODE -ne 0) { throw 'EXP configuration failed; game was not launched.' }
 }
 $arguments = @('--game', (Join-Path $projectRoot 'game.toml'), '--disc', $disc,
-    '--memcard-dir', (Join-Path $projectRoot 'output/player-saves'), '--debug-port', "$DebugPort", '--no-launcher')
+    '--memcard-dir', $savePath, '--debug-port', "$DebugPort", '--no-launcher')
 if ($RetailBios) { $arguments += @('--bios', (Resolve-Path -LiteralPath $RetailBios).Path) }
 if ($Headless) { $arguments += '--headless' }
 $mappingFile = if ($ControllerMappings) { (Resolve-Path -LiteralPath $ControllerMappings).Path } else { '' }

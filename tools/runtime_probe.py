@@ -15,8 +15,35 @@ def request(command, port=4380):
         command.setdefault('id', 1)
         connection.sendall((json.dumps(command) + '\n').encode())
         with connection.makefile('rb') as stream:
-            response = stream.readline(16 * 1024 * 1024)
-        return json.loads(response)
+            response = bytearray()
+            limit = 16 * 1024 * 1024
+            depth = 0
+            in_string = escaped = started = False
+            while len(response) < limit:
+                line = stream.readline(limit - len(response))
+                if not line:
+                    raise ValueError('Debug server closed before a complete JSON response')
+                response.extend(line)
+                # Scan once instead of reparsing a growing transaction dump
+                # after every line (quadratic work for large responses).
+                for byte in line:
+                    if in_string:
+                        if escaped:
+                            escaped = False
+                        elif byte == 92:
+                            escaped = True
+                        elif byte == 34:
+                            in_string = False
+                    elif byte == 34:
+                        in_string = True
+                    elif byte in (123, 91):
+                        started = True
+                        depth += 1
+                    elif byte in (125, 93):
+                        depth -= 1
+                if started and depth <= 0 and not in_string:
+                    return json.loads(response)
+            raise ValueError('Debug response exceeded 16 MiB')
 
 
 if __name__ == '__main__':

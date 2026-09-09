@@ -8,6 +8,9 @@
 static uint8_t ram[0x200000], saved[0x200000];
 static int enabled=1, watching;
 static unsigned writes;
+static unsigned gpu_count;
+static uint32_t gpu_words[6];
+void gpu_write_gp0(uint32_t word) { CHECK(gpu_count<6);gpu_words[gpu_count++]=word; }
 #define MAP 0x800ac000u
 #define PARENT 0x800ad000u
 #define ROOT 0x800ae000u
@@ -19,6 +22,7 @@ uint8_t psx_mod_read_byte(uint32_t a) { return *ptr(a); }
 static void allowed(uint32_t a) {
     if (watching) CHECK(a == MAP+0xc || (a >= PARENT+0x78 && a < PARENT+0x88)
         || (a >= ROOT+0xa0 && a < ROOT+0xa8) || (a >= RETURN && a < RETURN+12)
+        || a == 0x8004b3fc || a == 0x8004b404
         || a == 0x8004b818 || (a >= 0x801f0000 && a < 0x801f0200));
     ++writes;
 }
@@ -32,12 +36,13 @@ void shinka_map_frame(CPUState*);
 void shinka_map_quick_menu(CPUState*);
 void shinka_map_transition(CPUState*);
 void shinka_map_text(CPUState*);
+void shinka_map_present(void);
 #define R psx_mod_read_word
 #define W psx_mod_write_word
 static CPUState cpu;
 static void object(uint32_t p,uint32_t cb) { W(p+0x28,0x80014274);W(p+0x48,cb);W(p+0xc,1); }
 static void fresh(void) {
-    watching=0;enabled=1;memset(ram,0,sizeof(ram));memset(&cpu,0,sizeof(cpu));
+    watching=0;enabled=1;gpu_count=0;memset(ram,0,sizeof(ram));memset(&cpu,0,sizeof(cpu));
     W(0x8004b3f8,0x1000);W(0x8005cca8,2);W(RETURN,0x249);
     W(RETURN+4,123456);W(RETURN+8,654321);W(0x8004b370,0x14);
     for(unsigned i=0;i<sizeof(map_guards)/sizeof(map_guards[0]);++i)
@@ -48,9 +53,18 @@ static void fresh(void) {
     object(MAP,0x8009913c);W(MAP+0x50,PARENT);W(MAP+0x180,1);W(MAP+0x184,30);W(MAP+0xa8+29*4,1);
     object(PARENT,0x80099894);W(PARENT+0x20,3);W(PARENT+0x24,0x800af000);W(0x800af000,ROOT);
     object(ROOT,0x8001270c);W(ROOT+0x20,0x2d);W(ROOT+0x10,3);
+    object(0x800ab000,0x80020b58);W(0x800ab020,1);W(0x800ab024,0x800af010);
+    W(0x800af010,0x800ab100);W(0x8005ccbc,0x800ab000);
+    object(0x800ab100,0x80083558);W(0x800ab120,1);W(0x800ab124,0x800af014);W(0x800af014,PARENT);
+    W(0x8004de4c,0x00f00140);W(0x8004de5c,0x01000000);W(0x8004de60,0x00f00140);
     psx_mod_write_half(0x8004b818,1<<13);watching=1;writes=0;
 }
 static void select_icon(void) { cpu.gpr[31]=0x80098c6c;cpu.gpr[17]=MAP;shinka_map_frame(&cpu); }
+/* Older builds serialized a request while backing through the Status root. */
+static void legacy_request(void) {
+    W(MAP+0xc,3);W(PARENT+0x78,0x53485452);W(PARENT+0x7c,30);
+    W(PARENT+0x80,R(RETURN));W(PARENT+0x84,psx_mod_read_byte(0x8004b370));
+}
 static void root_close(void) {
     cpu.gpr[31]=0x800997ec;cpu.gpr[16]=PARENT;shinka_map_frame(&cpu);
     CHECK(R(ROOT+0xa0)==5 && R(ROOT+0xa4)==PARENT);
@@ -60,27 +74,54 @@ static void transition(void) { cpu.gpr[31]=0x80013318;cpu.gpr[17]=ROOT;cpu.gpr[4
 int main(void) {
     fresh();cpu.gpr[31]=0x80099aa4;cpu.gpr[4]=0x80099894;cpu.gpr[5]=0x78;cpu.gpr[6]=8;
     shinka_map_allocate(&cpu);CHECK(cpu.gpr[5]==0x88 && cpu.gpr[6]==12 && writes==0);
-    fresh();select_icon();CHECK(R(MAP+0xc)==3 && R(RETURN)==0x249);
-    CHECK(R(RETURN+4)==123456 && R(PARENT+0x78)==0x53485452);
+    fresh();select_icon();CHECK(R(MAP+0xc)==1 && R(RETURN)==0x249);
+    CHECK(R(PARENT+0x78)==0x53484354 && R(0x8004b3fc)==0 && gpu_count==0);
+    memcpy(saved,ram,sizeof(ram));writes=0;select_icon();CHECK(writes==0);
+    fresh();memcpy(ram,saved,sizeof(ram));shinka_map_present(); /* pending state restore */
+    CHECK(R(RETURN+4)==225700 && R(RETURN+8)==164434);
+    CHECK(R(0x8004b3fc)==0x21d && R(0x8004b404)==0);
+    CHECK(R(PARENT+0x78)==0 && R(ROOT+0xa0)==0); /* no root-menu detour */
+    CHECK(gpu_count==6 && gpu_words[0]==0x02000000 && gpu_words[1]==0
+        && gpu_words[2]==0x00f00140 && gpu_words[3]==0x02000000
+        && gpu_words[4]==0x01000000 && gpu_words[5]==0x00f00140);
+    CHECK(psx_mod_read_half(0x8004b818)==0);
+    memcpy(saved,ram,sizeof(ram));writes=0;select_icon();CHECK(writes==0);
+    fresh();memcpy(ram,saved,sizeof(ram));writes=0;select_icon();CHECK(writes==0);
+    CHECK(R(0x8004b3fc)==0x21d); /* engine queue survives state restoration */
+    fresh();legacy_request();CHECK(R(RETURN)==0x249);
     root_close();memcpy(saved,ram,sizeof(ram));transition();
     CHECK(cpu.gpr[4]==0x21d && R(RETURN)==0x21d && R(RETURN+4)==225700 && R(RETURN+8)==164434);
     CHECK(R(PARENT+0x78)==0 && R(ROOT+0xa0)==0);
     writes=0;transition();CHECK(writes==0); /* consumed once */
     memcpy(ram,saved,sizeof(ram));transition();CHECK(R(RETURN)==0x21d); /* pending savestate */
-    fresh();select_icon();root_close();enabled=0;transition();CHECK(R(RETURN)==0x249 && R(PARENT+0x78)==0);
-    fresh();select_icon();root_close();watching=0;W(0x8004b370,0x15);watching=1;transition();CHECK(R(RETURN)==0x249);
-    fresh();select_icon();watching=0;W(PARENT+0x24,0x1f801000);watching=1;writes=0;
+    fresh();legacy_request();root_close();enabled=0;transition();CHECK(R(RETURN)==0x249 && R(PARENT+0x78)==0);
+    fresh();legacy_request();root_close();watching=0;W(0x8004b370,0x15);watching=1;transition();CHECK(R(RETURN)==0x249);
+    fresh();legacy_request();watching=0;W(PARENT+0x24,0x1f801000);watching=1;writes=0;
     cpu.gpr[31]=0x800997ec;cpu.gpr[16]=PARENT;shinka_map_frame(&cpu);CHECK(writes==0);
     /* Every exposed icon must lead to its own area according to the original map. */
     {
         const unsigned icons[]={20,30,22,21,15,26};
         for(unsigned i=0;i<6;++i) {
             fresh();watching=0;W(RETURN,0x200);W(MAP+0x184,icons[i]);W(MAP+0xa8+(icons[i]-1)*4,1);watching=1;
-            select_icon();root_close();transition();
+            select_icon();shinka_map_present();CHECK(R(0x8004b3fc)==R(RETURN));
             CHECK(R(RETURN)!=0x200 && map_stage_icons[R(RETURN)-0x200]+1==icons[i]);
         }
     }
-    for(unsigned rejection=0;rejection<10;++rejection) {
+    for(unsigned rejection=0;rejection<6;++rejection) {
+        fresh();select_icon();watching=0;
+        switch(rejection) {
+        case 0:enabled=0;break;
+        case 1:W(0x8004b370,0x15);break;
+        case 2:W(RETURN,0x200);break;
+        case 3:memset(ptr(0x8004b3c0),0,30);break;
+        case 4:W(0x8004de5c,0);break; /* never clear an unfamiliar VRAM layout */
+        case 5:W(0x8004b3fc,0xd00);break;
+        }
+        watching=1;shinka_map_present();
+        CHECK(gpu_count==0 && R(RETURN)!=(uint32_t)0x21d);
+        CHECK(R(0x8004b3fc)==(rejection==5 ? 0xd00u : 0));
+    }
+    for(unsigned rejection=0;rejection<15;++rejection) {
         fresh();watching=0;
         switch(rejection) {
         case 0:enabled=0;break;
@@ -93,6 +134,11 @@ int main(void) {
         case 7:memset(ptr(0x8004b3c0),0,30);break; /* map icon alone isn't visitation */
         case 8:W(0x80098294,0);break; /* unknown overlay */
         case 9:psx_mod_write_half(0x8004b818,(1<<13)|(1<<4));break;
+        case 10:W(0x8004b3fc,0xd00);break; /* another transition already queued */
+        case 11:W(MAP+0x78,1);break; /* Amaterasu map */
+        case 12:W(MAP+0xa8+29*4,0);break; /* hidden icon */
+        case 13:psx_mod_write_half(0x8004b818,(1<<13)|(1<<14));break;
+        case 14:W(MAP+0x184,14);W(MAP+0xa8+13*4,1);break; /* unvalidated arrival */
         }
         watching=1;writes=0;select_icon();CHECK(writes==0 && R(PARENT+0x78)==0);
     }
@@ -109,6 +155,6 @@ int main(void) {
     cpu.gpr[5]=0x801e0000;cpu.gpr[6]=30;shinka_map_text(&cpu);
     CHECK(psx_mod_read_byte(cpu.gpr[5]+4)==13 && psx_mod_read_byte(cpu.gpr[5]+7)==15);
     CHECK(psx_mod_read_byte(cpu.gpr[5]+8)==2); /* two original names share one line */
-    puts("Map travel: visited destinations, queued state, native close, restore, disable and write guards passed.");
+    puts("Map travel: direct engine queue, visited destinations, legacy pending states, restore and write guards passed.");
     return 0;
 }

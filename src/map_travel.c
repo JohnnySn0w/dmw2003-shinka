@@ -1,5 +1,6 @@
 #include "cpu_state.h"
 #include "mod_plugins.h"
+#include "gpu.h"
 #include "map_data.h"
 
 extern int shinka_journal_enabled(void);
@@ -10,6 +11,7 @@ extern int shinka_journal_enabled(void);
 #define RETURN 0x80048d68u
 #define STORY 0x8004b370u
 #define PENDING 0x53485452u
+#define CUT 0x53484354u
 #define PAGE 5u
 
 /* Initial arrival points: outdoor locations validated with the original loader.
@@ -78,6 +80,38 @@ static uint16_t button(unsigned logical) {
     unsigned bit=B(0x8004b874+logical);
     return bit < 16 ? (uint16_t)(1u<<bit) : 0;
 }
+static void arrive(int i) {
+    W(RETURN,destinations[i].stage);
+    W(RETURN+4,destinations[i].x); W(RETURN+8,destinations[i].y);
+}
+/* Called after the frame's DrawSync, before display-buffer exchange. Clear both
+ * original display rectangles before the loader reuses menu resources.
+ * No texture area is touched. */
+void shinka_map_present(void) {
+    uint32_t owner, parent;
+    int i;
+    if (!revision()) return;
+    owner=R(0x8005ccbc);
+    if (!object(owner,0x80020b58) || R(owner+0x20) != 1) return;
+    parent=root_child(owner);
+    if (!object(parent,0x80083558) || R(parent+0x20) != 1) return;
+    parent=root_child(parent);
+    if (!controller(parent) || R(parent+0x78) != CUT) return;
+    i=destination(R(parent+0x7c));
+    if (!shinka_journal_enabled() || i < 0 || reason(parent,R(parent+0x7c))
+        || R(parent+0x80) != R(RETURN) || R(parent+0x84) != B(STORY)
+        || R(0x8004de48) != 0 || R(0x8004de4c) != 0x00f00140
+        || R(0x8004de5c) != 0x01000000 || R(0x8004de60) != 0x00f00140) {
+        W(parent+0x78,0); return;
+    }
+    gpu_write_gp0(0x02000000); gpu_write_gp0(0); gpu_write_gp0(0x00f00140);
+    gpu_write_gp0(0x02000000); gpu_write_gp0(0x01000000); gpu_write_gp0(0x00f00140);
+    arrive(i);
+    W(parent+0x78,0);
+    /* Same queue as 80016b88. The mode owner recursively destroys Status and
+     * its map before the next overlay loads; no root menu is constructed. */
+    W(MODE+12,0); W(MODE+4,R(RETURN));
+}
 void shinka_map_allocate(CPUState* cpu) {
     if (shinka_journal_enabled() && cpu->gpr[31] == 0x80099aa4
         && cpu->gpr[4] == 0x80099894 && cpu->gpr[5] == 0x78
@@ -101,9 +135,10 @@ void shinka_map_frame(CPUState* cpu) {
         if (!(pressed & button(13)) || (pressed & (directions | button(14)))
             || R(p+0x184) < 1 || R(p+0x184) > 46
             || R(p+0xa8+(R(p+0x184)-1)*4) != 1 || reason(parent,R(p+0x184))) return;
-        W(parent+0x78,PENDING); W(parent+0x7c,R(p+0x184));
+        /* Keep the map alive until this frame finishes drawing. */
+        if (R(parent+0x78) == CUT) return;
+        W(parent+0x78,CUT); W(parent+0x7c,R(p+0x184));
         W(parent+0x80,R(RETURN)); W(parent+0x84,B(STORY));
-        W(p+0xc,3); /* same map teardown as Triangle */
         psx_mod_write_half(0x8004b818,0);
     } else if (cpu->gpr[31] == 0x800997ec) {
         parent=cpu->gpr[16];
@@ -116,6 +151,7 @@ void shinka_map_frame(CPUState* cpu) {
     }
 }
 void shinka_map_quick_menu(CPUState* cpu) {
+    /* Compatibility for states saved during the former root-menu detour. */
     uint32_t p=cpu->gpr[4];
     if (R(MODE) == 0x1000 && object(p,0x8001270c) && R(p+0x20) == 0x2d
         && R(p+0xa0) == PAGE && R(p+0xc) == 1 && R(p+0x10) == 3
@@ -133,8 +169,7 @@ void shinka_map_transition(CPUState* cpu) {
     if (shinka_journal_enabled() && i >= 0 && !reason(parent,R(parent+0x7c))
         && R(parent+0x80) == R(RETURN) && R(parent+0x84) == B(STORY)) {
         cpu->gpr[4]=destinations[i].stage;
-        W(RETURN,destinations[i].stage);
-        W(RETURN+4,destinations[i].x); W(RETURN+8,destinations[i].y);
+        arrive(i);
     }
     W(parent+0x78,0); W(p+0xa0,0); W(p+0xa4,0);
 }

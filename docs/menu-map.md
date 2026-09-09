@@ -2,8 +2,10 @@
 
 The experimental English expanded menu supports **X to travel** from the original
 map. Move the cursor until it snaps to an icon. Eligible locations show
-**X: Travel** beneath their original name. Confirm closes the map and Status menu,
-then uses the original field loader to arrive. Triangle without confirming closes
+**X: Travel** beneath their original name. Confirm cuts directly from the map to
+black, then uses the original field loader to arrive. It does not reopen the
+Status root or play its closing animation. The original destination title card
+and loading sequence remain. Triangle without confirming closes
 the map normally.
 
 The initial travel network connects these Asuka locations:
@@ -28,6 +30,14 @@ accepts story byte values 1–36 for this initial network; this is a conservativ
 validation boundary, not a claim that every later value denotes post-game.
 Broader campaign coverage, additional arrival points and post-game routes remain
 work to do. Existing map navigation and visibility rules are preserved.
+
+Most unsupported icons currently mean that no arrival point has been validated;
+they do not imply a known story lock. The story range above is a broad scope
+limit, not a complete quest-by-quest access policy. Earlier visitation does not
+prove current access: travel could bypass a scripted entrance, escape a gated
+sequence, or reach an area whose NPCs depend on another story phase. Each added
+route needs those checks as well as a valid landing position. Leaving quest flags
+unchanged is necessary but does not by itself establish sequence safety.
 
 Enable the expanded menu with `python tools/configure_journal.py --enable` and
 restart. A savestate with the old Status allocation says **Reopen menu for travel**;
@@ -60,14 +70,26 @@ reading past old savestate allocations. The existing destructor owns every child
 All pending travel state is serialized in game RAM. Host-side memory stores only
 temporary text that the original text setter copies into its own allocation.
 
-On confirm, the map follows its normal teardown. The Status controller marks its
-new root with page 5 and its parent pointer; a mapped cancel input then drives the
-original full-menu close animation. At the resident transition's return address
-`0x80013318`, the hook revalidates the pending selection, feature, visitation,
-source and story. Only then does it change the field-return stage and coordinates
-at `0x80048d68` and the transition argument. A consumed request is cleared.
-Disabled or stale requests return to the original field. Party, inventory,
-quest flags and destination visitation flags are not written by the hook.
+On confirm, the map stays alive and records a pending cut in its Status parent.
+After the current frame's DrawSync returns at `0x8001d5a0`, the hook resolves the
+parent through the engine's current mode owner and revalidates the selection,
+feature, visitation, source and story. It clears only the two verified 320×240
+display rectangles with GPU fill commands before the loader reuses menu resources.
+An unfamiliar display layout aborts
+the request. The cut is immediate; it does not add a timed fade.
+
+The hook then changes the field-return stage and coordinates at `0x80048d68`
+and writes the same mode queue as the resident request function `0x80016b88`.
+The mode owner `0x80020b58` recursively destroys its children before the next
+overlay loads, including the still-open Status/map tree. No intermediate root
+menu is constructed. A consumed or rejected request is cleared. A rejected cut
+leaves the map open. Party, inventory, quest and visitation flags are not written.
+
+Older savestates made during the previous root-menu closure retain their original
+completion path: page 5 and a mapped cancel finish the native close animation,
+with a revalidation hook at `0x80013318`. Disabled or stale legacy requests return
+to the original field. New and old requests store their complete state in guest
+RAM so restoration does not depend on host pointers or timers.
 
 The native map-name panel retains the original name and adds a second line with
 the available action or reason. Its text hook uses the normal encoded text setter;
@@ -78,7 +100,8 @@ the original artwork and cursor remain in use.
 The native regression checks controller allocation, exact visitation, free-cursor
 rejection, unknown overlays, unsupported sources/servers/story states, input
 priority, deferred commit, repeated callbacks, pending-state restoration,
-disabling the feature before commit, name preservation and allowed write locations.
+disabling the feature before commit, competing transitions, display-buffer bounds,
+name preservation and allowed write locations.
 The build runs six Shinka native suites. Python tests verify data generation and
 revision rejection, as well as existing configuration and patch tooling.
 
@@ -96,6 +119,11 @@ both layouts with and without Card Folders.
 Testing uses a copied save profile. Destination screenshots, state files,
 route records and save-specific details remain local and are not published.
 Initial code checks and travel routes do not establish full campaign safety.
+
+The direct-cut build additionally verifies a trip and return trip, movement after
+arrival, destruction of the old menu tree, absence of an intermediate root,
+ordinary cancellation, unsupported selections and legacy pending travel states.
+A new state saved during area loading also completes after a full process restart.
 
 ## Reference and next work
 

@@ -15,6 +15,7 @@ ENTRIES = {
            ('8001810C', 'shinka_encounter_step')],
     '03': [('800194E8', 'shinka_menu_text'), ('800194E8', 'shinka_chart_text'),
            ('8001933C', 'shinka_encounter_seed'), ('800194E8', 'shinka_map_text')],
+    '04': [],
     '05': [('8001ED6C', 'shinka_menu_background'), ('8001ED6C', 'shinka_chart_sprite'),
            ('8001F648', 'shinka_chart_frame'), ('8001F648', 'shinka_map_frame')],
 }
@@ -28,6 +29,12 @@ def shard(code, number):
             raise ValueError(f'Review entry {address}: expected one real CPS entry')
         code = code.replace(needle, needle + f'\n    {callback}(cpu);')
         declarations.append(f'extern void {callback}(CPUState*);')
+    if number == '04':
+        needle = '    PGXP_ALU(0x24020001u, cpu->gpr[2], _pgx1, 0x00000001u); }  /* 0x8001D5A0: 0x24020001 */'
+        if code.count(needle) != 1:
+            raise ValueError('Review frame DrawSync return before buffer exchange')
+        code = code.replace(needle, needle + '\n    shinka_map_present();')
+        declarations.append('extern void shinka_map_present(void);')
     if number == '01':
         needle = '    PGXP_STORE(0xAC800018u, _pgxa, cpu->gpr[0]); }  /* 0x800142B8: 0xAC800018 */'
         if code.count(needle) != 1:

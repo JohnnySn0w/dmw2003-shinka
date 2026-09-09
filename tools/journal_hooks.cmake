@@ -47,7 +47,7 @@ execute_process(COMMAND "${Python3_EXECUTABLE}"
 if(NOT _map_result EQUAL 0)
     message(FATAL_ERROR "Extract the supported STSTATUS.PRO and review map data: ${_map_error}")
 endif()
-foreach(_shard 00 01 02 03 05)
+foreach(_shard 00 01 02 03 04 05)
     set(_original "${CMAKE_CURRENT_SOURCE_DIR}/output/recompiled/SLES_039.36_full_${_shard}.c")
     set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS "${_original}")
     if(NOT "${_original}" IN_LIST _sources)

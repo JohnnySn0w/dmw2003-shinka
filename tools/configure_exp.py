@@ -37,8 +37,10 @@ def exp_patches(data, lba, multiplier):
     return patches
 
 
-def dv_patches(data, lba, multiplier):
-    """Scale the final DV award argument after original rounding/minimum/caps."""
+def dv_patches(data, lba, multiplier, fixed_award=0):
+    """Scale or replace the final DV award after original rounding/minimum/caps."""
+    if fixed_award not in (0, 10):
+        raise ValueError('Fixed DV award must be 0 or 10')
     if multiplier not in (1, 2, 3, 4):
         raise ValueError('DV multiplier must be 1, 2, 3 or 4')
     if hashlib.sha256(data).hexdigest() != OVERLAY_SHA256:
@@ -49,10 +51,12 @@ def dv_patches(data, lba, multiplier):
     expected = struct.pack('<4I', 0x8E030020, 0, 0x0060F809, 0x00403021)
     if original != expected:
         raise ValueError('DV delivery call signature changed')
-    if multiplier == 1:
+    if multiplier == 1 and not fixed_award:
         return []
     words = list(struct.unpack('<4I', original))
-    if multiplier == 3:
+    if fixed_award:
+        words[3] = 0x2406000A  # addiu a2,zero,10 (call delay slot)
+    elif multiplier == 3:
         words[1] = 0x00023040  # sll a2,v0,1
         words[3] = 0x00C23021  # addu a2,a2,v0 (call delay slot)
     else:
@@ -91,8 +95,8 @@ default = 1
     text += '''
 [[feature]]
 id = "dv-exp"
-name = "Digivolution EXP multiplier"
-description = "Multiply the final DV award after original rounding and caps."
+name = "Digivolution EXP"
+description = "Multiply the final DV award or award a fixed 10 points."
 default_enabled = false
 
 [[option]]
@@ -105,9 +109,23 @@ max = 4
 step = 1
 default = 1
 '''
+    text += '''
+[[option]]
+feature = "dv-exp"
+id = "fixed_award"
+label = "Fixed DV points (0 uses multiplier)"
+type = "integer"
+min = 0
+max = 10
+step = 10
+default = 0
+'''
     for feature_id, generate in [('battle-exp', exp_patches), ('dv-exp', dv_patches)]:
         for factor in (2, 3, 4):
             for offset, expected, replacement in generate(data, lba, factor):
+                condition = f'multiplier = "{factor}"'
+                if feature_id == 'dv-exp':
+                    condition += ', fixed_award = "0"'
                 text += f'''
 [[patch]]
 feature = "{feature_id}"
@@ -115,15 +133,27 @@ target = "disc_user"
 offset = {offset}
 expected = "{expected.hex(' ')}"
 replace = "{replacement.hex(' ')}"
-when = {{ multiplier = "{factor}" }}
+when = {{ {condition} }}
+'''
+    offset, expected, replacement = dv_patches(data, lba, 1, fixed_award=10)[0]
+    text += f'''
+[[patch]]
+feature = "dv-exp"
+target = "disc_user"
+offset = {offset}
+expected = "{expected.hex(' ')}"
+replace = "{replacement.hex(' ')}"
+when = {{ fixed_award = "10" }}
 '''
     return text
 
 
-def select_feature(text, multiplier, feature_id='battle-exp'):
+def select_feature(text, multiplier, feature_id='battle-exp', fixed_award=0):
     """Preserve other packages/features verbatim, replacing only our records."""
     if feature_id not in ('battle-exp', 'dv-exp') or multiplier not in (1, 2, 3, 4):
         raise ValueError('Unsupported EXP feature or multiplier')
+    if fixed_award not in (0, 10) or (fixed_award and feature_id != 'dv-exp'):
+        raise ValueError('Unsupported fixed award')
     parsed = tomllib.loads(text) if text.strip() else {'format_version': 2}
     if parsed.get('format_version') != 2:
         raise ValueError('Only mod state format 2 is supported; no state was changed')
@@ -147,10 +177,12 @@ version = "{VERSION}"
 [[feature]]
 package_id = "{PACKAGE}"
 id = "{feature_id}"
-enabled = {'true' if multiplier != 1 else 'false'}
+enabled = {'true' if multiplier != 1 or fixed_award else 'false'}
 [feature.values]
 multiplier = "{multiplier}"
 '''
+    if feature_id == 'dv-exp':
+        result += f'fixed_award = "{fixed_award}"\n'
     updated = tomllib.loads(result)
     # Fail closed if an unfamiliar state layout was disturbed by the edit.
     def unrelated(state):
@@ -168,10 +200,12 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--disc-bin', type=Path, required=True)
     parser.add_argument('--multiplier', type=int, choices=(1, 2, 3, 4))
-    parser.add_argument('--dv-multiplier', type=int, choices=(1, 2, 3, 4))
+    dv_group = parser.add_mutually_exclusive_group()
+    dv_group.add_argument('--dv-fixed-10', action='store_true')
+    dv_group.add_argument('--dv-multiplier', type=int, choices=(1, 2, 3, 4))
     args = parser.parse_args()
-    if args.multiplier is None and args.dv_multiplier is None:
-        parser.error('Specify --multiplier and/or --dv-multiplier')
+    if args.multiplier is None and args.dv_multiplier is None and not args.dv_fixed_10:
+        parser.error('Specify --multiplier, --dv-multiplier or --dv-fixed-10')
     root = Path(__file__).resolve().parents[1]
     destination = root / 'output/exp-audit'
     with contextlib.redirect_stdout(io.StringIO()):
@@ -193,6 +227,8 @@ def main():
     for feature_id, factor in [('battle-exp', args.multiplier), ('dv-exp', args.dv_multiplier)]:
         if factor is not None:
             selected = select_feature(selected, factor, feature_id)
+    if args.dv_fixed_10:
+        selected = select_feature(selected, 1, 'dv-exp', fixed_award=10)
     package = mods / 'packages' / PACKAGE / VERSION
     package.mkdir(parents=True, exist_ok=True)
     (package / 'manifest.toml').write_text(content, encoding='utf-8')
@@ -205,6 +241,8 @@ def main():
         print(f'Selected {args.multiplier}x base battle EXP.')
     if args.dv_multiplier is not None:
         print(f'Selected {args.dv_multiplier}x final DV EXP.')
+    if args.dv_fixed_10:
+        print('Selected fixed 10 DV points per participating form.')
     print('Restart to apply. The stock disc is unchanged; 1x disables each feature independently.')
 
 

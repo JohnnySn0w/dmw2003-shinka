@@ -4,17 +4,21 @@ param(
     [string]$ControllerMappings = '',
     [ValidateSet(1,2,3,4)][int]$ExpMultiplier,
     [ValidateSet(1,2,3,4)][int]$DvExpMultiplier,
+    [switch]$DvFixed10,
     [string]$Python = 'python',
     [switch]$Headless,
     [switch]$HoldOnGuestExit,
     [int]$DebugPort = 4380
 )
 $ErrorActionPreference = 'Stop'
+if ($DvFixed10 -and $PSBoundParameters.ContainsKey('DvExpMultiplier')) {
+    throw 'Choose DvFixed10 or DvExpMultiplier, not both.'
+}
 $projectRoot = Split-Path $PSScriptRoot -Parent
 $disc = (Resolve-Path -LiteralPath $DiscCue).Path
 $runtime = Join-Path $projectRoot 'build-windows/Release/dmw2003-shinka.exe'
 if (-not (Test-Path -LiteralPath $runtime)) { throw 'Run tools/build_windows.ps1 first.' }
-if ($PSBoundParameters.ContainsKey('ExpMultiplier') -or $PSBoundParameters.ContainsKey('DvExpMultiplier')) {
+if ($PSBoundParameters.ContainsKey('ExpMultiplier') -or $PSBoundParameters.ContainsKey('DvExpMultiplier') -or $DvFixed10) {
     if (Get-Process -Name 'dmw2003-shinka' -ErrorAction SilentlyContinue) {
         throw 'Close the game before changing the EXP setting.'
     }
@@ -25,6 +29,7 @@ if ($PSBoundParameters.ContainsKey('ExpMultiplier') -or $PSBoundParameters.Conta
     $expArgs = @('--disc-bin', $discBin)
     if ($PSBoundParameters.ContainsKey('ExpMultiplier')) { $expArgs += @('--multiplier', "$ExpMultiplier") }
     if ($PSBoundParameters.ContainsKey('DvExpMultiplier')) { $expArgs += @('--dv-multiplier', "$DvExpMultiplier") }
+    if ($DvFixed10) { $expArgs += '--dv-fixed-10' }
     & $Python (Join-Path $PSScriptRoot 'configure_exp.py') @expArgs
     if ($LASTEXITCODE -ne 0) { throw 'EXP configuration failed; game was not launched.' }
 }

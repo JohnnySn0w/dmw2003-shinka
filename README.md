@@ -20,7 +20,7 @@ See the [groundwork audit and port milestones](docs/groundwork-audit.md) for pin
 - Travel from visited map icons using X, with story and destination safeguards.
 - In-menu random-encounter adjustment, including disabling random encounters while preserving scripted fights.
 
-Fresh configurations retain original EXP until enabled. The current local setup selects 3x normal EXP and 3x final DV EXP.
+Fresh configurations retain original EXP until enabled. The current local setup selects 3x normal EXP and fixed 10-point DV awards.
 
 ## Local game data
 

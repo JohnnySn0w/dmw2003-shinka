@@ -136,3 +136,27 @@ No evolved-form battle was completed from that fresh load; the live 2-to-6 DV
 comparison above remains the controlled checkpoint test, not a cold-load battle
 comparison. Seventeen Python tests pass. The local configuration is left at 3x
 normal EXP and 3x DV EXP.
+
+
+## Fixed 10-point DV mode
+
+`-DvFixed10` in the Windows launcher, or `--dv-fixed-10` in the Python
+configuration command, replaces the final award with exactly 10 DV points for
+each eligible participating form. This mode replaces DV multiplication; the CLI
+rejects specifying both. Normal EXP remains independently configurable.
+Selecting `-DvExpMultiplier` again switches back to multiplier mode (1 disables
+DV modification). Omission preserves the current choice.
+
+The patch leaves the pointer load, wait slot and call intact, replacing only
+its delay-slot argument assignment with `addiu a2,zero,10`. Manifest conditions
+make fixed and multiplier patches mutually exclusive. Existing configurations
+without the new option default to multiplier mode.
+
+With consistent original progression data, 10 points gives one skill level per
+battle below the natural growth limit, and one per five battles above it. Any
+partial progress carries over; level 99 remains the maximum. This is not an
+at-least-10 floor: a naturally larger award is also replaced with 10.
+
+Validation covers guarded instruction generation, exclusive patch selection,
+switching modes, and preservation of normal EXP. Fixed mode has not yet received
+a live battle test. The local setting now uses normal EXP 3x plus fixed DV 10.

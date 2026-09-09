@@ -101,3 +101,32 @@ choice = "original"
         self.assertTrue(values['battle-exp']['enabled'])
         self.assertEqual(values['battle-exp']['values']['multiplier'], '3')
         self.assertFalse(values['dv-exp']['enabled'])
+
+    def test_fixed_dv_and_exclusive_patch_selection(self):
+        data = bytearray(self.fixture())
+        struct.pack_into('<4I', data, 0x1388, 0x8E030020, 0, 0x0060F809, 0x00403021)
+        with patch.object(exp, 'OVERLAY_SHA256', hashlib.sha256(data).hexdigest()):
+            patches = tomllib.loads(exp.manifest(data, 123))['patch']
+            patches = [p for p in patches if p['feature'] == 'dv-exp']
+            for multiplier in (1, 2, 3, 4):
+                for fixed in (0, 10):
+                    values = dict(multiplier=str(multiplier), fixed_award=str(fixed))
+                    active = [p for p in patches if all(values[k] == v for k, v in p['when'].items())]
+                    self.assertEqual(len(active), int(fixed != 0 or multiplier != 1))
+                    if fixed:
+                        words = struct.unpack('<4I', bytes.fromhex(active[0]['replace']))
+                        self.assertEqual(words, (0x8E030020, 0, 0x0060F809, 0x2406000A))
+                        # addiu a2,zero,10 ignores the original award entirely.
+                        self.assertEqual(words[3] >> 26, 9)
+                        self.assertEqual((words[3] >> 21) & 31, 0)
+                        self.assertEqual((words[3] >> 16) & 31, 6)
+                        self.assertEqual(words[3] & 0xffff, 10)
+        state = exp.select_feature('', 3)
+        state = exp.select_feature(state, 1, 'dv-exp', fixed_award=10)
+        values = {f['id']: f for f in tomllib.loads(state)['feature']}
+        self.assertTrue(values['dv-exp']['enabled'])
+        self.assertEqual(values['dv-exp']['values']['fixed_award'], '10')
+        self.assertEqual(values['battle-exp']['values']['multiplier'], '3')
+        state = exp.select_feature(state, 3, 'dv-exp')
+        dv = next(f for f in tomllib.loads(state)['feature'] if f['id'] == 'dv-exp')
+        self.assertEqual(dv['values']['fixed_award'], '0')

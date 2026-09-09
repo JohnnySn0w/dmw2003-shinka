@@ -72,3 +72,19 @@ normal and DV multipliers need separate controls.
 
 The formula reconstruction is broader than live test coverage. Later forms,
 multi-form participation and campaign-wide unlock behavior still need tests.
+
+
+## Multiple levels from one award
+
+Both inspected routines loop, rather than stopping after the first level:
+normal EXP branches from overlay offset `0x366c` back to `0x3568` after a
+successful increment and runs the per-level growth call at `0x362c`. DV branches
+from `0x3a1c` back to `0x39a8`, retaining cumulative EXP and testing the next
+threshold until it fails or reaches level 99. These are static code findings;
+result-screen presentation and all multi-level unlock combinations have not
+been exhaustively tested live.
+
+The optional fixed-10 DV mode replaces step 4 above with an award of 10,
+regardless of the enemy, rookie level or participation split. Eligibility is
+unchanged. It normally produces one skill level per battle until the natural
+limit and one per five battles afterward, without relying on multi-level gains.

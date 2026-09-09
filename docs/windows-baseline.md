@@ -27,6 +27,8 @@ The default build includes the framework's OpenBIOS. An optional locally supplie
 
 Keyboard defaults: arrows = D-pad, Enter = Start, X/S/Z/A = Cross/Circle/Square/Triangle, Q/W/E/R = L1/R1/L2/R2, right Shift = Select. At language selection use **Start** to confirm. Default gamepad face buttons map A/B/X/Y to Cross/Circle/Square/Triangle.
 
+See [controller compatibility](controller-support.md) for the native SDL3 input decision, optional mapping files, Steam Input path, and required hardware tests.
+
 ## Capture and compile overlays
 
 The main executable does not contain all game code. Disc-loaded modules overwrite portions of its original RAM range. `game.toml` sets the overlay floor to physical `0x00082CB0`, based on the verified reward-module base; this enables the overlay path for that shared area. Other module loads still require validation.
@@ -54,6 +56,7 @@ Supply the same optional `-RetailBios` choice as the first build. This generates
 - Language screen rendered; D-pad changed selection; Start entered the opening movie.
 - Opening movie frames advanced, and SPU/CD audio buffers contained nonzero samples at 44.1 kHz. Headless audio-buffer activity alone does not validate speaker playback or audio synchronization.
 - A separate windowed run created an OpenGL 3.3 context, initialized the GPU pipeline, restored a movie state, and sent nonzero audio to the active host output at 44.1 kHz. The audio diagnostics reported underruns and overflow drops; smooth, synchronized listening is not established.
+- The user confirmed hearing the opening movie through speakers, describing it as very jittery. Audible output is confirmed; playback quality remains a failure.
 - Native savestate save/load succeeded during the movie. Blank local memory-card files were created. This does not establish in-game card save/load compatibility.
 - The initial overlay-fallback movie run measured approximately 0.31–0.34 times real time. The lowered overlay floor allowed interpreter-local chaining; performance remains a validation target.
 - First static overlay generation processed six retained capture regions: five built, one skipped for lack of walk-root seeds, zero failures, 325 exact function identities. This capture covers only paths visited during boot/movie playback.

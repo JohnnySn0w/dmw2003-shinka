@@ -26,6 +26,25 @@ psxrecomp_add_game_runtime(shinka
     GEN_MARKER "output/recompiled/SLES_039.36_dispatch.c"
     GEN_FULL_GLOB "output/recompiled/SLES_039.36_full_*.c"
 )
+# The no-launcher path commits mods before resolving --disc in the pinned
+# frontend. Generate a local corrected copy; never edit the dependency checkout.
+set(_frontend "${PSXRECOMP_ROOT}/runtime/src/main.cpp")
+file(READ "${_frontend}" _frontend_text)
+set(_commit_old "PSXRecompV4::mod_runtime_commit(resolved_disc, &mod_error)")
+set(_commit_new "PSXRecompV4::mod_runtime_commit(disc_override_path ? std::filesystem::path(disc_override_path) : resolved_disc, &mod_error)")
+string(FIND "${_frontend_text}" "${_commit_old}" _commit_position)
+if(_commit_position EQUAL -1)
+    message(FATAL_ERROR "Pinned frontend mod-commit site changed; review the CLI disc fix")
+endif()
+string(REPLACE "${_commit_old}" "${_commit_new}" _frontend_text "${_frontend_text}")
+file(MAKE_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/shinka-runtime")
+file(CONFIGURE OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/shinka-runtime/main.cpp"
+    CONTENT "${_frontend_text}" @ONLY)
+get_target_property(_runtime_sources shinka SOURCES)
+list(REMOVE_ITEM _runtime_sources "${_frontend}")
+set_property(TARGET shinka PROPERTY SOURCES "${_runtime_sources}")
+target_sources(shinka PRIVATE "${CMAKE_CURRENT_BINARY_DIR}/shinka-runtime/main.cpp")
+target_include_directories(shinka PRIVATE "${PSXRECOMP_ROOT}/runtime/src")
 if(SHINKA_OVERLAY_SOURCE)
     # Redirect only generated static-overlay calls; keep upstream sources intact.
     set_property(SOURCE "${SHINKA_OVERLAY_SOURCE}" APPEND PROPERTY
@@ -40,6 +59,10 @@ if(SHINKA_BUILD_TESTS)
     add_test(NAME overlay_guard COMMAND shinka_overlay_guard_test)
 endif()
 add_custom_command(TARGET shinka POST_BUILD
+    COMMAND ${CMAKE_COMMAND}
+        "-DSOURCE=${CMAKE_CURRENT_SOURCE_DIR}/output/exp-mod"
+        "-DDESTINATION=$<TARGET_FILE_DIR:shinka>/mods/packages/shinka.experience/0.1.0"
+        -P "${CMAKE_CURRENT_SOURCE_DIR}/tools/stage_exp.cmake"
     COMMAND ${CMAKE_COMMAND} -E make_directory "$<TARGET_FILE_DIR:shinka>/assets"
     COMMAND ${CMAKE_COMMAND} -E copy_if_different
         "${CMAKE_CURRENT_SOURCE_DIR}/assets/shinka.png" "$<TARGET_FILE_DIR:shinka>/assets/psxrecomp.png"

@@ -29,6 +29,8 @@ Keyboard defaults: arrows = D-pad, Enter = Start, X/S/Z/A = Cross/Circle/Square/
 
 See [controller compatibility](controller-support.md) for the native SDL3 input decision, optional mapping files, Steam Input path, and required hardware tests.
 
+Optional normal EXP scaling is available through `-ExpMultiplier 1`, `2`, `3` or `4` on the launch script. See [configuration and battle comparisons](experience.md). Changing the setting requires restarting the game.
+
 ## Capture and compile overlays
 
 The main executable does not contain all game code. Disc-loaded modules overwrite portions of its original RAM range. `game.toml` sets the overlay floor to physical `0x00082CB0`, based on the verified reward-module base; this enables the overlay path for that shared area. Other module loads still require validation.

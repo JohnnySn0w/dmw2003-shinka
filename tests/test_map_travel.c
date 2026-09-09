@@ -71,7 +71,89 @@ static void root_close(void) {
     cpu.gpr[4]=ROOT;shinka_map_quick_menu(&cpu);CHECK(psx_mod_read_half(0x8004b818)==(1<<14));
 }
 static void transition(void) { cpu.gpr[31]=0x80013318;cpu.gpr[17]=ROOT;cpu.gpr[4]=R(RETURN);shinka_map_transition(&cpu); }
+static void target(unsigned icon) {
+    W(MAP+0x184,icon);W(MAP+0xa8+(icon-1)*4,1);
+}
+static void story_policy(void) {
+    const unsigned icons[]={20,30,22,21,26};
+    /* After the badge, every departure offered by the Seiryu map is rejected.
+     * Other main-story phases still work. */
+    for(unsigned story=4;story<=6;++story) for(unsigned i=0;i<5;++i) {
+        fresh();watching=0;W(RETURN,0x22e);W(0x8004b370,story);target(icons[i]);watching=1;writes=0;
+        select_icon();
+        if(story==5) CHECK(writes==0 && R(PARENT+0x78)==0);
+        else { shinka_map_present();CHECK(R(RETURN)!=0x22e && gpu_count==6); }
+    }
+    /* Completing the announcement releases travel immediately in phase 5.
+     * A changed completion bit is rechecked even without a phase change. */
+    for(unsigned legacy=0;legacy<2;++legacy) for(unsigned revoked=0;revoked<2;++revoked) {
+        fresh();watching=0;W(RETURN,0x22e);W(0x8004b370,5);
+        psx_mod_write_byte(0x8004b3e0,0xff);watching=1;
+        if(legacy) { legacy_request();root_close(); } else select_icon();
+        if(revoked) { watching=0;psx_mod_write_byte(0x8004b3e0,0xfd);watching=1; }
+        if(legacy) transition();else shinka_map_present();
+        CHECK(R(RETURN)==(revoked ? 0x22eu : 0x21du));
+        CHECK(R(PARENT+0x78)==0 && R(0x8004b370)==5);
+        CHECK(psx_mod_read_byte(0x8004b3e0)==(revoked ? 0xfd : 0xff));
+    }
+    /* An old queued departure cannot bypass the new policy after state load. */
+    fresh();watching=0;W(RETURN,0x22e);W(0x8004b370,5);watching=1;
+    legacy_request();root_close();transition();
+    CHECK(R(RETURN)==0x22e && cpu.gpr[4]==0x22e && R(PARENT+0x78)==0);
+    fresh();watching=0;W(RETURN,0x22e);W(0x8004b370,5);
+    W(PARENT+0x78,0x53484354);W(PARENT+0x7c,30);W(PARENT+0x80,0x22e);W(PARENT+0x84,5);
+    watching=1;shinka_map_present();CHECK(R(RETURN)==0x22e && gpu_count==0 && R(PARENT+0x78)==0);
+    /* Players with an already-skipped event can still return to Seiryu. */
+    fresh();watching=0;W(0x8004b370,5);target(15);watching=1;
+    select_icon();shinka_map_present();CHECK(R(RETURN)==0x22e);
+    /* Correct width: malformed/high story words must not alias an early phase. */
+    fresh();watching=0;W(0x8004b370,0x105);watching=1;writes=0;
+    select_icon();CHECK(writes==0);
+    /* The incomplete interception uses the outer approach only in phase 6.
+     * Unrelated bits in the same byte do not imply completion. */
+    for(unsigned story=5;story<=7;++story) for(unsigned done=0;done<2;++done) {
+        fresh();watching=0;W(0x8004b370,story);target(20);
+        psx_mod_write_byte(0x8004b3e0,done ? 0xff : 0xbf);watching=1;
+        select_icon();shinka_map_present();
+        CHECK(R(RETURN)==0x202 && R(0x8004b3fc)==0x202);
+        CHECK(R(RETURN+4)==(story==6 && !done ? 0x27e34u : 0x2dda8u));
+        CHECK(R(RETURN+8)==(story==6 && !done ? 0x12bccu : 0xf760u));
+    }
+    /* Recompute the landing if a subflag changes without changing the phase.
+     * Exercise both directions and the legacy pending-state completion path. */
+    for(unsigned legacy=0;legacy<2;++legacy) for(unsigned done=0;done<2;++done) {
+        fresh();watching=0;W(0x8004b370,6);target(20);
+        psx_mod_write_byte(0x8004b3e0,done ? 0 : 0x40);watching=1;
+        if(legacy) { legacy_request();W(PARENT+0x7c,20);root_close(); }
+        else select_icon();
+        watching=0;psx_mod_write_byte(0x8004b3e0,done ? 0x40 : 0);watching=1;
+        if(legacy) transition();else shinka_map_present();
+        CHECK(R(RETURN)==0x202 && R(RETURN+4)==(done ? 0x2dda8u : 0x27e34u));
+        CHECK(R(0x8004b370)==6 && psx_mod_read_byte(0x8004b3e0)==(done ? 0x40 : 0));
+    }
+    /* Landing outside the lockdown is retained across both boundaries. */
+    for(unsigned story=19;story<=24;++story) {
+        fresh();watching=0;W(0x8004b370,story);target(20);watching=1;
+        select_icon();shinka_map_present();CHECK(R(RETURN)==0x202 && R(RETURN+4)==0x2dda8);
+    }
+    /* The actual map panel presents the departure instruction, not X: Travel. */
+    fresh();watching=0;W(RETURN,0x22e);W(0x8004b370,5);
+    W(0x801e0000,47);W(0x801e0004+30*4,200);psx_mod_write_byte(0x801e00c8,14);
+    watching=1;cpu.gpr[31]=0x8009843c;cpu.gpr[16]=MAP;cpu.gpr[5]=0x801e0000;cpu.gpr[6]=30;
+    shinka_map_text(&cpu);
+    {
+        const char* expected="Use the city exit";
+        uint32_t p=cpu.gpr[5]+3;
+        for(unsigned i=0;expected[i];++i) {
+            unsigned c=(unsigned char)expected[i];
+            if(c==' ') { CHECK(psx_mod_read_byte(p++)==1);CHECK(psx_mod_read_byte(p++)==1); }
+            else CHECK(psx_mod_read_byte(p++)==(c>='a' ? c-57 : c-51));
+        }
+        CHECK(psx_mod_read_byte(p)==0);
+    }
+}
 int main(void) {
+    story_policy();
     fresh();cpu.gpr[31]=0x80099aa4;cpu.gpr[4]=0x80099894;cpu.gpr[5]=0x78;cpu.gpr[6]=8;
     shinka_map_allocate(&cpu);CHECK(cpu.gpr[5]==0x88 && cpu.gpr[6]==12 && writes==0);
     fresh();select_icon();CHECK(R(MAP+0xc)==1 && R(RETURN)==0x249);

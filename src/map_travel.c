@@ -13,6 +13,10 @@ extern int shinka_journal_enabled(void);
 #define PENDING 0x53485452u
 #define CUT 0x53484354u
 #define PAGE 5u
+#define TEDDY_COMPLETE 0x8004b3e0u /* flag 0x4011, bit 1 */
+#define KEITH_COMPLETE 0x8004b3e0u /* flag 0x4016, bit 6 */
+
+struct arrival { uint32_t stage, x, y; };
 
 /* Initial arrival points: outdoor locations validated with the original loader.
  * Asuka uses the bridge, avoiding the plot-dependent Main Lobby entrance.
@@ -65,31 +69,52 @@ static int source(uint32_t stage) {
         if (destinations[i].stage == stage) return 1;
     return 0;
 }
-static const char* reason(uint32_t parent, uint32_t icon) {
+static const char* departure(uint32_t stage, uint32_t story) {
+    /* WSTAG420 writes 5 after the badge. WSTAG395's Wind Prairie scene
+     * requires 5 and flag 0x4011 clear; its completion sets that flag. */
+    if (stage == 0x22e && story == 5 && !(B(TEDDY_COMPLETE) & 2))
+        return "Use the city exit";
+    return NULL;
+}
+static struct arrival landing(int i, uint32_t story) {
+    struct arrival a={destinations[i].stage,destinations[i].x,destinations[i].y};
+    /* WSTAG205's Keith event completes flag 0x4016. Before it completes,
+     * use the bridge approach identified by Flawe instead of its inner end. */
+    if (a.stage == 0x202 && story == 6 && !(B(KEITH_COMPLETE) & 0x40)) {
+        a.x=0x27e34; a.y=0x12bcc;
+    }
+    return a;
+}
+static const char* plan(uint32_t parent, uint32_t icon, struct arrival* out) {
+    uint32_t story=R(STORY), stage=R(RETURN);
+    const char* blocked;
     int i=destination(icon);
     if (!controller(parent)) return "Reopen menu for travel";
-    if (!source(R(RETURN))) return "Travel unavailable here";
+    if (!source(stage)) return "Travel unavailable here";
     /* Later campaign and post-game access need separate destination validation. */
-    if (!B(STORY) || B(STORY) > 0x24) return "Travel unavailable now";
+    if (!story || story > 0x24) return "Travel unavailable now";
+    blocked=departure(stage,story);
+    if (blocked) return blocked;
     if (i < 0) return "No travel point yet";
     if (!visited(destinations[i].stage)) return "Visit arrival area first";
-    if (destinations[i].stage == R(RETURN)) return "Already at this location";
+    if (destinations[i].stage == stage) return "Already at this location";
+    if (out) *out=landing(i,story);
     return NULL;
 }
 static uint16_t button(unsigned logical) {
     unsigned bit=B(0x8004b874+logical);
     return bit < 16 ? (uint16_t)(1u<<bit) : 0;
 }
-static void arrive(int i) {
-    W(RETURN,destinations[i].stage);
-    W(RETURN+4,destinations[i].x); W(RETURN+8,destinations[i].y);
+static void arrive(const struct arrival* a) {
+    W(RETURN,a->stage);
+    W(RETURN+4,a->x); W(RETURN+8,a->y);
 }
 /* Called after the frame's DrawSync, before display-buffer exchange. Clear both
  * original display rectangles before the loader reuses menu resources.
  * No texture area is touched. */
 void shinka_map_present(void) {
     uint32_t owner, parent;
-    int i;
+    struct arrival a;
     if (!revision()) return;
     owner=R(0x8005ccbc);
     if (!object(owner,0x80020b58) || R(owner+0x20) != 1) return;
@@ -97,16 +122,15 @@ void shinka_map_present(void) {
     if (!object(parent,0x80083558) || R(parent+0x20) != 1) return;
     parent=root_child(parent);
     if (!controller(parent) || R(parent+0x78) != CUT) return;
-    i=destination(R(parent+0x7c));
-    if (!shinka_journal_enabled() || i < 0 || reason(parent,R(parent+0x7c))
-        || R(parent+0x80) != R(RETURN) || R(parent+0x84) != B(STORY)
+    if (!shinka_journal_enabled() || plan(parent,R(parent+0x7c),&a)
+        || R(parent+0x80) != R(RETURN) || R(parent+0x84) != R(STORY)
         || R(0x8004de48) != 0 || R(0x8004de4c) != 0x00f00140
         || R(0x8004de5c) != 0x01000000 || R(0x8004de60) != 0x00f00140) {
         W(parent+0x78,0); return;
     }
     gpu_write_gp0(0x02000000); gpu_write_gp0(0); gpu_write_gp0(0x00f00140);
     gpu_write_gp0(0x02000000); gpu_write_gp0(0x01000000); gpu_write_gp0(0x00f00140);
-    arrive(i);
+    arrive(&a);
     W(parent+0x78,0);
     /* Same queue as 80016b88. The mode owner recursively destroys Status and
      * its map before the next overlay loads; no root menu is constructed. */
@@ -134,11 +158,11 @@ void shinka_map_frame(CPUState* cpu) {
         for (i=4;i<8;++i) directions |= button(i);
         if (!(pressed & button(13)) || (pressed & (directions | button(14)))
             || R(p+0x184) < 1 || R(p+0x184) > 46
-            || R(p+0xa8+(R(p+0x184)-1)*4) != 1 || reason(parent,R(p+0x184))) return;
+            || R(p+0xa8+(R(p+0x184)-1)*4) != 1 || plan(parent,R(p+0x184),NULL)) return;
         /* Keep the map alive until this frame finishes drawing. */
         if (R(parent+0x78) == CUT) return;
         W(parent+0x78,CUT); W(parent+0x7c,R(p+0x184));
-        W(parent+0x80,R(RETURN)); W(parent+0x84,B(STORY));
+        W(parent+0x80,R(RETURN)); W(parent+0x84,R(STORY));
         psx_mod_write_half(0x8004b818,0);
     } else if (cpu->gpr[31] == 0x800997ec) {
         parent=cpu->gpr[16];
@@ -160,16 +184,15 @@ void shinka_map_quick_menu(CPUState* cpu) {
 }
 void shinka_map_transition(CPUState* cpu) {
     uint32_t p=cpu->gpr[17], parent;
-    int i;
+    struct arrival a;
     if (cpu->gpr[31] != 0x80013318 || !revision() || !object(p,0x8001270c)
         || R(p+0x20) != 0x2d || R(p+0xa0) != PAGE || cpu->gpr[4] != R(RETURN)) return;
     parent=R(p+0xa4);
     if (!controller(parent) || R(parent+0x78) != PENDING) return;
-    i=destination(R(parent+0x7c));
-    if (shinka_journal_enabled() && i >= 0 && !reason(parent,R(parent+0x7c))
-        && R(parent+0x80) == R(RETURN) && R(parent+0x84) == B(STORY)) {
-        cpu->gpr[4]=destinations[i].stage;
-        arrive(i);
+    if (shinka_journal_enabled() && !plan(parent,R(parent+0x7c),&a)
+        && R(parent+0x80) == R(RETURN) && R(parent+0x84) == R(STORY)) {
+        cpu->gpr[4]=a.stage;
+        arrive(&a);
     }
     W(parent+0x78,0); W(p+0xa0,0); W(p+0xa4,0);
 }
@@ -196,8 +219,8 @@ void shinka_map_text(CPUState* cpu) {
         if (n > 180) return;
     }
     if (!n || k >= 96) return;
-    help=reason(R(p+0x50),icon);
-    if (!help) help="X: Travel";
+    help=plan(R(p+0x50),icon,NULL);
+    if (!help) help=icon == 20 ? "X: City entrance" : "X: Travel";
     text[n++]=2; text[n++]=1;
     while (*help && n < 252) {
         unsigned c=(unsigned char)*help++;

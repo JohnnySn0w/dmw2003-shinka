@@ -1,6 +1,7 @@
 # Fast travel: story gates and walkthrough scope
 
-Audited 2026-09-09 against the Shinka implementation at `8198337`.
+Walkthrough scope audited 2026-09-09 against `8198337`; the first runtime guards
+were subsequently traced and implemented as described below.
 
 The walkthroughs identify a manageable set of travel-sensitive events. The
 useful policy is to shorten repeat journeys while preserving first entrances,
@@ -8,18 +9,19 @@ scripted exits, temporary closures and transport unlocks. A previously visited
 area can become inaccessible later. Both departure and arrival need checks.
 
 This is an implementation scope and test plan, not a completed campaign safety
-certification. No runtime restrictions changed during this audit. The current
-six-destination network still uses the broad story-byte range described in
-[map travel](menu-map.md). That range does not prove the events below are safe.
+certification. The six-destination network now guards Seiryu's pending departure
+scene and adjusts Asuka's early arrival. It retains the broad story range
+described in [map travel](menu-map.md). That range does not prove the remaining
+events below are safe.
 
 ## Evidence and version boundaries
 
 - **Guide evidence** identifies event order and places to investigate. A guide
   telling the player to speak to somebody does not prove that conversation is a
   required flag. We must distinguish hints from actual prerequisites in the game.
-- **Code evidence** below means a predicate was read in Shinka or the reference
-  mod. A reference mod's workaround is a lead, not proof of the original game's
-  intent or a verified Shinka fix.
+- **Code evidence** identifies whether a predicate comes from original field
+  scripts, Shinka, or the reference mod. A reference workaround is a lead, not
+  proof of the original game's intent or a verified Shinka fix.
 - **Proposed policy** is our design inference. Each policy needs a matching
   original-game predicate and before/after testing before becoming an access rule.
 
@@ -66,7 +68,7 @@ normal exit behavior has been checked. This audit does not inventory every sideq
 
 ## Exact code leads
 
-Shinka reads the story byte at `0x8004b370` and currently accepts `1..0x24`
+Shinka reads the 32-bit story word at `0x8004b370` and accepts `1..0x24`
 (decimal 1–36). This is a scope cutoff, **not a decoded postgame boundary**.
 Exact landing visitation comes from `0x8004b3c0 + (stage & 0xff) / 8`, using bit
 `(stage & 0xff) % 8`. Neither value encodes the entire access policy.
@@ -75,13 +77,14 @@ The reference is Flawe's Fast Travel 2.0 as packaged in
 [D-W-3-Recomp commit e7c2cd4](https://github.com/Xive080/D-W-3-Recomp/tree/e7c2cd48e1a15a93aeafe543f4e3bdc7b40a3243/source/flawe/FastTravel).
 Its destination-adjustment routine begins at `0x8009ba84`, with related checks
 at `0x8009ba0c`. Addresses use the `STSTATUS.PRO` load base `0x80082cb0`.
-These are reference-mod predicates; they are **not implemented in Shinka** as
-the conditional rules below.
+These are reference-mod predicates. The first was subsequently verified against
+the original bridge script and implemented; the other conditional redirects have
+not been added. Shinka already uses an outside bridge landing during lockdown.
 
 | Reference predicate | Reference action | Interpretation / next check |
 | --- | --- | --- |
-| Destination `0x200`; story `6`; `(byte[0x8004b3e0] & 0x40) == 0` | Redirect to `0x202`, coordinates `(0x27e34, 0x12bcc)` | Asuka approach exception. Keith is a guide-based candidate; the bit's meaning and trigger position require original-script confirmation. |
-| Destination `0x200`; story `20..23` | Redirect to `0x202`, `(0x2dda8, 0xf760)` | Strong candidate for the Asuka closure window. Shinka always uses this bridge landing, including outside these phases; that does not validate the earlier exception. |
+| Destination `0x200`; story `6`; `(byte[0x8004b3e0] & 0x40) == 0` | Redirect to `0x202`, coordinates `(0x27e34, 0x12bcc)` | Keith's early encounter. Original-script confirmation and the implemented arrival are documented below. |
+| Destination `0x200`; story `20..23` | Redirect to `0x202`, `(0x2dda8, 0xf760)` | Candidate closure window. Shinka keeps this bridge landing during those phases, leaving access to the original gate script. |
 | Destination `0x23e`; story `25`; `(byte[0x8004b3bf] & 2) == 0` | Redirect to `0x23b`, `(0x509c0, 0xdde0)` | Suzaku City to Phoenix Bay. The earthquake approach in T09 is a candidate explanation; confirm what sets the bit. |
 | Destination `0x270`; story `< 37` | Redirect to `0x272`, `(0x17ec8, 0x1ac9a)` | Amaterasu City to its bridge. Inspect Knightmon's access test and the arrival's side of that gate. This does not identify story 37 as postgame. |
 | Destination `0x2c1` or `0x2c3`; story `34..36` | Redirect to `0x2c0`, `(0x15ee2, 0x23a9a)` | Amaterasu Mobius Desert / Mirage Tower to Noise Desert. Investigate Resistance approach events. This is **not** a direct Bai Hu destination redirect. |
@@ -109,12 +112,67 @@ reports missing NPCs and underwater/underground hangs when its postgame travel
 leaves the supported world. These are the reference author's reported results,
 not crashes reproduced in Shinka. They support retaining a postgame allowlist.
 
+## Implemented original-script guards
+
+The story counter is a **32-bit word**, not the low byte used by the initial
+prototype. Original field modules read and write it with word instructions.
+Selection and both deferred transition paths now use the full value and resolve
+the same policy from current RAM. A subflag change cannot leave a stale landing
+or bypass a new departure restriction. No progression flags are written by travel.
+
+| Original evidence (file offsets) | Implemented behavior |
+| --- | --- |
+| `WSTAG420.PRO`, badge routine at `0x13c..0x190`, writes story `5`. `WSTAG395.PRO` at `0x38..0x64` launches event `0x50` only for story `5` and flag `0x4011` clear. Its completion callback at `0x134..0x15c` sets that flag. | Seiryu (`0x22e`) departures show **Use the city exit** while that predicate holds. Travel resumes when the conversation finishes, even though story remains `5`. Travel **into** Seiryu remains allowed. |
+| `WSTAG205.PRO` at `0x334..0x388` tests story `6`, encounter-start flag `0x4006` set, and completion flag `0x4016` clear before launching follow-up event `0x65`. The callback at `0x410..0x458` sets the start flag; `0x45c..0x484` sets completion. | Asuka (`0x202`) uses `(0x27e34, 0x12bcc)` while story is `6` and completion is clear. Otherwise it uses `(0x2dda8, 0xf760)`. The map labels this **X: City entrance**. The original encounter and gate scripts retain control. |
+
+The resident flag reader `0x800163b0` maps class `0x40` to bitset `0x8004b3de`.
+Its low flag index selects the bit: `0x4011` is byte `0x8004b3e0`, mask `2`;
+`0x4016` is the same byte, mask `0x40`. The setter is `0x800165ac`.
+The original global function table at `0x80048abc` contains the setter at `+0xc`
+and reader at `+0x10`, matching the indirect calls in these modules.
+
+The original `FIELDSTG.PRO` stage table at `0x8009a884` independently resolves
+`0x202` to `WSTAG205`, `0x229` (Wind Prairie) to `WSTAG395`, and `0x22e`
+(Seiryu) to `WSTAG420`. `WSTAG410` belongs to East Station (`0x22c`): its
+story `5 -> 6` write is **not** Teddy's completion. Waiting for story `6`
+would unnecessarily keep Seiryu travel locked after the announcement.
+
+The annotated instruction words were compared with modules extracted from the
+owner's PAL disc. Reproducible SHA-256 fingerprints:
+
+| Module | SHA-256 |
+| --- | --- |
+| `WSTAG205.PRO` | `04947dd9329abaf269a224daedfc39eb61bf0e9c8b6bdf007477545c1abd4a4c` |
+| `WSTAG395.PRO` | `c39fddb86ea006d3b6feded40ca7fb6e7a54cd184db0e6537690ef907851c87a` |
+| `WSTAG420.PRO` | `613cf3d7c5a39bfbf38fe9c6ced49dd33406ba3e7f3a49537448a20002a5a0b4` |
+
+Native regression covers all exposed Seiryu departures, completion within story
+`5`, recovery travel into Seiryu, neighboring story phases, unrelated flag bits,
+Asuka's two landings, lockdown phase boundaries, high story-word rejection, and
+subflag changes between selection and commit. Both the direct cut and old
+pending-menu savestates recheck the policy. The test's write allowlist rejects
+progression writes.
+
+Live checks use an isolated copy of an advanced save, with the story and relevant
+event flags reset to construct explicit **test fixtures**. They are not naturally
+earned early-game checkpoints. In the Seiryu fixture, confirming the blocked map
+selection leaves the map open. Walking through the normal exit starts Teddy's
+dialogue; completing it normally sets `0x4011` while story stays `5`. Walking back
+into Seiryu then permits travel to Central Park. The trip leaves the checked
+progression bytes unchanged. No completion flag is forced during this sequence.
+The Asuka fixture lands at the alternate coordinates and immediately starts the
+original Keith dialogue and battle. Winning and finishing the follow-up dialogue
+sets `0x4016` through the original script, with story still `6`. See
+[map travel validation](menu-map.md) for subsequent runtime checks and remaining
+coverage. These event checks do not substitute for a full campaign run through
+the badge, Blue Card errands, lockdown and reopening.
+
 ## Priorities for the existing network
 
 | Current field | First check before broader campaign claims |
 | --- | --- |
-| Seiryu City `0x22e` | T02 departure: can teleport bypass the exit event, and does returning recover it? Compare natural and teleported paths immediately after the badge. |
-| Asuka bridge `0x202` | Compare both reference coordinates during the story-6 exception; then test closure and reopening. Verify movement reaches the required trigger instead of landing beyond it. |
+| Seiryu City `0x22e` | T02 guard and native announcement release verified in a controlled fixture above. Retain a naturally earned badge checkpoint for full campaign regression. |
+| Asuka bridge `0x202` | Story-6 approach starts the original encounter. Complete the closure/reopening campaign regression; synthetic boundary tests alone do not certify all gate events. |
 | Asuka Main Lobby `0x200` (source only) | Audit departures during forced-return, disguise and liberation sequences. Being a supported source must not allow escape from unfinished scripts. |
 | Central Park `0x21d` | Establish event-free departure and arrival positions for each allowed phase. T14 is also a prerequisite before admitting later phases or the other server. |
 | Wire Forest Entrance `0x21e` and Wire Forest `0x222` | Lower-priority candidates for broad repeat travel; no special closure was identified in the reviewed passages. This is an evidence gap, not proof that none exists. |
@@ -122,11 +180,12 @@ not crashes reproduced in Shinka. They support retaining a postgame allowlist.
 
 ## Implementation and validation plan
 
-1. **Resolve T02 and T08 first.** Follow original event scripts and observe normal
+1. **Finish T02 and T08 campaign coverage.** The first rules above are implemented.
+   Follow original event scripts and observe normal
    completion around the Seiryu exit, Keith approach and Asuka closure. Name a
    flag only after identifying its readers/writers or observing its transition
    with a matching script. Do not guess numeric story values from chapter order.
-2. **Separate departure from arrival policy.** Evaluate current field, server,
+2. **Extend the shared departure and arrival policy.** Evaluate current field, server,
    story, event state, transport capability and exact landing visit. Return one
    of: travel to the normal landing, travel to a validated approach, or unavailable.
    Keep decisions read-only with respect to progression.
@@ -145,10 +204,10 @@ save/reload. Compare progression with the natural route; unchanged flags during
 the teleport alone are insufficient. Never manufacture completion by setting a
 quest bit during the test.
 
-Once predicates are implemented, add native policy tests for both sides of each
+For each additional predicate, add native policy tests for both sides of each
 boundary, wrong-server destinations, stale visits, alternate landings and timed
 departures. Re-evaluate the same policy on selection and at the existing deferred
-cut, including subflags that can change without the story byte changing. Retain
+cut, including subflags that can change without the story word changing. Retain
 cancel and pending-savestate coverage. The existing direct transition can be
 reused; safe travel does not require reopening the root menu.
 

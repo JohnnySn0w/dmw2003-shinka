@@ -4,7 +4,9 @@ Mod development for Digimon World 2003, targeting the European multilingual Play
 
 ## Status
 
-Initial groundwork audit completed. Target: a Windows port with progressively reconstructed game systems and optional mechanics changes. The supplied disc has been identified and inspected, selected assets extracted locally, and the main executable translated to C using a locally built candidate recompiler. No playable Windows build or gameplay mods have been validated yet.
+An experimental Windows x64 executable now builds and boots the supplied disc into language selection and the opening movie. Main-executable code and captured overlays compile locally through the pinned PSXRecomp framework, with interpreter fallback. Native savestate save/load works in the tested movie sequence. This is not yet a validated playable port: performance, exploration, battles, audible playback, and in-game saves still need testing. Gameplay mods are not enabled.
+
+See [Windows build, launch, and overlay-capture instructions](docs/windows-baseline.md) for the runnable baseline and current validation limits.
 
 See the [groundwork audit and port milestones](docs/groundwork-audit.md) for pinned sources, verified findings, feature analysis, and reproduction commands.
 

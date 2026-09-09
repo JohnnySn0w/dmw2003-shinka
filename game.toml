@@ -1,0 +1,29 @@
+[game]
+name = "Digimon World 2003 - Shinka"
+id = "SLES-03936"
+players = 1
+exe = "extracted/audit/SLES_039.36"
+load_address = "0x80010000"
+entry_pc = "0x80010E90"
+text_size = "0x000E1000"
+stack_base = "0x801FFFF0"
+
+[recompiler]
+seeds = "output/ghidra_funcs.txt"
+out_dir = "output/recompiled"
+strict = true
+
+[runtime]
+window_title = "Digimon World 2003 - Shinka baseline"
+memcard_dir = "output/saves"
+# Verified STFGTREP load base; other .PRO modules reuse this RAM region.
+overlay_region_floor = "0x00082CB0"
+overlay_cache = true
+overlay_capture_persist_dir = "output/overlay-captures"
+
+[video]
+renderer = "opengl"
+aspect_ratio = "4:3"
+
+[controller]
+default_mode = "digital"

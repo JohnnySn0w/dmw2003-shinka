@@ -91,7 +91,7 @@ The first four rows capture explicit user requests. The rest remain design candi
 
 1. **Input and provenance — achieved for the supplied image.** Repeatable read-only inspection, exact hash, boot/selected-overlay extraction, pinned upstream revisions.
 2. **Translation probe — achieved for the main EXE only.** Build emitters and produce local C plus static analysis. This is not a runnable game.
-3. **Windows baseline — next implementation milestone.** Link the candidate runtime; boot to title, start a game, walk, enter/exit battle, play original audio, and save/reload. Keep Shinka features off. Record failures and interpreter coverage rather than accepting a title screen as success.
+3. **Windows baseline — in progress.** The runtime now links and boots into language selection/opening movie, with native overlay compilation and movie savestate save/load. See [build instructions and live validation](windows-baseline.md). Still required: title flow, start a game, walk, enter/exit battle, play original audio audibly, and save/reload in game. Keep Shinka features off. Record failures and interpreter coverage rather than accepting a title screen as success.
 4. **Readable system reconstruction.** Establish validated types, function names, memory ownership, and overlay identities. Start with reward calculation and map/menu transitions. Each translated/replaced routine must be compared with the original under controlled inputs.
 5. **Feature slices.** EXP first; encounter control second; guarded map teleport third. Test default settings for unchanged behavior and enabled settings for their intended effect.
 6. **Presentation and broader mechanics.** Optional audio replacement, battle timing, progression UI, and balance changes once the baseline is reliable.

@@ -19,6 +19,7 @@
 *.STR
 *.TIM
 SLES_039.36
+/psx_*.json
 
 # Emulator saves
 *.mcd

@@ -12,6 +12,11 @@ lab interface: Switch Digimon, Digivolve and Digivolve Chart. Triangle backs out
 through those menus, then returns to the full-screen root with DIGIVOLUTIONS
 highlighted. Square on STATUS is no longer the entry point.
 
+In Digivolve Chart, anonymous nodes represent nearby locked possibilities.
+Select one with the D-pad and press X for training hints; X closes the details.
+Required levels and stat values remain hidden. Unlocked forms keep their original
+descriptions. See the [discovery and hint rules](evolution-journal.md).
+
 SETTINGS has three rows:
 
 - **EXP:** 1x, 2x, 3x, 4x normal battle EXP, before participation splitting.

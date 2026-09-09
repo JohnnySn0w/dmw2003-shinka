@@ -32,7 +32,7 @@ function Invoke-Checked([string]$Program, [string[]]$Arguments) {
 }
 Push-Location $projectRoot
 try {
-    Invoke-Checked $Python @('tools/audit_disc.py', $disc, '--output', 'extracted/audit', '--extract-exe', '--extract-file', 'STFGTREP.PRO')
+    Invoke-Checked $Python @('tools/audit_disc.py', $disc, '--output', 'extracted/audit', '--extract-exe', '--extract-file', 'STFGTREP.PRO', '--extract-file', 'STGDGLAB.PRO')
     $emitterBuild = Join-Path $candidate 'build-recompiler'
     Invoke-Checked 'cmake' @('-S', "$framework/recompiler", '-B', $emitterBuild, '-G', 'Visual Studio 17 2022', '-A', 'x64', '-DPSXRECOMP_ENABLE_CHD=OFF', '-DBUILD_TESTING=OFF')
     Invoke-Checked 'cmake' @('--build', $emitterBuild, '--config', 'Release', '--target', 'psxrecomp-game', 'psxrecomp-bios', '--parallel', "$Jobs")
@@ -52,8 +52,8 @@ try {
     }
     Invoke-Checked 'cmake' @('-S', '.', '-B', 'build-windows', '-G', 'Visual Studio 17 2022', '-A', 'x64', "-DPSXRECOMP_ROOT=$framework", "-DSHINKA_OVERLAY_SOURCE=$overlaySource", '-DPSX_RECOMP_UI=OFF', '-DPSX_REWIND=OFF', '-DPSX_DEBUG_TOOLS=ON', '-DPSX_PGXP_VARIANT=OFF', '-DCMAKE_BUILD_TYPE=Release')
     Invoke-Checked 'cmake' @('-S', '.', '-B', 'build-windows', '-DSHINKA_BUILD_TESTS=ON')
-    Invoke-Checked 'cmake' @('--build', 'build-windows', '--config', 'Release', '--target', 'shinka', 'shinka_overlay_guard_test', 'shinka_journal_menu_test', 'shinka_menu_exp_test', '--parallel', "$Jobs")
-    Invoke-Checked 'ctest' @('--test-dir', 'build-windows', '-C', 'Release', '--output-on-failure', '-R', '^(overlay_guard|journal_menu|menu_exp)$')
+    Invoke-Checked 'cmake' @('--build', 'build-windows', '--config', 'Release', '--target', 'shinka', 'shinka_overlay_guard_test', 'shinka_journal_menu_test', 'shinka_menu_exp_test', 'shinka_evolution_chart_test', '--parallel', "$Jobs")
+    Invoke-Checked 'ctest' @('--test-dir', 'build-windows', '-C', 'Release', '--output-on-failure', '-R', '^(overlay_guard|journal_menu|menu_exp|evolution_chart)$')
 } finally {
     Pop-Location
 }

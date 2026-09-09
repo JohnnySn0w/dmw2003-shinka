@@ -14,6 +14,18 @@ execute_process(COMMAND "${Python3_EXECUTABLE}"
 if(NOT _generated_result EQUAL 0)
     message(FATAL_ERROR "Review generated menu hooks: ${_generated_error}")
 endif()
+set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS
+    "${CMAKE_CURRENT_SOURCE_DIR}/tools/generate_evolution_data.py"
+    "${CMAKE_CURRENT_SOURCE_DIR}/tools/evolution_hints.py"
+    "${CMAKE_CURRENT_SOURCE_DIR}/extracted/audit/STGDGLAB.PRO"
+    "${CMAKE_CURRENT_SOURCE_DIR}/extracted/audit/SLES_039.36")
+execute_process(COMMAND "${Python3_EXECUTABLE}"
+    "${CMAKE_CURRENT_SOURCE_DIR}/tools/generate_evolution_data.py"
+    "${CMAKE_CURRENT_SOURCE_DIR}/extracted/audit" "${_generated}/evolution_data.h"
+    RESULT_VARIABLE _evolution_result ERROR_VARIABLE _evolution_error)
+if(NOT _evolution_result EQUAL 0)
+    message(FATAL_ERROR "Extract the supported STGDGLAB.PRO and review chart data: ${_evolution_error}")
+endif()
 get_target_property(_sources shinka SOURCES)
 foreach(_shard 00 01 02 03 05)
     set(_original "${CMAKE_CURRENT_SOURCE_DIR}/output/recompiled/SLES_039.36_full_${_shard}.c")
@@ -42,5 +54,5 @@ list(APPEND _sources "${_generated}/mod_runtime.cpp")
 set_property(TARGET shinka PROPERTY SOURCES "${_sources}")
 set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS
     "${_runtime}" "${CMAKE_CURRENT_SOURCE_DIR}/src/menu_settings_bridge.inc")
-target_sources(shinka PRIVATE src/journal_menu.c src/menu_exp.c)
+target_sources(shinka PRIVATE src/journal_menu.c src/menu_exp.c src/evolution_chart.c)
 target_include_directories(shinka PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/output/recompiled" "${_generated}")

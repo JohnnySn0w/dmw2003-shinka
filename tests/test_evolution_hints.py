@@ -24,7 +24,7 @@ class EvolutionHintTests(unittest.TestCase):
         req = eh.Requirement(99, ((10, 5), (20, 5)), 0, 1)
         self.assertEqual(eh.hints(req, {10: 'ExVeemon', 20: 'Stingmon'}), [
             'Deepen your mastery of ExVeemon.', 'Deepen your mastery of Stingmon.'])
-        self.assertEqual(eh.hints(req, {}), ['Explore other evolution paths with your partner.'])
+        self.assertEqual(eh.hints(req, {}), ['Explore other evolution paths.'])
 
     def test_rookie_tables_are_independent_and_revision_guarded(self):
         data = bytearray(eh.TABLE + 8 * eh.ROWS * 16)

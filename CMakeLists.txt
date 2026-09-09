@@ -73,6 +73,9 @@ if(SHINKA_BUILD_TESTS)
     add_executable(shinka_menu_exp_test tests/test_menu_exp.c src/menu_exp.c)
     target_include_directories(shinka_menu_exp_test PRIVATE "${PSXRECOMP_ROOT}/runtime/include" "${CMAKE_CURRENT_BINARY_DIR}/shinka-runtime")
     add_test(NAME menu_exp COMMAND shinka_menu_exp_test)
+    add_executable(shinka_evolution_chart_test tests/test_evolution_chart.c src/evolution_chart.c)
+    target_include_directories(shinka_evolution_chart_test PRIVATE "${PSXRECOMP_ROOT}/runtime/include" "${CMAKE_CURRENT_BINARY_DIR}/shinka-runtime")
+    add_test(NAME evolution_chart COMMAND shinka_evolution_chart_test)
 endif()
 add_custom_command(TARGET shinka POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E make_directory "$<TARGET_FILE_DIR:shinka>/mods/packages/shinka.evolution-journal/0.1.0"

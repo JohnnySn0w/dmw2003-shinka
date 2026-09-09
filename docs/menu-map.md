@@ -33,4 +33,4 @@ icons, disappears after snapping, and leaves that icon selected. Travel should
 consume the game's selected icon after this snap behavior; the hit-test radius
 and selected-icon variable still require tracing.
 
-Evolution-tree access and directional hints are specified in [the evolution journal design](evolution-journal.md). The original lab chart now has an experimental English DIGIVOLUTIONS entry in the field menu. The requirement reader and hint formatter are implemented as tooling; in-game clues remain pending. See the evolution journal document for the verified overlay dispatcher and field-return context.
+Evolution-tree access and directional hints are specified in [the evolution journal design](evolution-journal.md). The English DIGIVOLUTIONS entry now opens the full portable lab. Its chart adds anonymous nodes for nearby locked forms, with directional hints on X. See the evolution journal document for discovery rules, validation limits and field-return behavior.

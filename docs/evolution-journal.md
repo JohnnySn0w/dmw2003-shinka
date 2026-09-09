@@ -24,7 +24,7 @@ form would be misleading.
 | --- | --- |
 | Rookie growth | Grow stronger alongside your partner. |
 | Known prerequisite form | Deepen your mastery of Greymon. |
-| Unrevealed prerequisite | Explore other evolution paths with your partner. |
+| Unrevealed prerequisite | Explore other evolution paths. |
 | Strength | Develop greater strength. |
 | Defense | Build your physical defenses. |
 | Spirit | Strengthen your spirit. |
@@ -59,11 +59,22 @@ The chart retains D-pad and L1/R1 navigation. Triangle backs out one level at a
 time; leaving Select Action returns to DIGIVOLUTIONS in the full-screen root.
 Triangle there resumes exploration. The source is `src/journal_menu.c`.
 
-Directional clues are **not rendered in the game yet**. The requirement reader
-and formatter in `tools/evolution_hints.py` cover all 352 original requirements,
-with tests for hidden names, two-form requirements, per-rookie differences,
-numeric non-disclosure, and revision rejection. Connecting these strings to the
-highlighted locked node is the next feature step.
+The English chart now renders directional clues: select an anonymous framed
+node with the D-pad and press X. Its description panel shows training directions
+without naming the destination or exposing required values. Unlocked forms keep
+their original portraits, names and descriptions. X closes the details again.
+
+Discovery is gradual. Existing branches retain their known forms and anonymous
+gaps, plus the next unknown step. An otherwise hidden branch can appear when its
+first form requires rookie growth or a prerequisite the selected partner already
+knows. Later undiscovered forms remain omitted. These additions only change the
+chart's display cache, not ownership, unlock checks or the equipped forms.
+
+The requirement reader in `tools/evolution_hints.py` and the local build generator
+cover all 352 original requirements. Those records use **one-based profile
+indices**, whereas the chart uses Digimon IDs. The generator resolves this
+mapping from the verified executable, strips all numeric thresholds from the
+view data, and rejects unsupported revisions. Generated game data stays local.
 
 ## Verified integration points
 
@@ -115,6 +126,18 @@ savestate compatibility. Other languages retain their original menu behavior.
 
 ## Coverage and remaining work
 
+`src/evolution_chart.c` connects the chart cache, anonymous artwork and native
+description widgets through guarded resident hooks. The draw stack can reside in
+the PSX scratchpad. Portraits and frames use different VRAM pages; the anonymous
+nodes use the original frame sheet. The selected partner's known-form list and
+name-resource directory are read from guest RAM, including after savestate loads.
+
+Native checks cover all eight rookie views, gradual discovery, hidden names and
+artwork, scratchpad drawing, revision rejection, and writes confined to UI state.
+Python checks cover disc revision guards, requirement mapping and exclusion of
+threshold values from generated view data. Live visual checks are still narrower
+than full campaign and controller coverage.
+
 Local live checks use `output/menu-test-saves`, a copy of the diagnostic saves.
 The original player memory cards are not used for these checks. Captures and
 extracted game data stay ignored.
@@ -138,9 +161,9 @@ and transition guards, the selected DIGIVOLUTIONS row, field-context preservatio
 unknown-overlay rejection, restoration of all lab callbacks, and one-time root
 return with and without Card Folders. Python
 checks cover mod-state changes without disturbing the EXP options. The build
-script runs all three Shinka native tests rather than unrelated dependency examples.
+script runs all four Shinka native tests rather than unrelated dependency examples.
 
 Before promoting this developer feature, expand coverage across party combinations,
 locked and unlocked branches, unlocked chart pages, all field families and languages.
-Add selected-partner retention and the directional hint panel. Map teleportation
+Add selected-partner retention and broader hint coverage. Map teleportation
 and encounter settings are separate outstanding features; EXP settings are now available.

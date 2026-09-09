@@ -1,8 +1,8 @@
 """Directional hints for the verified PAL evolution requirements.
 
-This is menu groundwork, not an installed game-menu hook. The future view must
-supply names only for forms it is allowed to reveal. Numeric requirements stay
-in the internal record and never enter the hint text.
+Offline companion to the native chart hints in src/evolution_chart.c. Callers
+supply names only for forms they are allowed to reveal. Numeric requirements
+stay in the internal record and never enter the hint text.
 """
 from dataclasses import dataclass
 import hashlib
@@ -73,7 +73,7 @@ both forms; they do not imply the player must use the DNA attack in battle.
         else:
             hidden = True
     if hidden:
-        result.append('Explore other evolution paths with your partner.')
+        result.append('Explore other evolution paths.')
     if requirement.extra_type:
         try:
             result.append(DIRECTIONS[requirement.extra_type])

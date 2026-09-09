@@ -13,6 +13,7 @@
 #define READ psx_mod_read_word
 #define WRITE psx_mod_write_word
 static int enabled;
+int shinka_journal_enabled(void) { return enabled; }
 static int object(uint32_t p, uint32_t callback) {
     return p >= 0x80090000u && p <= 0x801eff00u && !(p & 3u)
         && READ(p + 0x28) == 0x80014274u && READ(p + 0x48) == callback;

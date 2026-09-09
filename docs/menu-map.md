@@ -2,8 +2,9 @@
 
 The native runtime displays the original status menu and Asuka map correctly.
 The Wire Forest Entrance icon and location label were inspected in a copied
-save. The [expanded field menu](field-menu.md) now provides normal/DV EXP settings.
-Map teleportation and encounter-rate adjustment remain unimplemented.
+save. The [expanded field menu](field-menu.md) now provides normal/DV EXP settings
+and [0–200% random encounter adjustment](encounters.md).
+Map teleportation remains unimplemented.
 
 The original `STSTATUS.PRO` is 100,936 bytes. A live status-menu RAM capture
 matched the entire extracted module at `0x80082cb0`, resolving the placeholder
@@ -17,8 +18,6 @@ Next implementation work:
    field-transition path to load the destination and its assets.
 4. Enforce visited-location and story/server restrictions; test return travel,
    cutscenes, underwater/underground exits and post-game boundaries.
-5. Add a random encounter-rate control to SETTINGS, including zero random
-   encounters while preserving scripted fights.
 
 The inspected FastTravel reference package describes X on map icons and travel
 on closing the menu, plus Square to switch server maps. Its documentation also

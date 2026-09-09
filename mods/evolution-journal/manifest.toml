@@ -3,7 +3,7 @@ id = "shinka.evolution-journal"
 version = "0.1.0"
 name = "Shinka Evolution Journal"
 channel = "developer"
-description = "English DIGIVOLUTIONS and SETTINGS entries with live EXP controls."
+description = "English portable lab, evolution hints, EXP and random encounter controls."
 resolver = "declarative"
 
 [[target]]
@@ -14,6 +14,16 @@ disc_sha256 = "fb70dc9a995aed628cf515cabc87c7b14e5142559076ec394dfe793ec3e26a04"
 id = "menu-chart"
 name = "Expanded field menu"
 default_enabled = false
+
+[[option]]
+feature = "menu-chart"
+id = "encounter_rate"
+label = "Random encounter rate (%)"
+type = "integer"
+min = 0
+max = 200
+step = 50
+default = 100
 
 [[plugin]]
 feature = "menu-chart"

@@ -9,8 +9,9 @@ from pathlib import Path
 ENTRIES = {
     '00': [('8001270C', 'shinka_journal_quick_menu'), ('800121B4', 'shinka_menu_construct')],
     '01': [('80014504', 'shinka_menu_allocate'), ('800140D8', 'shinka_chart_resource')],
-    '02': [('80016B88', 'shinka_journal_transition')],
-    '03': [('800194E8', 'shinka_menu_text'), ('800194E8', 'shinka_chart_text')],
+    '02': [('80016B88', 'shinka_journal_transition'), ('8001810C', 'shinka_encounter_step')],
+    '03': [('800194E8', 'shinka_menu_text'), ('800194E8', 'shinka_chart_text'),
+           ('8001933C', 'shinka_encounter_seed')],
     '05': [('8001ED6C', 'shinka_menu_background'), ('8001ED6C', 'shinka_chart_sprite'),
            ('8001F648', 'shinka_chart_frame')],
 }

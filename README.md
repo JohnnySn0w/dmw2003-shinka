@@ -8,7 +8,7 @@ An experimental Windows x64 build supports the tested early-game exploration, ba
 
 The first gameplay feature is optional **1â€“4x normal battle EXP**, applied through guarded disc-read patches. See [EXP configuration and validation](docs/experience.md). Money is unchanged; the expanded field menu now includes live EXP settings. See the [progression formulas](docs/progression.md) and [menu/map groundwork](docs/menu-map.md).
 
-An experimental English menu adds **DIGIVOLUTIONS** and **SETTINGS** as selectable rows in both the world overlay and the full-screen root reached after leaving a submenu. Enable it with `python tools/configure_journal.py --enable` and restart. DIGIVOLUTIONS opens the full lab interface for switching partners, selecting battle forms, loading techniques and viewing the chart; leaving it highlights DIGIVOLUTIONS again. Select an anonymous chart node and press X for directional training hints. See [menu controls and implementation](docs/field-menu.md) and [lab integration](docs/evolution-journal.md).
+An experimental English menu adds **DIGIVOLUTIONS** and **SETTINGS** as selectable rows in both the world overlay and the full-screen root reached after leaving a submenu. Enable it with `python tools/configure_journal.py --enable` and restart. DIGIVOLUTIONS opens the full lab interface for switching partners, selecting battle forms, loading techniques and viewing the chart; leaving it highlights DIGIVOLUTIONS again. Select an anonymous chart node and press X for directional training hints. SETTINGS includes live EXP controls and **0%, 50%, 100%, 150%, 200% random encounter rates**. See [menu controls and implementation](docs/field-menu.md), [encounter behavior](docs/encounters.md) and [lab integration](docs/evolution-journal.md).
 
 See [Windows build, launch, and overlay-capture instructions](docs/windows-baseline.md) for the runnable baseline and current validation limits.
 
@@ -21,9 +21,8 @@ See the [groundwork audit and port milestones](docs/groundwork-audit.md) for pin
 - Expand EXP validation across party splits, later enemies and progression caps.
 - Expand DV validation across later forms, participation splits and natural growth limits.
 - Investigate music extraction and replacement instrument samples; compare a single track before expanding the work.
-- Add directional hints and selected-partner retention to the DIGIVOLUTIONS entry; see [design and hint groundwork](docs/evolution-journal.md).
+- Add selected-partner retention to the DIGIVOLUTIONS entry; see [design and hint groundwork](docs/evolution-journal.md).
 - Travel from visited map icons using X, with story and destination safeguards.
-- In-menu random-encounter adjustment, including disabling random encounters while preserving scripted fights.
 
 Fresh configurations retain original EXP until enabled. The current local setup selects 3x normal EXP and fixed 10-point DV awards.
 

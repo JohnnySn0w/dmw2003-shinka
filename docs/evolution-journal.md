@@ -161,9 +161,9 @@ and transition guards, the selected DIGIVOLUTIONS row, field-context preservatio
 unknown-overlay rejection, restoration of all lab callbacks, and one-time root
 return with and without Card Folders. Python
 checks cover mod-state changes without disturbing the EXP options. The build
-script runs all four Shinka native tests rather than unrelated dependency examples.
+script runs all five Shinka native tests rather than unrelated dependency examples.
 
 Before promoting this developer feature, expand coverage across party combinations,
 locked and unlocked branches, unlocked chart pages, all field families and languages.
 Add selected-partner retention and broader hint coverage. Map teleportation
-and encounter settings are separate outstanding features; EXP settings are now available.
+remains outstanding; EXP and [encounter settings](encounters.md) are now available.

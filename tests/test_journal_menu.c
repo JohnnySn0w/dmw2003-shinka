@@ -29,6 +29,9 @@ void shinka_register_journal(void);
 #define R psx_mod_read_word
 
 static int battle_rate = 3, dv_rate = 1, fixed_rate = 10, fail_save;
+static int encounter_rate = 100;
+int shinka_encounter_rate_get(void) { return encounter_rate; }
+int shinka_encounter_rate_set(int rate) { if (fail_save) return 0; encounter_rate = rate; return 1; }
 uint32_t psx_mod_alloc_guest_memory(uint32_t size, uint32_t alignment) { return 0x80400000; }
 void shinka_rates_get(int* battle, int* dv, int* fixed) { *battle=battle_rate; *dv=dv_rate; *fixed=fixed_rate; }
 int shinka_rates_set(int battle, int dv, int fixed) { if (fail_save) return 0; battle_rate=battle; dv_rate=dv; fixed_rate=fixed; return 1; }
@@ -80,17 +83,28 @@ int main(void) {
     W(menu + 0x58, 7); psx_mod_write_half(0x8004b818, 0xa000);
     shinka_journal_quick_menu(&cpu);
     CHECK(R(menu + 0xa0) == 1 && R(menu + 0x58) == 0 && R(menu + 0x10) == 0);
-    W(menu + 0xa4, 0x11300); W(menu + 0x10, 3); ram[0x4b879] = 5;
+    W(menu + 0xa4, 0x311300); W(menu + 0x10, 3); ram[0x4b879] = 5;
     psx_mod_write_half(0x8004b818, 0x20); shinka_journal_quick_menu(&cpu);
     CHECK(battle_rate == 4); CHECK(R(menu + 0x10) == 0);
-    W(menu + 0xa4, 0x11400); W(menu + 0x10, 3); W(menu + 0x58, 1); psx_mod_write_half(0x8004b818, 0x20);
+    W(menu + 0xa4, 0x311400); W(menu + 0x10, 3); W(menu + 0x58, 1); psx_mod_write_half(0x8004b818, 0x20);
     shinka_journal_quick_menu(&cpu); CHECK(dv_rate == 1 && fixed_rate == 0);
     /* Combined confirm inputs must never send the SETTINGS index to Status.
      * A persistence failure keeps the old rates and makes the error visible. */
-    W(menu + 0xa4, 0x1400); W(menu + 0x10, 3); fail_save = 1;
+    W(menu + 0xa4, 0x301400); W(menu + 0x10, 3); fail_save = 1;
     psx_mod_write_half(0x8004b818, 0xa020); shinka_journal_quick_menu(&cpu);
     CHECK(dv_rate == 1 && (R(menu + 0xa4) & 1) && R(menu + 0x10) == 0);
     fail_save = 0;
+    W(menu + 0xa4, 0x301400); W(menu + 0x10, 3); W(menu + 0x58, 2);
+    psx_mod_write_half(0x8004b818, 0x20); shinka_journal_quick_menu(&cpu);
+    CHECK(encounter_rate == 150 && battle_rate == 4 && dv_rate == 1 && R(menu + 0xa0) == 1);
+    W(menu + 0xa4, 0x401400); W(menu + 0x10, 3); fail_save = 1;
+    psx_mod_write_half(0x8004b818, 0x20);
+    shinka_journal_quick_menu(&cpu);
+    CHECK(encounter_rate == 150 && (R(menu + 0xa4) & 1));
+    fail_save = 0;
+    W(menu + 0xa4, 0x401400); W(menu + 0x10, 3); W(menu + 0x58, 3);
+    psx_mod_write_half(0x8004b818, 0x2000); shinka_journal_quick_menu(&cpu);
+    CHECK(R(menu + 0xa0) == 0 && R(menu + 0x58) == 7); /* BACK moved below encounters */
     W(menu + 0x58, 6);
     cpu.gpr[4] = 0x1000; cpu.gpr[17] = menu; cpu.gpr[31] = 0x80013334u;
     shinka_journal_transition(&cpu);

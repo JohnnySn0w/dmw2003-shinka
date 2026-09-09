@@ -3,6 +3,8 @@
 #include <stdio.h>
 extern void shinka_rates_get(int*, int*, int*);
 extern int shinka_rates_set(int, int, int);
+extern int shinka_encounter_rate_get(void);
+extern int shinka_encounter_rate_set(int);
 extern void shinka_rewards_refresh(void);
 extern void shinka_rewards_tick(void);
 extern void shinka_rewards_activate(void);
@@ -14,7 +16,8 @@ static int expanded(uint32_t p) {
 }
 
 static uint32_t rate_tag(int battle, int dv, int fixed) {
-    return (uint32_t)((battle << 8) | (dv << 12) | (fixed ? 0x10000 : 0));
+    return (uint32_t)((battle << 8) | (dv << 12) | (fixed ? 0x10000 : 0)
+        | ((shinka_encounter_rate_get() / 50 + 1) << 20));
 }
 
 uint32_t shinka_menu_slot(uint32_t p, uint32_t address) {
@@ -67,9 +70,9 @@ static uint32_t encode(const char* text) {
         unsigned char c = (unsigned char)*text++;
         if (c >= '0' && c <= '9') {
             psx_mod_write_byte(out++, c - '0' + 4);
-        } else if (c == ' ' || c == ':') {
+        } else if (c == ' ' || c == ':' || c == '%') {
             psx_mod_write_byte(out++, 1);
-            psx_mod_write_byte(out++, c == ' ' ? 1 : 7);
+            psx_mod_write_byte(out++, c == ' ' ? 1 : c == ':' ? 7 : 0x2a);
         } else {
             psx_mod_write_byte(out++, c >= 'a' && c <= 'z' ? c - 57 : c - 51);
         }
@@ -101,7 +104,9 @@ void shinka_menu_text(CPUState* cpu) {
             else if (row == 1) {
                 snprintf(value, sizeof(value), fixed ? "DV EXP: %d pts" : "DV EXP: %dx", fixed ? fixed : dv);
                 label = value;
-            } else label = row == 2 ? "BACK" : "";
+            } else if (row == 2) {
+                snprintf(value, sizeof(value), "Encounters: %d%%", shinka_encounter_rate_get()); label = value;
+            } else label = row == 3 ? "BACK" : "";
         } else label = !enabled && row >= 5 + (READ(p + 0x60) != 0) ? ""
             : labels[row + (row >= 5 && !READ(p + 0x60))];
     }
@@ -130,7 +135,7 @@ void shinka_menu_background(CPUState* cpu) {
     WRITE(panel_scratch, 16); WRITE(panel_scratch + 4, 100); WRITE(panel_scratch + 8, 104);
     psx_mod_write_byte(panel_scratch + 100, 0); /* one sprite, id zero */
     for (i = 0; i < 84; ++i) psx_mod_write_byte(panel_scratch + 16 + i, psx_mod_read_byte(textures + i));
-    rows = READ(p + 0xa0) == 1 ? 3 : (enabled ? 7 : 5) + (READ(p + 0x60) != 0);
+    rows = READ(p + 0xa0) == 1 ? 4 : (enabled ? 7 : 5) + (READ(p + 0x60) != 0);
     psx_mod_write_half(panel_scratch + 104, (uint16_t)(rows * 4));
     psx_mod_write_half(panel_scratch + 106, 0);
     psx_mod_write_half(panel_scratch + 108, 0xffff);
@@ -191,7 +196,7 @@ void shinka_journal_quick_menu(CPUState* cpu) {
         WRITE(p + 0x5c, READ(p + 0x10) == 3 ? count - 2 : count);
         return;
     }
-    WRITE(p + 0x5c, READ(p + 0xa0) == 1 && READ(p + 0x10) == 3 ? 3 : count);
+    WRITE(p + 0x5c, READ(p + 0xa0) == 1 && READ(p + 0x10) == 3 ? 4 : count);
     if (READ(p + 0x10) != 3) return;
     if (READ(p + 0xa0) > 1) { refresh_menu(p, 0, 4); return; }
     pressed = psx_mod_read_half(0x8004b818);
@@ -204,14 +209,20 @@ void shinka_journal_quick_menu(CPUState* cpu) {
         int battle, dv, fixed;
         shinka_rates_get(&battle, &dv, &fixed);
         if ((READ(p + 0xa4) & ~1u) != rate_tag(battle, dv, fixed)) {
-            refresh_menu(p, 1, row < 3 ? row : 0);
+            refresh_menu(p, 1, row < 4 ? row : 0);
             return; /* current settings remain authoritative after state load */
         }
     }
-    if ((pressed & button(14)) || (row == 2 && (pressed & button(13)))) {
+    if ((pressed & button(14)) || (row == 3 && (pressed & button(13)))) {
         WRITE(p + 0xa4, 0); refresh_menu(p, 0, count - 1);
-    } else if (row < 2 && (pressed & (button(5) | button(7) | button(13)))) {
+    } else if (row < 3 && (pressed & (button(5) | button(7) | button(13)))) {
         int battle, dv, fixed, direction = pressed & button(7) ? -1 : 1;
+        if (row == 2) {
+            int next = (shinka_encounter_rate_get() / 50 + direction + 5) % 5 * 50;
+            WRITE(p + 0xa4, !shinka_encounter_rate_set(next));
+            refresh_menu(p, 1, row);
+            return;
+        }
         shinka_rates_get(&battle, &dv, &fixed);
         if (row == 0) battle = (battle - 1 + direction + 4) % 4 + 1;
         else {

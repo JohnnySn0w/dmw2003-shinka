@@ -1,5 +1,9 @@
 # Groundwork audit — 2026-09-08
 
+This is the initial audit record. For subsequent playable-build progress, see
+[Windows baseline](windows-baseline.md); live EXP, portable lab and encounter
+controls are documented in [the expanded field menu](field-menu.md).
+
 ## Decision
 
 Target a Windows port with progressively reconstructed, readable game systems. Use a recompilation runtime as a candidate bridge, not as evidence that a full decompilation is complete. Preserve the original presentation and behavior first; introduce optional mechanics changes after a reliable baseline exists.

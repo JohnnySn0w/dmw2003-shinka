@@ -1,5 +1,6 @@
 """Enable or disable the experimental English DIGIVOLUTIONS and SETTINGS menu."""
 import argparse
+import json
 import re
 import tomllib
 from pathlib import Path
@@ -12,12 +13,14 @@ def select_journal(text, enabled):
     if original.get('format_version') != 2:
         raise ValueError('Unsupported mod-state version')
     kept = []
+    values = {}
     for chunk in re.split(r'(?=^\[\[(?:package|feature)\]\]\s*$)', text, flags=re.M):
         parsed = tomllib.loads(chunk) if chunk.strip() else {}
         if parsed.get('package', [{}])[0].get('id') == PACKAGE:
             continue
         feature = parsed.get('feature', [{}])[0]
         if feature.get('package_id') == PACKAGE and feature.get('id') == 'menu-chart':
+            values = feature.get('values', {})
             continue
         kept.append(chunk)
     result = ''.join(kept).strip() or 'format_version = 2'
@@ -30,6 +33,11 @@ package_id = "{PACKAGE}"
 id = "menu-chart"
 enabled = {'true' if enabled else 'false'}
 '''
+    if values:
+        if not isinstance(values, dict) or any(not isinstance(v, str) for v in values.values()):
+            raise ValueError('Unsupported journal option values')
+        result += '[feature.values]\n' + ''.join(
+            f'{json.dumps(k)} = {json.dumps(v)}\n' for k, v in values.items())
     def unrelated(state):
         state = dict(state)
         state['package'] = [p for p in state.get('package', []) if p.get('id') != PACKAGE]

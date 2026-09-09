@@ -29,3 +29,8 @@ multiplier = "1"
     def test_rejects_unknown_schema(self):
         with self.assertRaises(ValueError):
             select_journal('format_version = 9', True)
+
+    def test_retains_encounter_setting_when_toggling_menu(self):
+        original = select_journal('', True) + '[feature.values]\nencounter_rate = "50"\n'
+        result = select_journal(select_journal(original, False), True)
+        self.assertEqual(tomllib.loads(result)['feature'][0]['values'], {'encounter_rate': '50'})

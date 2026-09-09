@@ -32,3 +32,27 @@ extern "C" int shinka_rates_set(int battle, int dv, int fixed) {
     std::fprintf(stdout, "Shinka settings: EXP %dx, DV %dx, fixed %d\n", battle, dv, fixed);
     return 1;
 }
+
+extern "C" int shinka_encounter_rate_get(void) {
+    auto& manager = PSXRecompV4::state().manager;
+    if (!manager.feature_enabled("shinka.evolution-journal", "menu-chart")) return 100;
+    auto text = manager.feature_option_value("shinka.evolution-journal", "menu-chart", "encounter_rate");
+    return text.empty() ? 100 : std::atoi(text.c_str());
+}
+
+extern "C" int shinka_encounter_rate_set(int rate) {
+    if (rate < 0 || rate > 200 || rate % 50) return 0;
+    auto& runtime = PSXRecompV4::state();
+    auto previous = runtime.manager;
+    std::string error;
+    bool ok = runtime.manager.set_feature_option("shinka.evolution-journal", "menu-chart",
+                  "encounter_rate", std::to_string(rate), &error)
+        && PSXRecompV4::mod_runtime_commit(runtime.disc_path, &error);
+    if (!ok) {
+        runtime.manager = std::move(previous);
+        std::fprintf(stderr, "Shinka encounter settings: %s\n", error.c_str());
+        return 0;
+    }
+    std::fprintf(stdout, "Shinka settings: random encounters %d%%\n", rate);
+    return 1;
+}

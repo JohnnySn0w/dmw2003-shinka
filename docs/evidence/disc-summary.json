@@ -1,0 +1,60 @@
+{
+  "format": "MODE2/2352",
+  "size": 692146560,
+  "hashes": {
+    "sha256": "fb70dc9a995aed628cf515cabc87c7b14e5142559076ec394dfe793ec3e26a04",
+    "sha1": "457cb233349ba841e03b33d8060f8fbcadd45cb3",
+    "md5": "da76a5685b875c353343102b7587fded"
+  },
+  "matches_recomp_known_sha1": true,
+  "volume": "DMW3",
+  "root": [
+    {
+      "name": "DUMMY.;1",
+      "lba": 276901,
+      "size": 35283682,
+      "directory": false
+    },
+    {
+      "name": "SLES_039.36;1",
+      "lba": 24,
+      "size": 923648,
+      "directory": false
+    },
+    {
+      "name": "SYSTEM.CNF;1",
+      "lba": 23,
+      "size": 70,
+      "directory": false
+    }
+  ],
+  "executable": {
+    "sha256": "15f37849a81b9f00e7f20d00de7a465b663a9e86b9d08b05d32dd386be95c546",
+    "entry_pc": "0x80010e90",
+    "load_address": "0x80010000",
+    "text_size": "0xe1000",
+    "stack_base": "0x801ffff0"
+  },
+  "selected_files": {
+    "STSTATUS.PRO": {
+      "size": 100936,
+      "sha256": "892300687ec6a8d69c7c2b6c6111adffb5df3beee301e9ef919ee78c02f24e8a"
+    },
+    "STFGTREP.PRO": {
+      "size": 26104,
+      "sha256": "c2e8845fccab5f2e852c1025fac2ee4f548c6136b1a1b47e6c838ce7eb5f1ef9"
+    },
+    "MPBGM001.BIN": {
+      "size": 26880,
+      "sha256": "d55a3f10b2ef303e8bee1fed3250a95a766f4780256aebb6358470c476fe777c"
+    },
+    "MVBGM001.BIN": {
+      "size": 82676,
+      "sha256": "aad2d7abc6ea01978fcf316fcdcd53b232d0f8822f6ea6daaf5b89ff2631cc53"
+    }
+  },
+  "catalog_counts": {
+    "directories": 98,
+    "entries": 2481
+  }
+}

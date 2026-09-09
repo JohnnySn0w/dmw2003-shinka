@@ -1,5 +1,7 @@
 # Initial investigation
 
+Historical first-pass notes. The [groundwork audit](groundwork-audit.md) supersedes the open questions below about image hashing, hidden directories, and local music extraction.
+
 ## Observed in the local image
 
 - Single-track BIN/CUE image, MODE2/2352.

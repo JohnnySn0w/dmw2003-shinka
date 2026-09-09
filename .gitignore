@@ -12,6 +12,13 @@
 /extracted/
 /output/
 /scratch/
+/generated/
+/build*/
+/vendor-local/
+*.PRO
+*.STR
+*.TIM
+SLES_039.36
 
 # Emulator saves
 *.mcd

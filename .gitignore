@@ -1,0 +1,29 @@
+# Original and generated game images
+*.bin
+*.cue
+*.iso
+*.img
+*.chd
+*.pbp
+*.exe
+
+# Extracted game assets and local outputs
+/input/
+/extracted/
+/output/
+/scratch/
+
+# Emulator saves
+*.mcd
+*.mcr
+*.sav
+*.srm
+*.state
+*.savestate
+
+# Development artifacts
+__pycache__/
+*.py[cod]
+.venv/
+.DS_Store
+Thumbs.db

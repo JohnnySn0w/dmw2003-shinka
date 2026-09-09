@@ -1,6 +1,26 @@
 # Partner-selection abnormal exit: first report
 
-Status: unresolved; first observed on the Windows baseline with static boot/movie overlays. The user reached partner selection through cutscenes and dialogue and reported that effects and visuals looked correct until the failure. They were holding Tab for fast-forward as the selection screen loaded. Exact selected set/action and whether turbo is necessary to reproduce remain unknown.
+Status: reproduced and corrected for the tested transition. The user reported an exit near partner selection while holding Tab. A subsequent headless replay reproduced it without Tab input; this was not a paced windowed A/B test of turbo.
+
+## Reproduction and correction
+
+The diagnostic replay reached the same null PC with RA `0x8008312C` and SP `0x1F8003CC`, at frame 36,388. The newly enabled function trace identified `0x80083118` as the last native entry. Live RAM contained a different routine there from the compiled static-overlay implementation. The generated dispatcher validated range `0x83054..0x831E7` against CRC `0x4F8C65D8`, but the halted RAM's CRC was `0x9F669CC2`. The cached validator had accepted code that no longer matched.
+
+The stale implementation read a call target from its expected stack layout and transferred to zero. This explains the matching terminal state in both runs. Identifying the precise missed write/invalidation path remains useful upstream work; the correction does not depend on guessing that path.
+
+Shinka redirects generated static-overlay validation calls to `src/overlay_guard.c`. It computes CRC from current RAM on every call, bounds-checks all ranges, and rejects changed code so dispatch falls back to the interpreter. Upstream source and generated game code remain unchanged. Full CRC validation adds work per dispatch; cache optimization must wait for a verified invalidation contract.
+
+Validation:
+
+- The native regression test accepts known matching code, rejects a changed byte without any generation notification, accepts restored bytes, handles split ranges, and rejects invalid ranges/null memory.
+- Release runtime and test executable build; CTest regression and all three disc-tool tests pass.
+- Reloading the same pre-transition checkpoint reaches registration instead of exiting.
+- Name entry, Balanced Pack selection, account confirmation, and the 100% registered screen render and accept input.
+- Local SCPH-1001 checkpoints in `output/partner-repro-saves`: slot 4 title, slot 7 before the failing transition, slot 9 starter-pack selection. These are not distributed.
+
+This corrects the reproduced stale-overlay exit. Exploration, battles, in-game card saving, sustained performance, and windowed fast-forward still require validation.
+
+## Original failure evidence
 
 The visible-host log ends with `execution completed, PC=0x00000000`. The runtime's corresponding path identifies this as an abnormal return from top-level guest dispatch. This is evidence of a guest control-flow exit, not evidence of a Windows access violation. Do not attribute it to controller support or turbo alone without a paired reproduction.
 

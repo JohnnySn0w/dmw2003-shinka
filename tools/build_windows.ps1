@@ -51,7 +51,9 @@ try {
         $overlaySource = (Resolve-Path -LiteralPath 'output/overlays/overlays_static.c').Path
     }
     Invoke-Checked 'cmake' @('-S', '.', '-B', 'build-windows', '-G', 'Visual Studio 17 2022', '-A', 'x64', "-DPSXRECOMP_ROOT=$framework", "-DSHINKA_OVERLAY_SOURCE=$overlaySource", '-DPSX_RECOMP_UI=OFF', '-DPSX_REWIND=OFF', '-DPSX_DEBUG_TOOLS=ON', '-DPSX_PGXP_VARIANT=OFF', '-DCMAKE_BUILD_TYPE=Release')
-    Invoke-Checked 'cmake' @('--build', 'build-windows', '--config', 'Release', '--target', 'shinka', '--parallel', "$Jobs")
+    Invoke-Checked 'cmake' @('-S', '.', '-B', 'build-windows', '-DSHINKA_BUILD_TESTS=ON')
+    Invoke-Checked 'cmake' @('--build', 'build-windows', '--config', 'Release', '--target', 'shinka', 'shinka_overlay_guard_test', '--parallel', "$Jobs")
+    Invoke-Checked 'ctest' @('--test-dir', 'build-windows', '-C', 'Release', '--output-on-failure', '-R', '^overlay_guard$')
 } finally {
     Pop-Location
 }

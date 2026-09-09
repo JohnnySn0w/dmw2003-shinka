@@ -25,6 +25,19 @@ psxrecomp_add_game_runtime(shinka
     GEN_MARKER "output/recompiled/SLES_039.36_dispatch.c"
     GEN_FULL_GLOB "output/recompiled/SLES_039.36_full_*.c"
 )
+if(SHINKA_OVERLAY_SOURCE)
+    # Redirect only generated static-overlay calls; keep upstream sources intact.
+    set_property(SOURCE "${SHINKA_OVERLAY_SOURCE}" APPEND PROPERTY
+        COMPILE_DEFINITIONS psx_overlay_static_code_matches=shinka_overlay_code_matches)
+    target_sources(shinka PRIVATE src/overlay_guard.c)
+endif()
+option(SHINKA_BUILD_TESTS "Build Shinka native regression tests" ON)
+if(SHINKA_BUILD_TESTS)
+    enable_testing()
+    add_executable(shinka_overlay_guard_test tests/test_overlay_guard.c src/overlay_guard.c)
+    target_link_libraries(shinka_overlay_guard_test PRIVATE ZLIB::ZLIB)
+    add_test(NAME overlay_guard COMMAND shinka_overlay_guard_test)
+endif()
 add_custom_command(TARGET shinka POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E copy_if_different
         "${CMAKE_CURRENT_SOURCE_DIR}/game.toml" "$<TARGET_FILE_DIR:shinka>/game.toml")

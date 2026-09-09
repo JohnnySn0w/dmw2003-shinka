@@ -51,7 +51,7 @@ Supply the same optional `-RetailBios` choice as the first build. This generates
 
 ## Validation and remaining work
 
-The first user playthrough reached partner selection with apparently correct cutscenes, dialogue, and effects, then exited while Tab was held as that screen loaded. See [partner-selection exit triage](partner-selection-exit.md). This is the current progression blocker; turbo's causal role is unproven.
+The first user playthrough exited at the registration/partner-selection transition. A replay reproduced stale native-overlay execution; Shinka's live-byte guard now rejects it. The corrected build passes that checkpoint through name entry, starter-pack selection, and completed registration. See [failure evidence and correction](partner-selection-exit.md). Other progression and performance checks remain open.
 
 - Main EXE: 23 translated C shards, 1,230 dispatch entries. These counts do not measure decompilation completeness.
 - Windows Release compilation and linking succeeded with MSVC 14.44 and SDK 10.0.26100.0.

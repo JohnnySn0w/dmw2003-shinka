@@ -201,10 +201,12 @@ static void south_policy(void) {
         fresh();watching=0;W(RETURN,excluded[i]);watching=1;writes=0;
         select_icon();CHECK(writes==0);
     }
-    for(unsigned icon=45;icon<=46;++icon) {
-        fresh();watching=0;target(icon);watching=1;writes=0;
-        select_icon();CHECK(writes==0);
-    }
+    /* Jungle Grave owns the first Zanbamon entry; Phoenix Bay is a safe surface
+     * landing once its exact field has been reached naturally. */
+    fresh();watching=0;target(45);watching=1;writes=0;
+    select_icon();CHECK(writes==0);
+    fresh();watching=0;target(46);watching=1;writes=0;
+    select_icon();shinka_map_present();CHECK(R(RETURN)==0x23b);
     /* The first arrival exits into Bulk Swamp, the bridge icon's other field.
      * It can depart after completion; it does not authorize the bridge landing. */
     for(unsigned story=6;story<=7;++story) for(unsigned station=0;station<2;++station) {
@@ -249,7 +251,7 @@ int main(void) {
     cpu.gpr[31]=0x800997ec;cpu.gpr[16]=PARENT;shinka_map_frame(&cpu);CHECK(writes==0);
     /* Every exposed icon must lead to its own area according to the original map. */
     {
-        const unsigned icons[]={20,30,22,21,15,26,32,43,44};
+        const unsigned icons[]={20,30,22,21,15,26,32,43,44,46};
         for(unsigned i=0;i<sizeof(icons)/sizeof(icons[0]);++i) {
             fresh();watching=0;W(RETURN,0x200);W(MAP+0x184,icons[i]);W(MAP+0xa8+(icons[i]-1)*4,1);watching=1;
             select_icon();shinka_map_present();CHECK(R(0x8004b3fc)==R(RETURN));

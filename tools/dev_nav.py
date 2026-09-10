@@ -31,6 +31,7 @@ POINTS = {
     'south-station': (0x232, 0x15ade, 0x111cd),
     'bulk-bridge': (0x234, 0x3dc56, 0x1f77c),
     'tranquil-swamp': (0x237, 0x2d205, 0x106a6),
+    'phoenix-bay': (0x23b, 0x437f2, 0x29469),
     'pelche-oasis': (0x249, 84211, 84884),
 }
 

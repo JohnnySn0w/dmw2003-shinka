@@ -31,6 +31,7 @@ static const struct { uint32_t icon, stage, x, y; } destinations[] = {
     {32, 0x232, 0x15ade, 0x111cd}, /* South Station, outside the gondola */
     {43, 0x234, 0x3dc56, 0x1f77c}, /* Bulk Bridge */
     {44, 0x237, 0x2d205, 0x106a6}, /* Tranquil Swamp */
+    {46, 0x23b, 0x437f2, 0x29469}, /* Phoenix Bay, south-side bridge */
     {26, 0x249, 84211, 84884},   /* Pelche Oasis */
 };
 static int object(uint32_t p, uint32_t callback) {

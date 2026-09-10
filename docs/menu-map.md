@@ -21,6 +21,7 @@ The initial travel network connects these Asuka locations:
 | South Station | Walkway beside the gondola controls |
 | Bulk Swamp / Bulk Bridge | Bulk Bridge's wooden crossing |
 | Tranquil Swamp | Boardwalk near the inn |
+| Phoenix Bay | South-side bridge |
 | Pelche Oasis | Path near the waterfront |
 
 The exact arrival area must already be visited in the loaded game. One icon can
@@ -48,8 +49,10 @@ finish and the station to have been visited. Every landing also needs its own
 visit. **Finish the gondola trip** or **Visit South Station first** explains a
 missing prerequisite. This policy applies to departures as well as arrivals,
 including departure from Bulk Swamp, where the first arrival scene leaves the
-party. The gondola interior, Jungle Grave, Phoenix Bay, Suzaku and the inn/shaman
-interiors remain outside this travel network.
+party. The gondola interior, Jungle Grave, Suzaku and the inn/shaman interiors
+remain outside this travel network. Phoenix Bay is now a surface destination once
+its exact field has been visited. Jungle Grave remains excluded because its first
+entry owns the Zanbamon encounter and returns the party through the native event.
 
 Most unsupported icons currently mean that no arrival point has been validated;
 they do not imply a known story lock. The story range above is a broad scope
@@ -176,7 +179,7 @@ The fixtures validate these predicates and transitions, not every prerequisite
 in a naturally played campaign. Full lockdown/reopening coverage remains pending.
 
 The South expansion was checked with another isolated copied profile. A map trip
-through all three new landings retained the checked progression bytes. The station
+through all three first-arrival landings retained the checked progression bytes. The station
 console returned to East Station normally. Tranquil Swamp's boardwalks lead to its
 entrance island and the original Bulk Bridge transition; that transition was
 crossed in both directions. Walking from the Bulk Bridge teleport landing also
@@ -192,6 +195,13 @@ The final build restores a map savestate in Bulk Swamp, travels to Tranquil Swam
 and returns to Central Park. Pending-story and missing-station fixtures reject
 travel, with their instructions fitting the native map panel. Private captures,
 states and fixture details remain excluded from Git.
+
+Phoenix Bay was subsequently loaded from Central Park at its native south-side
+bridge coordinates and returned to Central Park with exact stage and position
+checks; reloading the copied savestate preserved the Phoenix landing. The native
+Jungle Grave entry was also exercised from a story-7 fixture: its Zanbamon scene
+returned the party to Bulk Bridge and advanced the story to 8. Jungle Grave remains
+excluded so that event-owned return stays under the original field script.
 
 ## Reference and next work
 

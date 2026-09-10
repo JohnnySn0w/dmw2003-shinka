@@ -9,9 +9,10 @@ scripted exits, temporary closures and transport unlocks. A previously visited
 area can become inaccessible later. Both departure and arrival need checks.
 
 This is an implementation scope and test plan, not a completed campaign safety
-certification. The nine-destination network now guards Seiryu's pending departure
-scene, adjusts Asuka's early arrival, and gates three South Sector stops behind
-the completed first arrival. It retains the broad story range
+certification. The ten-destination network now guards Seiryu's pending departure
+scene, adjusts Asuka's early arrival, gates three South Sector stops behind the
+completed first arrival, and admits Phoenix Bay only after its exact surface field
+has been visited. It retains the broad story range
 described in [map travel](menu-map.md). That range does not prove the remaining
 events below are safe.
 
@@ -205,16 +206,19 @@ Annotated instruction words matched the owner's original modules. SHA-256:
 | `WSTAG450.PRO` | `725061b3c988ab745c63e8e09f25995f9404f1c5ee7d43e7128be6eedc6f6e5e` |
 | `WSTAG465.PRO` | `1915774a80702694c9f5dd269ceb624c2522ab794a51d6a61686850cad8f8a5d` |
 
-[Live validation](menu-map.md) covers all three landings, station transport,
+[Live validation](menu-map.md) covers all three first-arrival landings, station transport,
 ordinary bridge/swamp transitions and a controlled `6 -> 7` arrival fixture.
 The first gondola battle and preceding errands still need a naturally earned
 checkpoint; the synthetic setup must not be mistaken for a full quest replay.
 
 This extends T03 coverage. It does not add travel past Zanbamon or into the
-Suzaku forced-return sequence. Jungle Grave, Phoenix Bay, Suzaku and the
-gondola/inn/shaman interiors remain unvalidated sources and destinations.
+Suzaku forced-return sequence. Jungle Grave remains excluded because its first
+entry owns the Zanbamon encounter and returns the party through the native event.
+Phoenix Bay is now a validated surface landing at stage `0x23b`, icon `46`, gated
+by its exact visit bit; its map round-trip was checked from an isolated story-7
+profile. The gondola, inn/shaman interiors and Suzaku remain outside the network.
 T04/T05 and the later Phoenix Bay approach still need their own predicates and
-live event checks before adding those locations. The pre-Zanbamon errands and
+live event checks before broader campaign claims. The pre-Zanbamon errands and
 ordinary route are described in [Dark_Zero's walkthrough](https://gamefaqs.gamespot.com/ps/562323-digimon-world-3/faqs/17652).
 
 ## Priorities for the existing network

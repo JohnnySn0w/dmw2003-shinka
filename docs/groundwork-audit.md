@@ -3,6 +3,7 @@
 This is the initial audit record. For subsequent playable-build progress, see
 [Windows baseline](windows-baseline.md); live EXP, portable lab and encounter
 controls are documented in [the expanded field menu](field-menu.md).
+Subsequent MIDI/sample export findings are documented in [music groundwork](music.md).
 
 ## Decision
 

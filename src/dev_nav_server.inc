@@ -42,6 +42,7 @@ static void handle_shinka_nav(int id,const char* json) {
     if (!strcmp(op,"warp")) error=shinka_nav_warp(json_get_int(json,"stage",-1),
         json_get_int(json,"x",-1),json_get_int(json,"y",-1),
         json_get_int(json,"facing",-1),expected);
+    else if (!strcmp(op,"enter")) error=shinka_nav_enter(json_get_int(json,"stage",-1),expected);
     else if (!strcmp(op,"story")) error=shinka_nav_story(json_get_int(json,"value",-1),expected);
     /* The pinned flat JSON helper matches the first quoted key string; using
      * flag_id avoids colliding with the operation's own "flag" value. */

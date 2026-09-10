@@ -26,6 +26,20 @@ static void fresh(void) {
 static void unchanged(void) { CHECK(writes==0 && !memcmp(before,ram,sizeof(ram))); }
 int main(void) {
     ShinkaNavPartner p;
+    for(unsigned source=0x23b;source<=0x23e;source+=3) {
+        unsigned destination=source==0x23b?0x23e:0x23b;
+        fresh();W(0x8004b3f8,source);writes=0;
+        CHECK(!shinka_nav_enter(destination,source));
+        CHECK(writes==2 && addresses[1]==0x8004b3fc && R(0x8004b3fc)==destination);
+        CHECK(R(0x80048d68)==0x21d && R(0x8004b370)==20);
+    }
+    fresh();CHECK(shinka_nav_enter(0x23e,0x21d));unchanged();
+    fresh();W(0x8004b3f8,0x1000);writes=0;memcpy(before,ram,sizeof(ram));
+    CHECK(shinka_nav_enter(0x23e,0x1000));unchanged();
+    fresh();W(0x8004b3f8,0x23b);writes=0;memcpy(before,ram,sizeof(ram));
+    CHECK(shinka_nav_enter(0x23b,0x23b));CHECK(shinka_nav_enter(0x23e,0x23e));unchanged();
+    W(0x8004b3fc,0x600);writes=0;memcpy(before,ram,sizeof(ram));
+    CHECK(shinka_nav_enter(0x23e,0x23b));unchanged();
     {
         ShinkaNavLab lab;
         fresh();CHECK(shinka_nav_lab(&lab));unchanged();

@@ -17,6 +17,7 @@ void shinka_nav_state(ShinkaNavState* state);
 void shinka_nav_partner(unsigned index, ShinkaNavPartner* partner);
 /* NULL means success. All validation precedes the first write. */
 const char* shinka_nav_warp(int stage, int x, int y, int facing, int expected_mode);
+const char* shinka_nav_enter(int stage, int expected_mode);
 const char* shinka_nav_story(int value, int expected_mode);
 const char* shinka_nav_flag(int flag, int value, int expected_mode);
 const char* shinka_nav_encounters(int enabled, int expected_mode);

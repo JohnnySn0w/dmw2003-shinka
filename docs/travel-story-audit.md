@@ -317,6 +317,20 @@ removal completion or item consumption. Both Jungle Grave and Suzaku stay
 excluded. Next checks are the actual event-entry geometry/native entry path,
 the item-dependent removal interaction, and each scene's downstream transition.
 
+The follow-up native-entry fixture uses `dev_nav enter` to queue the original
+field-to-field loader from Phoenix Bay (`0x23b`) into Suzaku (`0x23e`) at story
+11. It reaches the city entrance under the red-roofed gate, unlike the earlier
+coordinate restore at the central plaza. Walking northeast reaches the plaza;
+neither entry alone nor that walk established event `0x10e`. The reverse native
+connection also loaded Phoenix Bay successfully. Captures:
+`suzaku11-native-entry.png`, `suzaku11-native-ne.png` and
+`phoenix-native-return.png` in ignored `output/south-event-audit/`.
+
+This rules out treating the coordinate-restore path as the sole explanation for
+the missing scene in this fixture. The event's actual trigger and prerequisites
+still need tracing. Both commands are developer-queued transitions, not natural
+exit interactions, and do not justify opening Suzaku to player-map travel.
+
 ## Priorities for the existing network
 
 | Current field | First check before broader campaign claims |

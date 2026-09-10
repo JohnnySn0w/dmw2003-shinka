@@ -236,6 +236,7 @@ def main(argv=None):
     warp = sub.add_parser('warp')
     warp.add_argument('name')
     raw = sub.add_parser('warp-raw')
+    sub.add_parser('enter', help='Queue a traced native field connection; no coordinate restore').add_argument('stage', type=number)
     for key in ('stage', 'x', 'y', 'facing'):
         raw.add_argument(key, type=number)
     press = sub.add_parser('press')
@@ -304,7 +305,7 @@ def main(argv=None):
         elif cmd in ('party', 'lab'):
             result = nav.nav(cmd)
         else:
-            fields = {key: getattr(args, key) for key in ('value', 'flag', 'index') if hasattr(args, key)}
+            fields = {key: getattr(args, key) for key in ('value', 'flag', 'index', 'stage') if hasattr(args, key)}
             if cmd == 'encounters':
                 fields['enabled'] = int(args.mode == 'next')
             nav.mutate(cmd, **fields)

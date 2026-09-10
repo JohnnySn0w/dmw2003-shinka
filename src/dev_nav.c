@@ -82,6 +82,17 @@ const char* shinka_nav_warp(int stage,int x,int y,int facing,int expected_mode) 
     W(RETURN+12,(uint32_t)facing);W(MODE+12,0);W(MODE+4,(uint32_t)stage);
     return NULL;
 }
+const char* shinka_nav_enter(int stage,int expected_mode) {
+    const char* error=ready(expected_mode,0);
+    if (error) return error;
+    /* Only the reciprocal exits traced in WSTAG485/500 are admitted here.
+     * Unlike a map restore, native field entry resolves its own position. */
+    if (!((expected_mode==0x23b && stage==0x23e)
+        || (expected_mode==0x23e && stage==0x23b)))
+        return "Unsupported native field connection";
+    W(MODE+12,0);W(MODE+4,(uint32_t)stage);
+    return NULL;
+}
 const char* shinka_nav_story(int value,int expected_mode) {
     const char* error=ready(expected_mode,0);
     if (error) return error;

@@ -92,6 +92,21 @@ player on arrival can therefore require a different checkpoint or landing.
 
 ## Progression and combat fixtures
 
+For native entry tests, `python tools/dev_nav.py enter 0x23e` queues the original
+field-to-field loader from Phoenix Bay into Suzaku. `enter 0x23b` is supported
+from Suzaku in the reverse direction. These are the only admitted connections,
+traced from WSTAG485 offset `0x162c` and WSTAG500 offset `0x1bf0`.
+The command requires the current field and mode owner to remain valid, rejects
+an already queued transition, and writes the complete queue word atomically.
+
+Unlike `warp`, `enter` leaves the field-return coordinates alone and lets the
+native loader choose its entrance. It returns a queue-time snapshot, **not an
+arrival or scene-completion assertion**. Inspect `where` and a screenshot after
+loading; the cached return position can still describe the old field until a
+normal menu refresh. These developer transitions bypass walking to and using
+the exit and do not certify the exit's trigger conditions or quest sequence.
+Use a copied fixture profile. Player-map travel permissions are unchanged.
+
 ```powershell
 python tools/dev_nav.py save 8
 python tools/dev_nav.py story 6

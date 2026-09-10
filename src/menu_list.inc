@@ -7,6 +7,7 @@ extern int shinka_encounter_rate_get(void);
 extern int shinka_encounter_rate_set(int);
 extern int shinka_music_palette_get(void);
 extern int shinka_music_palette_set(int);
+extern int shinka_music_available(void);
 extern void shinka_rewards_refresh(void);
 extern void shinka_rewards_tick(void);
 extern void shinka_rewards_activate(void);
@@ -93,7 +94,7 @@ void shinka_menu_text(CPUState* cpu) {
     if (!expanded(p)) return;
     if (cpu->gpr[31] == 0x8001288c) {
         label = READ(p + 0xa4) & 1 ? "Settings save failed" : READ(p + 0xa0) == 1
-            ? (shinka_music_palette_get() ? "Alt audio playback pending" : "SETTINGS: Left Right") : READ(MODE) == STATUS
+            ? (shinka_music_palette_get() && !shinka_music_available() ? "Music pack missing" : "SETTINGS: Left Right") : READ(MODE) == STATUS
             ? "Triangle: Close Status" : "Triangle: Close Menu";
     } else if (cpu->gpr[31] == 0x80012938) {
         row = READ(p + 0x18);

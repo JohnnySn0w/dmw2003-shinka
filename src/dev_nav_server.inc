@@ -1,10 +1,20 @@
 /* Included in a generated copy of the pinned debug server. */
 #include "dev_nav.h"
+#include "music_live.h"
+extern int shinka_music_palette_get(void);
+extern int shinka_music_palette_set(int palette);
 static void handle_shinka_nav(int id,const char* json) {
     char op[32];
     const char* error=NULL;
     int expected=json_get_int(json,"expected_mode",-1);
     if (!json_get_str(json,"op",op,sizeof(op))) { send_err(id,"Missing op");return; }
+    if (!strcmp(op,"music")) {
+        int palette = json_get_int(json,"palette",-1);
+        if (palette != -1 && !shinka_music_palette_set(palette)) { send_err(id,"Invalid or unsaved palette");return; }
+        send_fmt("{\"id\":%d,\"ok\":true,\"palette\":%d,\"matched_notes\":%u,\"status\":\"%s\"}",
+            id,shinka_music_palette_get(),shinka_music_matched_voices(),shinka_music_status());
+        return;
+    }
     if (!strcmp(op,"lab")) {
         ShinkaNavLab s;
         error=shinka_nav_lab(&s);

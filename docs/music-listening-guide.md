@@ -16,8 +16,10 @@ is whether this feels welcoming and recognizably digital, or too much like a lou
 
 These audio links are local build outputs and will not work on a fresh clone.
 Only Asuka City's three arrangements are authored so far. The other rows describe
-future auditions, not audio already rendered. Alternate in-game playback is still
-pending. See [rendering instructions](music-palettes.md).
+future offline auditions, not audio already rendered. A separate
+[live instrument pack](music-live.md) now covers 42 banks through SETTINGS,
+using provisional sample-level arrangements you can judge in the game. These
+are not identical to the offline previews. See [rendering instructions](music-palettes.md).
 
 ## Reading the labels
 

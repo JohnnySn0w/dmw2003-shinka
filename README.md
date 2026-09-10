@@ -43,9 +43,10 @@ preferred **DS-inspired hybrid** of samples and synth accents.
 The [per-track listening guide](docs/music-listening-guide.md) identifies 41
 sequences with scene context and arrangement questions. The current BGM001
 auditions are **Asuka City**; other track arrangements are still pending.
-Runtime music replacement remains pending.
-SETTINGS now saves a **Soundtrack** preference: Original, DS, Sampled, or Chip.
-Alternate selections are labeled as playback pending and do not yet change live audio.
+[Live soundtrack switching](docs/music-live.md) now uses that SETTINGS preference:
+**Original, DS, Sampled, or Chip** changes music instruments mid-song. The local
+pack covers 42 music banks with provisional sample-level arrangements; effects,
+ambience and unidentified banks keep their original audio.
 
 ## Planned work
 

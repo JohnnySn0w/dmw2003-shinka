@@ -57,8 +57,8 @@ extern "C" int shinka_encounter_rate_set(int rate) {
     return 1;
 }
 
-/* A saved preference until the alternate music backends are integrated.
- * 0 original, 1 DS, 2 sampled, 3 chip. Never imply an audio switch here. */
+/* Live music palette, sampled once per SPU render block.
+ * 0 original, 1 DS, 2 sampled, 3 chip. */
 extern "C" int shinka_music_palette_get(void) {
     auto& manager = PSXRecompV4::state().manager;
     if (!manager.feature_enabled("shinka.evolution-journal", "menu-chart")) return 0;
@@ -79,6 +79,6 @@ extern "C" int shinka_music_palette_set(int palette) {
         std::fprintf(stderr, "Shinka soundtrack preference: %s\n", error.c_str());
         return 0;
     }
-    std::fprintf(stdout, "Shinka soundtrack preference saved: %d (alternate playback pending)\n", palette);
+    std::fprintf(stdout, "Shinka soundtrack switched: %d\n", palette);
     return 1;
 }

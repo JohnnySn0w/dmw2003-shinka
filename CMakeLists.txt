@@ -44,7 +44,7 @@ if(_main_position EQUAL -1)
 endif()
 # Explicit registration survives MSVC's removal of unused C CRT constructors.
 string(REPLACE "${_main_entry}"
-    "extern \"C\" void shinka_register_journal(void);\n${_main_entry}\n    shinka_register_journal();"
+    "extern \"C\" void shinka_register_journal(void);\nextern \"C\" void shinka_music_init(const char*);\n${_main_entry}\n    shinka_music_init(argv[0]);\n    shinka_register_journal();"
     _frontend_text "${_frontend_text}")
 file(MAKE_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/shinka-runtime")
 file(CONFIGURE OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/shinka-runtime/main.cpp"
@@ -87,6 +87,7 @@ if(SHINKA_BUILD_TESTS)
     target_include_directories(shinka_dev_nav_test PRIVATE src)
     add_test(NAME dev_nav COMMAND shinka_dev_nav_test)
 endif()
+include("${CMAKE_CURRENT_SOURCE_DIR}/tools/music_live.cmake")
 add_custom_command(TARGET shinka POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E make_directory "$<TARGET_FILE_DIR:shinka>/mods/packages/shinka.evolution-journal/0.1.0"
     COMMAND ${CMAKE_COMMAND} -E copy_if_different

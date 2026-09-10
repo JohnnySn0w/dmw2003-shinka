@@ -34,6 +34,7 @@ static int battle_rate = 3, dv_rate = 1, fixed_rate = 10, fail_save;
 static int encounter_rate = 100;
 static int music_palette;
 int shinka_music_palette_get(void) { return music_palette; }
+int shinka_music_available(void) { return 1; }
 int shinka_music_palette_set(int palette) { if (fail_save) return 0; music_palette = palette; return 1; }
 int shinka_encounter_rate_get(void) { return encounter_rate; }
 int shinka_encounter_rate_set(int rate) { if (fail_save) return 0; encounter_rate = rate; return 1; }

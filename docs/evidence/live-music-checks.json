@@ -1,0 +1,39 @@
+{
+  "date": "2026-09-10",
+  "feature": "Live instrument switching from SETTINGS",
+  "runtime": "Windows x64 Release, headless diagnostic captures, SCPH-1001 backend",
+  "music_banks": 42,
+  "sample_routes": 669,
+  "pack_bytes": 180193124,
+  "verified": [
+    "Original, DS, Sampled and Chip all produced nonzero SPU audio during a running field song",
+    "Left/Right on the in-game Soundtrack row changed the persisted and active palette",
+    "Unidentified environmental bank voices remained on original audio",
+    "Area transition from mode 0x202 to Central Park 0x21d retained music matching",
+    "A random encounter entered battle mode 0x600 with replacement music active",
+    "The final build loaded a copied battle checkpoint successfully and re-identified active music voices",
+    "All four palettes produced nonzero captured audio after the battle checkpoint load",
+    "Attack/confirmation inputs completed the encounter and returned to Central Park with Sampled selected",
+    "All eight native tests and 70 Python tests passed"
+  ],
+  "final_battle_one_second_captures": [
+    {"palette": "DS", "peak": 0.525848388671875, "rms": 0.11365265207874628, "clipped_samples": 0},
+    {"palette": "Sampled", "peak": 0.634613037109375, "rms": 0.1192416544394555, "clipped_samples": 0},
+    {"palette": "Chip", "peak": 0.822540283203125, "rms": 0.21758008816873456, "clipped_samples": 0},
+    {"palette": "Original", "peak": 0.826904296875, "rms": 0.1659432725014454, "clipped_samples": 0}
+  ],
+  "limits": [
+    "Captures are sequential song segments, not loudness-matched comparisons at the same musical position",
+    "Headless SPU captures do not verify the physical audio device or subjective musical quality",
+    "Only selected scenes were exercised; generating 42 banks is not full campaign listening coverage",
+    "Alternate sample phases restart on a savestate load; original song timing is retained",
+    "The live sample-level palettes differ from the earlier offline per-part arrangements"
+  ],
+  "local_artifacts": [
+    "output/music-live-01/live-switch-check.json",
+    "output/music-live-01/menu-live-ds.png",
+    "output/music-live-01/final-battle-switch.json",
+    "output/music-live-01/return-to-field.json",
+    "output/music-live-01/music-live.json"
+  ]
+}

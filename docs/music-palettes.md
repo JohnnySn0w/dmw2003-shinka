@@ -54,8 +54,9 @@ The two earlier offline BGM001 previews use the same original note timeline:
   at most 24 simultaneous voices, with deterministic voice stealing.
 
 All three are creative arrangement prototypes. The in-game SETTINGS menu now
-saves a Soundtrack preference among Original, DS, Sampled, and Chip; alternate
-live playback remains pending and is explicitly labeled in the menu. The voice
+[switches live music instruments](music-live.md) among Original, DS, Sampled,
+and Chip. The live sample-level palettes preserve the game's sequencing and
+are distinct from these offline per-part arrangements. The voice
 assignments are provisional; they do not establish the original instruments'
 identities. BGM001's sequence now matches the community reference labeled
 **Asuka City**. The [per-track listening guide](music-listening-guide.md) supplies

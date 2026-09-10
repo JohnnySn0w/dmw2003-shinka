@@ -96,10 +96,11 @@ the same independent Mido audit. Eleven substantial sequences match community
 track labels; the title-bank sequence remains unidentified. COMMON contains
 multiple bank/score entries and is not supported by the single-pair exporter.
 
-Next: refine the [DS-inspired palette](music-palettes.md), verify the labeled
-scenes in-game, and resolve controller/loop behavior before adding runtime music
-selection, transitions, and settings. Original-instrument tuning remains a
-separate fidelity task.
+The [live instrument palettes](music-live.md) now run beneath the game's original
+sequencer, preserving its controller and loop handling. Next: refine their
+instrument choices and verify scene reuse. The separate offline MIDI renderer
+still needs controller/loop interpretation; original-instrument export tuning
+remains a separate fidelity task.
 
 Format references: the author-maintained reverse-engineering documentation for
 [VAB sample banks](https://psx-spx.consoledev.net/cdromfileformats/#cdrom-file-audio-sample-sets-vab-and-vhvb-sony),

@@ -41,6 +41,8 @@ successfully. [Offline soundtrack auditions](docs/music-palettes.md) render
 BGM001 with CC0 sampled instruments, a 24-voice oscillator-chip palette, or the
 preferred **DS-inspired hybrid** of samples and synth accents.
 Runtime music replacement remains pending.
+SETTINGS now saves a **Soundtrack** preference: Original, DS, Sampled, or Chip.
+Alternate selections are labeled as playback pending and do not yet change live audio.
 
 ## Planned work
 

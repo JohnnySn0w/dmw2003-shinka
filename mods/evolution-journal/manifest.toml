@@ -25,6 +25,16 @@ max = 200
 step = 50
 default = 100
 
+[[option]]
+feature = "menu-chart"
+id = "soundtrack"
+label = "Soundtrack preference (alternate playback pending)"
+type = "integer"
+min = 0
+max = 3
+step = 1
+default = 0
+
 [[plugin]]
 feature = "menu-chart"
 id = "shinka.evolution-journal"

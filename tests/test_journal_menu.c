@@ -32,6 +32,9 @@ void shinka_chart_selection_reset(void) {}
 
 static int battle_rate = 3, dv_rate = 1, fixed_rate = 10, fail_save;
 static int encounter_rate = 100;
+static int music_palette;
+int shinka_music_palette_get(void) { return music_palette; }
+int shinka_music_palette_set(int palette) { if (fail_save) return 0; music_palette = palette; return 1; }
 int shinka_encounter_rate_get(void) { return encounter_rate; }
 int shinka_encounter_rate_set(int rate) { if (fail_save) return 0; encounter_rate = rate; return 1; }
 uint32_t psx_mod_alloc_guest_memory(uint32_t size, uint32_t alignment) { return 0x80400000; }
@@ -104,9 +107,35 @@ int main(void) {
     shinka_journal_quick_menu(&cpu);
     CHECK(encounter_rate == 150 && (R(menu + 0xa4) & 1));
     fail_save = 0;
-    W(menu + 0xa4, 0x401400); W(menu + 0x10, 3); W(menu + 0x58, 3);
+    W(menu + 0xa4, 0x401400); W(menu + 0x10, 3); W(menu + 0x58, 4);
     psx_mod_write_half(0x8004b818, 0x2000); shinka_journal_quick_menu(&cpu);
-    CHECK(R(menu + 0xa0) == 0 && R(menu + 0x58) == 7); /* BACK moved below encounters */
+    CHECK(R(menu + 0xa0) == 0 && R(menu + 0x58) == 7); /* BACK below soundtrack */
+    /* All three alternates and Original survive cycling in both menu roots.
+     * Persistence failure and old savestate tags retain the current preference. */
+    for (unsigned mode = 0; mode < 2; ++mode) {
+        W(0x8004b3f8, mode ? 0x1000 : 0x21d);
+        music_palette = 0; W(menu + 0xa0, 1); W(menu + 0x58, 3);
+        for (unsigned i = 0; i < 4; ++i) {
+            W(menu + 0xa4, 0x401400 | (i << 24)); W(menu + 0x10, 3);
+            psx_mod_write_half(0x8004b818, 0x2000); shinka_journal_quick_menu(&cpu);
+            CHECK(music_palette == (i + 1) % 4 && R(menu + 0xa0) == 1 && R(menu + 0x58) == 3);
+        }
+        ram[0x4b87b] = 7; /* configured Left */
+        W(menu + 0xa4, 0x401400); W(menu + 0x10, 3);
+        psx_mod_write_half(0x8004b818, 0x80); shinka_journal_quick_menu(&cpu);
+        CHECK(music_palette == 3);
+        W(menu + 0xa4, 0x3401400); W(menu + 0x10, 3); fail_save = 1;
+        psx_mod_write_half(0x8004b818, 0x20); shinka_journal_quick_menu(&cpu);
+        CHECK(music_palette == 3 && (R(menu + 0xa4) & 1)); fail_save = 0;
+        W(menu + 0xa4, 0x401400); W(menu + 0x10, 3); /* stale savestate tag */
+        psx_mod_write_half(0x8004b818, 0x20); shinka_journal_quick_menu(&cpu);
+        CHECK(music_palette == 3 && R(menu + 0x10) == 0 && R(menu + 0x58) == 3);
+    }
+    music_palette = 0; W(menu + 0xa0, 1); W(menu + 0x10, 3);
+    W(menu + 0x5c, 4); W(menu + 0x58, 3); W(menu + 0xa4, 0x401400);
+    psx_mod_write_half(0x8004b818, 0x2000); shinka_journal_quick_menu(&cpu);
+    CHECK(music_palette == 0 && R(menu + 0x58) == 4 && R(menu + 0x10) == 0);
+    W(menu + 0xa0, 0); W(0x8004b3f8, 0x21d);
     W(menu + 0x58, 6);
     cpu.gpr[4] = 0x1000; cpu.gpr[17] = menu; cpu.gpr[31] = 0x80013334u;
     shinka_journal_transition(&cpu);

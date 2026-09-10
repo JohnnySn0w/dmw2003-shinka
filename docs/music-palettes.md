@@ -53,7 +53,9 @@ The two earlier offline BGM001 previews use the same original note timeline:
   waveform table, synthesized pitched percussion, and noise percussion. It uses
   at most 24 simultaneous voices, with deterministic voice stealing.
 
-All three are creative arrangement prototypes, not menu options yet. The voice
+All three are creative arrangement prototypes. The in-game SETTINGS menu now
+saves a Soundtrack preference among Original, DS, Sampled, and Chip; alternate
+live playback remains pending and is explicitly labeled in the menu. The voice
 assignments are provisional; they do not establish the original instruments'
 identities. Song titles and scene associations remain unmapped. Audition before
 expanding the profile to other banks.
@@ -179,4 +181,4 @@ comparison modes are dry; the DS mode adds the mix treatment described above.
 The previews establish working render paths, timing, and output bounds. They
 still need listening feedback on instrument choices and balance. Runtime music
 selection, track identification, transitions, loop timing, and separation from
-sound effects remain follow-up work before adding soundtrack settings.
+sound effects remain follow-up work before the saved preference can drive live audio.

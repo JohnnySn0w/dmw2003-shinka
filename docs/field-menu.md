@@ -17,11 +17,13 @@ Select one with the D-pad and press X for training hints; X closes the details.
 Required levels and stat values remain hidden. Unlocked forms keep their original
 descriptions. See the [discovery and hint rules](evolution-journal.md).
 
-SETTINGS has four rows:
+SETTINGS has five rows:
 
 - **EXP:** 1x, 2x, 3x, 4x normal battle EXP, before participation splitting.
 - **DV EXP:** 1x, 2x, 3x, 4x final DV EXP, or fixed 10 points per participating form.
 - **Encounters:** 0%, 50%, 100%, 150%, 200% random encounter frequency; default 100%.
+- **Soundtrack:** Original, DS, Sampled, Chip. Saves the preferred palette;
+  alternate in-game playback is pending. All three variations remain available.
 - **BACK:** return to the field menu. Triangle also returns.
 
 Left/right cycle a value; confirm also advances it. Each successful change is
@@ -32,6 +34,13 @@ original entry path. See [encounter behavior and validation](encounters.md).
 The screen reports a save failure and retains the previous settings if validation
 or persistence fails. The [initial map travel network](menu-map.md) supports X on
 eligible visited icons, with availability hints in the original name panel.
+
+The Soundtrack row is currently a **saved preference only**. Selecting an alternate
+shows `Alt audio playback pending`; it does not switch live audio. Original music
+continues playing until the replacement backends are integrated. The
+[three offline auditions](music-palettes.md) remain usable. Original is the default
+stored value; DS is the preferred audition direction. This row selects curated
+palettes, not arbitrary `.sf2` files.
 
 ## Implementation
 
@@ -49,7 +58,7 @@ savestates. The original text setters allocate and copy each encoded label.
 The background renderer receives a small dynamically constructed sprite
 descriptor. It copies six tile definitions from the loaded game resource and
 adds whole 14-pixel rows between the original top and bottom tiles. Borders and
-horizontal separators retain their original pixels. SETTINGS uses four rows.
+horizontal separators retain their original pixels. SETTINGS uses five rows.
 Transient text and sprite descriptors use the runtime's enhancement memory;
 they are rebuilt when a restored state lacks them.
 
@@ -68,7 +77,7 @@ the root directly and highlight DIGIVOLUTIONS; see the [lab integration notes](e
 copies of the locally generated CPS code. The original output and pinned
 framework checkout are untouched. CMake similarly builds a copy of the pinned
 mod runtime with `src/menu_settings_bridge.inc`, exposing only the validated
-EXP and encounter options to the emulator thread. The normal launcher/CLI state remains the
+EXP, encounter, and soundtrack-preference options to the emulator thread. The normal launcher/CLI state remains the
 source of truth; no second settings file is introduced.
 
 The committed disc-read plan handles future loads. `src/menu_exp.c` also
@@ -86,6 +95,9 @@ and remain ignored by Git.
 Older savestates with a menu already open retain the old layout until it is
 closed and reopened. Newly created menus use the expanded allocation. Restoring
 a state inside SETTINGS refreshes its labels to the current persisted rates.
+Restoring an older four-row SETTINGS page rebuilds the labels and moves an old
+BACK selection from row 3 to row 4 before accepting input. Soundtrack preference
+changes are included in the refresh tag, so savestates do not override them.
 Loading an expanded-menu state with the feature disabled retains safe child
 addressing and teardown while hiding the added actions.
 
@@ -100,3 +112,7 @@ checks also cover allocation in both roots, full-screen chart routing after
 accepted confirmation, and ordinary cancel transitions. Save-specific test
 notes and captures remain local. Other languages, wider campaign progression
 and physical controller devices have not received equivalent coverage.
+
+Soundtrack-row native checks cover all four values in both roots, forward/backward
+wrapping, failed persistence, stale savestate tags, and the older BACK-row migration.
+The configuration test verifies that toggling the menu preserves the saved palette.

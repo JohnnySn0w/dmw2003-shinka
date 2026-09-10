@@ -18,7 +18,7 @@ uint8_t psx_mod_read_byte(uint32_t a) { return *ptr(a); }
 uint16_t psx_mod_read_half(uint32_t a) { uint16_t v; memcpy(&v, ptr(a), 2); return v; }
 uint32_t psx_mod_read_word(uint32_t a) { uint32_t v; memcpy(&v, ptr(a), 4); return v; }
 static void writing(uint32_t a) {
-    if (watch) CHECK((a >= panel + 0xd0 && a < panel + 0x210) || a == panel + 0xcc
+    if (watch) CHECK((a >= panel + 0xd0 && a < panel + 0x210) || a == panel + 0xcc || a == panel + 0xc0
         || a == panel + 0x290 || a == panel + 0x294 || (a >= 0x80400000 && a < 0x80400200));
     ++writes;
 }
@@ -32,6 +32,7 @@ void shinka_chart_frame(CPUState*);
 void shinka_chart_text(CPUState*);
 void shinka_chart_resource(CPUState*);
 void shinka_chart_sprite(CPUState*);
+void shinka_chart_selection_reset(void);
 #define W psx_mod_write_word
 #define H psx_mod_write_half
 #define R psx_mod_read_word
@@ -57,7 +58,58 @@ static void decode(uint32_t p, char* out) {
     *out = 0;
 }
 
+static void chart_place_tests(void) {
+    CPUState cpu = {0};
+    uint32_t choices[8];
+    shinka_chart_selection_reset();
+    for (unsigned rookie = 0; rookie < 8; ++rookie) {
+        fixture(rookie); W(panel + 0xb8, 44);
+        for (unsigned i = 0; i < 44; ++i) H(panel + 0x60 + i * 2, evolution_ids[i + 8]);
+        shinka_chart_rebuild(panel);
+        unsigned page = 1 + rookie % 3, cell;
+        for (cell = 19; cell > 0 && !R(panel + 0xd0 + page * 80 + cell * 4); --cell) {}
+        choices[rookie] = R(panel + 0xd0 + page * 80 + cell * 4);
+        CHECK(choices[rookie] && choices[rookie] != 0xffffffffu);
+        W(panel + 0xc0, page); W(panel + 0x290, cell % 5); W(panel + 0x294, cell / 5);
+        cpu.gpr[29] = 0x1f8002d4; W(cpu.gpr[29] + 0xe0, panel);
+        cpu.gpr[31] = 0x800836d4; watch = 1; shinka_chart_frame(&cpu);
+    }
+    for (unsigned rookie = 0; rookie < 8; ++rookie) {
+        fixture(rookie); W(panel + 0xb8, 44);
+        for (unsigned i = 0; i < 44; ++i) H(panel + 0x60 + i * 2, evolution_ids[i + 8]);
+        /* A fresh chart's first draw must not replace the remembered place. */
+        W(panel + 0xc, 0); cpu.gpr[31] = 0x800836d4;
+        W(cpu.gpr[29] + 0xe0, panel); watch = 1; shinka_chart_frame(&cpu);
+        cpu.gpr[20] = panel; cpu.gpr[31] = 0x800846cc; shinka_chart_text(&cpu);
+        unsigned page = R(panel + 0xc0), row = R(panel + 0x294), col = R(panel + 0x290);
+        CHECK(page == 1 + rookie % 3);
+        CHECK(R(panel + 0xd0 + page * 80 + row * 20 + col * 4) == choices[rookie]);
+        CHECK(R(panel + 0xcc) > row);
+    }
+    /* Row compaction may move the form; restore identity rather than a cell. */
+    fixture(7); W(panel + 0xb8, 1); H(panel + 0x60, (uint16_t)choices[7]);
+    cpu.gpr[31] = 0x800846cc; watch = 1; shinka_chart_text(&cpu);
+    CHECK(R(panel + 0xc0) == 2);
+    CHECK(R(panel + 0xd0 + 160 + R(panel + 0x294) * 20 + R(panel + 0x290) * 4) == choices[7]);
+    /* Unknown forms cannot be revealed by an old place; physical labs and
+     * unsupported layouts cannot receive a portable chart bookmark. */
+    for (unsigned rejection = 0; rejection < 4; ++rejection) {
+        fixture(7);
+        if (rejection != 0) {
+            W(panel + 0xb8, 44);
+            for (unsigned i = 0; i < 44; ++i) H(panel + 0x60 + i * 2, evolution_ids[i + 8]);
+        }
+        if (rejection == 1) W(0x8004b3f8, 0xd00);
+        if (rejection == 2) H(0x8008f76a + 7 * 192, 0xdead);
+        if (rejection == 3) shinka_chart_selection_reset();
+        shinka_chart_rebuild(panel); cpu.gpr[31] = 0x800846cc;
+        watch = 1; shinka_chart_text(&cpu); CHECK(R(panel + 0xc0) == 0);
+    }
+    shinka_chart_selection_reset();
+}
+
 int main(void) {
+    chart_place_tests();
     CPUState cpu = {0};
     char text[512];
     for (unsigned rookie = 0; rookie < 8; ++rookie) {
@@ -96,6 +148,7 @@ int main(void) {
         psx_mod_write_byte(string + i, (uint8_t)(c >= 'a' ? c - 57 : c - 51));
     }
     cpu.gpr[20] = panel; cpu.gpr[31] = 0x800846cc; cpu.gpr[5] = names;
+    shinka_chart_selection_reset(); /* These text tests start without a bookmark. */
     watch = 1; shinka_chart_text(&cpu);
     /* Preserve the stock title's text substitution opcode and slot. */
     CHECK(psx_mod_read_byte(cpu.gpr[5]) == 2 && psx_mod_read_byte(cpu.gpr[5] + 1) == 5

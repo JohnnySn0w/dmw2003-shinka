@@ -26,6 +26,7 @@ void shinka_menu_allocate(CPUState *cpu);
 void shinka_menu_task_ready(CPUState *cpu);
 void shinka_register_journal(void);
 void shinka_lab_selection_reset(void);
+void shinka_chart_selection_reset(void) {}
 #define W psx_mod_write_word
 #define R psx_mod_read_word
 

@@ -21,6 +21,15 @@ partner is no longer present, the native initial selection is retained. The
 physical lab remains unchanged. Savestate loading clears this session preference
 so the loaded menu's own selection takes priority; it is not a memory-card option.
 
+The portable chart also remembers its last selected form and page separately
+for each rookie during the session. Reopening the chart returns to that branch,
+including after leaving the lab interface. It resolves the form in the current
+visible chart, so row rearrangements do not select a different form and an old
+bookmark cannot reveal a hidden node. If the form is no longer visible on that
+page, the chart keeps its normal initial selection. Physical-lab charts retain
+their original behavior. Loading a savestate clears these bookmarks, allowing
+the loaded chart's own cursor and page to take priority.
+
 Hints come from that rookie's own requirement table. A form can have different
 requirements for different partners; a global hint attached only to the final
 form would be misleading.
@@ -202,3 +211,29 @@ chooser screenshot verified that both cursor and summary panel showed Patamon.
 Loading the original physical-lab checkpoint restored slot 0.
 Party reorder/removal and unsupported-overlay cases currently have native
 regression coverage; those cases still need broader live party testing.
+
+### Chart position retention
+
+The renderer hook at return address `0x800836d4` records a valid selection only
+in the portable chart's normal input state (lifecycle 1, phase 3). Initial
+draws, page animations and teardown do not overwrite a bookmark. The initial
+title-text hook at `0x800846cc` restores the form before the native page-number
+widget is populated. Restoration searches the newly rebuilt display cache on
+the remembered page and updates only page, row count and cursor coordinates.
+The existing savestate/activation selection reset also clears chart bookmarks.
+
+Native tests cover independent bookmarks for all eight rookies across pages
+2–4, initial draws, missing/hidden selections, unsupported layouts, physical
+labs and reset behavior. Ownership records remain outside the write allowlist.
+The longest two-prerequisite hint was visually checked using a display-cache
+fixture; both names and training directions fit the original panel. That fixture
+changed only the chart's known-form cache, not the partner's owned forms.
+
+Live checks in the copied jungle-travel profile retained Patamon's selected
+branch after chart reopening, switching to Kumamon and back, and a full exit to
+the menu root followed by DIGIVOLUTIONS reentry. A chart savestate was saved,
+the cursor moved, and the state loaded: the saved selection took priority.
+Guilmon's existing eight known forms supplied a later-page check without any
+ownership edits: page 2, column 2, row 3 reopened on the same form, with **2/4**
+shown in the native page widget. Pages 3–4 have native regression coverage;
+they were not represented by that party's naturally known forms.

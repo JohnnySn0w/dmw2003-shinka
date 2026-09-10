@@ -15,7 +15,9 @@
 static int enabled;
 static uint32_t lab_selection_root, lab_selection_menu;
 static int lab_selected_rookie = -1, lab_choosing;
+extern void shinka_chart_selection_reset(void);
 void shinka_lab_selection_reset(void) {
+    shinka_chart_selection_reset();
     lab_selected_rookie = -1; lab_choosing = 0;
     lab_selection_root = lab_selection_menu = 0;
 }

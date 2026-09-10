@@ -12,6 +12,10 @@ An experimental English menu adds **DIGIVOLUTIONS** and **SETTINGS** as selectab
 
 See [Windows build, launch, and overlay-capture instructions](docs/windows-baseline.md) for the runnable baseline and current validation limits.
 
+The portable evolution chart remembers your last branch separately for each
+partner during the session. Loading a savestate preserves that state's own
+chart selection instead of applying a previous session bookmark.
+
 The original map now offers **X: Travel** between eleven visited Asuka-server locations:
 Asuka City bridge, Central Park, Wire Forest Entrance, Wire Forest, Seiryu City,
 South Station, Bulk Bridge, Tranquil Swamp, Phoenix Bay, Suzaku City and Pelche Oasis.

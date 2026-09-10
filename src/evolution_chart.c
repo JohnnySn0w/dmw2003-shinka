@@ -44,6 +44,20 @@ static int available(void) {
     return shinka_journal_enabled() && R(0x8005cca8) == 2;
 }
 
+static struct { uint32_t id, page; } chart_places[8];
+
+void shinka_chart_selection_reset(void) {
+    memset(chart_places, 0, sizeof(chart_places));
+}
+
+static int layout_matches(uint32_t p) {
+    unsigned rookie = R(p + 0xbc), row, col;
+    for (row = 0; row < 16; ++row) for (col = 0; col < 5; ++col)
+        if (H(0x8008f76a + rookie * 192 + row * 12 + col * 2)
+            != evolution_layout[rookie][row][col]) return 0;
+    return 1;
+}
+
 static uint32_t selected(uint32_t p) {
     unsigned page = R(p + 0xc0), row = R(p + 0x294), col = R(p + 0x290);
     return row < 4 && col < 5 ? R(p + 0xd0 + page * 80 + row * 20 + col * 4) : 0;
@@ -65,11 +79,8 @@ void shinka_chart_rebuild(uint32_t p) {
     uint32_t matrix[80] = {0}, counts[4] = {0}, old_selection;
     unsigned page, row, col, rookie, changed = 0;
     int hints = available();
-    if (!chart(p)) return;
+    if (!chart(p) || !layout_matches(p)) return;
     rookie = R(p + 0xbc);
-    for (row = 0; row < 16; ++row) for (col = 0; col < 5; ++col)
-        if (H(0x8008f76a + rookie * 192 + row * 12 + col * 2)
-            != evolution_layout[rookie][row][col]) return;
     old_selection = selected(p);
     for (page = 0; page < 4; ++page) {
         for (row = 0; row < 4; ++row) {
@@ -114,8 +125,38 @@ void shinka_chart_rebuild(uint32_t p) {
 }
 
 void shinka_chart_frame(CPUState* cpu) {
-    if (cpu->gpr[31] == 0x800836d4 && draw_stack(cpu->gpr[29]))
-        shinka_chart_rebuild(R(cpu->gpr[29] + 0xe0));
+    uint32_t p, id, rookie;
+    if (cpu->gpr[31] != 0x800836d4 || !draw_stack(cpu->gpr[29])) return;
+    p = R(cpu->gpr[29] + 0xe0);
+    shinka_chart_rebuild(p);
+    /* Observe the native chart's normal input phase, never its initial draw,
+     * page animation or teardown. Bookmarks contain form identity, not slots. */
+    if (!available() || R(0x8004b3f8) != 0xd01 || !chart(p)
+        || !layout_matches(p) || R(p + 0xc) != 1 || R(p + 0x10) != 3) return;
+    id = selected(p); rookie = R(p + 0xbc);
+    if (profile(id) < 0) return;
+    chart_places[rookie].id = id;
+    chart_places[rookie].page = R(p + 0xc0);
+}
+
+static void restore_chart_place(uint32_t p) {
+    uint32_t rookie, page, id;
+    unsigned cell, rows = 0;
+    if (R(0x8004b3f8) != 0xd01 || !layout_matches(p)) return;
+    rookie = R(p + 0xbc); page = chart_places[rookie].page;
+    id = chart_places[rookie].id;
+    if (!id || page >= 4) return;
+    shinka_chart_rebuild(p);
+    for (cell = 0; cell < 20; ++cell)
+        if (R(p + 0xd0 + page * 80 + cell * 4) == id) break;
+    if (cell == 20) return; /* A bookmark must not reveal a now-hidden form. */
+    for (unsigned row = 0; row < 4; ++row)
+        for (unsigned col = 0; col < 5; ++col) {
+            uint32_t form = R(p + 0xd0 + page * 80 + row * 20 + col * 4);
+            if (form && form != 0xffffffffu) { ++rows; break; }
+        }
+    W(p + 0xc0, page); W(p + 0xcc, rows);
+    W(p + 0x290, cell % 5); W(p + 0x294, cell / 5);
 }
 
 static int hidden_icon(CPUState* cpu, int resource) {
@@ -232,6 +273,8 @@ void shinka_chart_text(CPUState* cpu) {
     const uint8_t* req;
     if (!available() || (ra != 0x800846cc && ra != 0x800850bc && ra != 0x800850e8) || !chart(p)) return;
     if (ra == 0x800846cc) {
+        /* Initial title setup precedes the native page-number widget. */
+        restore_chart_place(p);
         text = encode_hint("\x02\x05\x01 - X: Hints");
         if (text) { cpu->gpr[5] = text; cpu->gpr[6] = 0xffffffffu; }
         return;

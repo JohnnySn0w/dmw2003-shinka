@@ -37,13 +37,15 @@ See the [groundwork audit and port milestones](docs/groundwork-audit.md) for pin
 
 The [offline music exporter](docs/music.md) converts owned BGM packs into MIDI,
 sample WAVs with loop points, and instrument metadata. All 30 BGM pairs export
-successfully; richer instruments and runtime music replacement remain pending.
+successfully. [Two offline soundtrack auditions](docs/music-palettes.md) render
+BGM001 with CC0 sampled instruments or a 24-voice oscillator-chip palette.
+Runtime music replacement remains pending.
 
 ## Planned work
 
 - Expand EXP validation across party splits, later enemies and progression caps.
 - Expand DV validation across later forms, participation splits and natural growth limits.
-- Reproduce one exported song's tuning and controller behavior, then compare replacement instruments before integrating optional playback.
+- Refine the sampled/chip soundtrack auditions and resolve track/loop/controller behavior before integrating optional playback.
 - Expand advanced-party coverage for DIGIVOLUTIONS and its session partner retention; see [design and hint groundwork](docs/evolution-journal.md).
 - Expand the initial map travel network with validated destinations and later story/server access rules.
 

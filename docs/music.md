@@ -2,7 +2,8 @@
 
 The owned European disc's 30 `MPBGM`/`MVBGM` pairs successfully export to
 standard MIDI, decoded sample WAVs, and instrument metadata. This is offline
-tooling; replacement instruments and in-game playback changes are still pending.
+tooling. [CC0 sampled and oscillator-chip auditions](music-palettes.md) now render
+the first main sequence; in-game replacement playback is still pending.
 
 ## Reproduce
 
@@ -89,9 +90,10 @@ all 475 sample files' frame counts and PCM format. These checks establish file
 structure and timing, not an audible match to the game's synth. Battle, title,
 and other non-BGM pack families have not been audited by this export pass.
 
-Next: identify one song in-game, reproduce its original instrument tuning and
-controller behavior, then compare an optional replacement arrangement before
-adding runtime selection, looping, transitions, and settings.
+Next: audition the [two replacement palettes](music-palettes.md), identify the
+song in-game, and resolve controller/loop behavior before adding runtime music
+selection, transitions, and settings. Original-instrument tuning remains a
+separate fidelity task.
 
 Format references: the author-maintained reverse-engineering documentation for
 [VAB sample banks](https://psx-spx.consoledev.net/cdromfileformats/#cdrom-file-audio-sample-sets-vab-and-vhvb-sony),

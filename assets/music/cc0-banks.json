@@ -1,0 +1,51 @@
+{
+  "license": "CC0-1.0",
+  "verified": "2026-09-10",
+  "banks": {
+    "piano": {
+      "name": "Upright Piano KW, small 20190703",
+      "credit": "Gonzalo and Roberto, FreePats; Inma Martinez de Miguel and Claudia Marin Martinez",
+      "source": "https://freepats.zenvoid.org/Piano/acoustic-grand-piano.html",
+      "url": "https://freepats.zenvoid.org/Piano/UprightPianoKW/UprightPianoKW-small-SF2-20190703.7z",
+      "archive_sha256": "3bd025e7c2ffa9e6f3f99215ce383c9cebbac991cfbf9be1453cdb4328ec3492",
+      "member": "UprightPianoKW-small-SF2-20190703/UprightPianoKW-small-20190703.sf2",
+      "sha256": "cf2a98eb38a32c4954b4b6e2caae4112d62dd8e892eceefdd7942b0e7d01ac2f"
+    },
+    "bass": {
+      "name": "Finger Bass YR 20190930",
+      "credit": "Andrea Biasior, FreePats",
+      "source": "https://freepats.zenvoid.org/ElectricGuitar/clean-electric-bass.html",
+      "url": "https://github.com/freepats/electric-bass-YR/releases/download/2019-09-30/FingerBassYR-SF2-20190930.7z",
+      "archive_sha256": "f5b5cfe04435a9e9037d1f97d515dc596535acf26637db9579d724cd757f179e",
+      "member": "FingerBassYR SF2-20190930/FingerBassYR 20190930.sf2",
+      "sha256": "bd1332696f61c0cb254ce7f202fb6b945ff46ccb1dcdd62e345a50bde3afb165"
+    },
+    "strings": {
+      "name": "Synth Strings 1 20200528",
+      "credit": "FreePats, synthesized with ZynAddSubFX/Yoshimi",
+      "source": "https://freepats.zenvoid.org/Synthesizer/synth-strings.html",
+      "url": "https://github.com/freepats/synth-strings-1/releases/download/2020-05-28/SynthStrings1-SF2-20200528.7z",
+      "archive_sha256": "1fed457941efbd6e1deca6937d1859db7920946709732265426785e9e11bcf55",
+      "member": "SynthStrings1 SF2-20200528/SynthStrings1 20200528.sf2",
+      "sha256": "7df5074a9ca497adfc3b63a3501a9244495dbb3334b05bba00789bf83cfe6cd4"
+    },
+    "drums": {
+      "name": "Synthesizer Percussion 20220718",
+      "credit": "Roberto, FreePats; synthesized with Yoshimi and Geonkick",
+      "source": "https://freepats.zenvoid.org/Percussion/electric-percussion.html",
+      "url": "https://freepats.zenvoid.org/Percussion/SynthesizerPercussion/SynthesizerPercussion-SF2-20220718.7z",
+      "archive_sha256": "6ff6580165061eac3113a9961e1e93860c9af87a82b523a49949f099d6f47ea3",
+      "member": "SynthesizerPercussion-SF2-20220718/SynthesizerPercussion-20220718.sf2",
+      "sha256": "b732f685ec460dc18e88a45dd150240d3bf50198d6a09f09483babd6a9fb4c31"
+    },
+    "clarinet": {
+      "name": "Clarinet 20190818",
+      "credit": "Tyler Dence (recording) and Kaili Dence (performer), FreePats",
+      "source": "https://freepats.zenvoid.org/Reed/clarinet.html",
+      "url": "https://freepats.zenvoid.org/Reed/Clarinet1/Clarinet-SF2-20190818.tar.xz",
+      "archive_sha256": "3f06aa4747cf52fb595d5778b147070a2a0213bcea331005e319d8b11d606a5e",
+      "member": "Clarinet-SF2-20190818/Clarinet-20190818.sf2",
+      "sha256": "b5324e7659c2b5994f5e2020e4de3706462bfeec8a79d488f9759eb03aa2ccb9"
+    }
+  }
+}

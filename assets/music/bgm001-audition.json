@@ -1,0 +1,19 @@
+{
+  "name": "BGM001 exploratory arrangement",
+  "notes": "Creative voice assignments for comparing palettes; not confirmed original instrument identities. Numbers and key maps are zero-based MIDI values.",
+  "midi_sha256": "66435e4ff19f51928c98cf7e3b84b2a9dacec648430b29286e1ecc3cb11bf72a",
+  "programs": {
+    "0": {"label": "Drum kit", "soundfont": "drums", "chip": "drums", "gain": 0.9, "pan": 0.5, "key_map": {"36": 36, "38": 38, "46": 46, "52": 49}, "soundfont_key_map": {"36": 48, "38": 50, "46": 54, "49": 55}},
+    "1": {"label": "Bass", "soundfont": "bass", "chip": "triangle", "gain": 1.0, "pan": 0.5, "adsr": [0.003, 0.12, 0.7, 0.08], "soundfont_key_offset": -12, "soundfont_tuning": 12},
+    "2": {"label": "Soft backing", "soundfont": "strings", "chip": "wave", "gain": 0.45, "pan": 0.6, "adsr": [0.05, 0.2, 0.45, 0.18]},
+    "3": {"label": "Lead left", "soundfont": "clarinet", "chip": "pulse", "gain": 0.85, "pan": 0.35},
+    "4": {"label": "Lead right", "soundfont": "clarinet", "chip": "square", "gain": 0.8, "pan": 0.65},
+    "5": {"label": "Keys", "soundfont": "piano", "chip": "wave", "gain": 0.8, "pan": 0.55, "adsr": [0.003, 0.3, 0.15, 0.12]},
+    "6": {"label": "High accents", "soundfont": "piano", "chip": "triangle", "gain": 0.6, "pan": 0.3, "adsr": [0.002, 0.2, 0.1, 0.08]},
+    "7": {"label": "Chord accents", "soundfont": "piano", "chip": "square", "gain": 0.7, "pan": 0.4, "adsr": [0.003, 0.18, 0.2, 0.1]},
+    "8": {"label": "Countermelody", "soundfont": "clarinet", "chip": "wave", "gain": 0.65, "pan": 0.55},
+    "9": {"label": "Repeated figures", "soundfont": "piano", "chip": "pulse", "gain": 0.4, "pan": 0.65, "adsr": [0.002, 0.1, 0.25, 0.07]},
+    "10": {"label": "Low accents", "soundfont": "piano", "chip": "triangle", "gain": 0.65, "pan": 0.5, "adsr": [0.002, 0.14, 0.05, 0.05]},
+    "11": {"label": "Tom accents", "soundfont": "drums", "chip": "drums", "gain": 0.65, "pan": 0.65, "key_map": {"36": 45, "37": 47, "38": 50}, "soundfont_key_map": {"45": 57, "47": 59, "50": 61}}
+  }
+}

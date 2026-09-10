@@ -57,8 +57,11 @@ All three are creative arrangement prototypes. The in-game SETTINGS menu now
 saves a Soundtrack preference among Original, DS, Sampled, and Chip; alternate
 live playback remains pending and is explicitly labeled in the menu. The voice
 assignments are provisional; they do not establish the original instruments'
-identities. Song titles and scene associations remain unmapped. Audition before
-expanding the profile to other banks.
+identities. BGM001's sequence now matches the community reference labeled
+**Asuka City**. The [per-track listening guide](music-listening-guide.md) supplies
+scene context and arrangement questions for 41 identified sequences. Every new
+preview writes hash-selected context to `preview.json` and `listening-notes.md`.
+Only Asuka City's profiles are authored so far; audition before expanding them.
 
 ## PS1 hardware versus a chiptune palette
 

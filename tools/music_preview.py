@@ -17,6 +17,7 @@ from music_export import midi_events, require
 from music_chip import ChipSynth
 from music_ds import HybridSynth, split_channels, validate_mix
 from music_fetch_banks import CATALOG, checked
+from music_context import track_context, listening_notes
 
 PROFILE = Path(__file__).resolve().parents[1] / 'assets/music/bgm001-audition.json'
 DS_PROFILE = PROFILE.with_name('bgm001-ds.json')
@@ -256,6 +257,9 @@ def main():
                       limitations=['Offline creative audition; not original SPU emulation.',
                                    'Custom PS1 controllers and sequence loops are not interpreted.',
                                    'Instrument identities and balancing are provisional.'])
+        report['track_context'] = track_context(report['midi_sha256'])
+        (args.output / 'listening-notes.md').write_text(
+            listening_notes(report['track_context'], args.backend), encoding='utf-8')
         if args.backend in ('soundfont', 'ds'):
             report['banks'] = json.loads(CATALOG.read_text(encoding='utf-8'))
             report['renderer'] = 'tinysoundfont 0.3.7 (MIT), offline float output'

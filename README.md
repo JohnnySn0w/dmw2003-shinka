@@ -40,6 +40,9 @@ sample WAVs with loop points, and instrument metadata. All 30 BGM pairs export
 successfully. [Offline soundtrack auditions](docs/music-palettes.md) render
 BGM001 with CC0 sampled instruments, a 24-voice oscillator-chip palette, or the
 preferred **DS-inspired hybrid** of samples and synth accents.
+The [per-track listening guide](docs/music-listening-guide.md) identifies 41
+sequences with scene context and arrangement questions. The current BGM001
+auditions are **Asuka City**; other track arrangements are still pending.
 Runtime music replacement remains pending.
 SETTINGS now saves a **Soundtrack** preference: Original, DS, Sampled, or Chip.
 Alternate selections are labeled as playback pending and do not yet change live audio.

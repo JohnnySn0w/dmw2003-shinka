@@ -54,7 +54,9 @@ The other 15 entries in this pack are very short program-127 cues with no
 matching instrument in the local bank. Their game-specific purpose is unresolved.
 Across all 30 BGM pairs there are **480 sequence entries and 475 sample files**;
 those entries are not a count of distinct songs, and samples may repeat between
-banks. File numbers have not yet been mapped to song titles or locations.
+banks. All 30 substantial BGM sequences now match community soundtrack labels;
+see the [per-track listening guide](music-listening-guide.md). BGM031's music is
+sequence 002, not its tiny sequence 000. Scene reuse still needs runtime checks.
 
 Instrument numbers are bank-specific. In BGM001, zero-based channel 9 uses a
 melodic program; a General MIDI player that forces percussion onto MIDI channel
@@ -88,11 +90,14 @@ On 2026-09-10, all 30 owned BGM pairs parsed successfully. Independent Mido
 1.3.3 reads of all 480 exported MIDI files matched PPQN, event counts, note-on
 counts (55,821 total), and calculated durations. Python's WAV reader verified
 all 475 sample files' frame counts and PCM format. These checks establish file
-structure and timing, not an audible match to the game's synth. Battle, title,
-and other non-BGM pack families have not been audited by this export pass.
+structure and timing, not an audible match to the game's synth. A later pass
+also exported 12 battle/title/event pairs (192 entries); these have not received
+the same independent Mido audit. Eleven substantial sequences match community
+track labels; the title-bank sequence remains unidentified. COMMON contains
+multiple bank/score entries and is not supported by the single-pair exporter.
 
-Next: refine the [DS-inspired palette](music-palettes.md), identify the
-song in-game, and resolve controller/loop behavior before adding runtime music
+Next: refine the [DS-inspired palette](music-palettes.md), verify the labeled
+scenes in-game, and resolve controller/loop behavior before adding runtime music
 selection, transitions, and settings. Original-instrument tuning remains a
 separate fidelity task.
 

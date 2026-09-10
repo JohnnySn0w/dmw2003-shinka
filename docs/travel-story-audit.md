@@ -283,6 +283,40 @@ Additional original module SHA-256 values:
 WSTAG500's 138 annotated code words also matched; this comparison alone is not
 a Suzaku event audit.
 
+### Suzaku condition records: partial audit
+
+The new read-only `tools/field_conditions.py` reproduces these predicates from
+the owned module at explicit, traced offsets:
+
+| WSTAG500 offset | Conditions | Action |
+| --- | --- | --- |
+| `0x1c60` | Story exactly 10; flag `0x400a` clear | Start event `0xfa` |
+| `0x1c78` | Story exactly 11; second condition unused | Start event `0x10e` |
+
+The event table at `0x1cd8` associates `0xfa` with script `0x800a6004`
+(module offset `0x224`) and callback `0x800a5e84` (offset `0xa4`). The callback
+sets **both** `0x400a` and `0x1a32` through the resident setter. The former is
+byte `0x8004b3df`, mask `4`; the tool deliberately leaves class-0x1a unresolved
+until its decoding is added with independent checks.
+
+The preceding event-table entry at `0x1cc4` associates `0x10e` with script
+`0x800a6180` (offset `0x3a0`) and no completion callback. Absence of a callback
+does not imply absence of progression writes: those can live in scene bytecode.
+Do not use the story-10 callback as the completion test for the story-11 event.
+
+A controlled story-11 developer warp to the reference Suzaku landing loaded the
+field, but did not establish the forced-return trigger or its completion.
+Walking and talking during this attempt reached **Tamer Alice**, not a verified
+Kail return scene. Early visual identification of Kail was incorrect. No travel
+permission or progression-completion claim follows from this attempt.
+
+Likewise, a story-9 Jungle Grave fixture loaded successfully, but did not replay
+the Smelly Herb interaction. The story-specific NPC condition lists at
+`0x1184..0x11a0` distinguish stories 7, 8, 9 and 10; they do not alone prove
+removal completion or item consumption. Both Jungle Grave and Suzaku stay
+excluded. Next checks are the actual event-entry geometry/native entry path,
+the item-dependent removal interaction, and each scene's downstream transition.
+
 ## Priorities for the existing network
 
 | Current field | First check before broader campaign claims |

@@ -1,5 +1,30 @@
 # Developer navigation and test fixtures
 
+## Offline field-condition inspection
+
+`tools/field_conditions.py` reads known 24-byte field condition/action records
+directly from an extracted original module. For example, with your local module
+path substituted:
+
+```powershell
+python tools/field_conditions.py WSTAG500.PRO --offset 0x1c60 --count 2
+```
+
+The JSON includes the input SHA-256, both condition pairs, readable story
+comparisons or supported bit addresses, and action-8 event IDs. Class-0x60 story
+conditions use equality for a nonzero value and inequality for zero. Class-0x1c
+and class-0x40 bit storage are decoded separately. Unknown classes remain
+unresolved, and the trailing type-dependent words are not interpreted.
+
+This is read-only and does not need a running game. It accepts explicit offsets
+from traced tables; it does not scan for plausible records or establish that a
+record is reachable. It also does not decode scene bytecode, trigger geometry,
+or event completion. Verified examples: WSTAG485 offset `0x172c`, WSTAG480
+offset `0x23b8`, and the two WSTAG500 records above. Unit tests use synthetic
+bytes rather than redistributed game data.
+
+## Live navigation
+
 `tools/dev_nav.py` controls the local runtime built with `PSX_DEBUG_TOOLS=ON`.
 It provides named warps, position bookmarks, frame-counted input, route scripts,
 screenshots, savestate checkpoints and explicit progression/combat edits.

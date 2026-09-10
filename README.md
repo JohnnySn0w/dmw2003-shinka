@@ -12,9 +12,11 @@ An experimental English menu adds **DIGIVOLUTIONS** and **SETTINGS** as selectab
 
 See [Windows build, launch, and overlay-capture instructions](docs/windows-baseline.md) for the runnable baseline and current validation limits.
 
-The original map now offers **X: Travel** between six visited Asuka locations:
-Asuka City bridge, Central Park, Wire Forest Entrance, Wire Forest, Seiryu City and Pelche Oasis.
-The menu closes automatically before loading the destination. See
+The original map now offers **X: Travel** between nine visited Asuka-server locations:
+Asuka City bridge, Central Park, Wire Forest Entrance, Wire Forest, Seiryu City,
+South Station, Bulk Bridge, Tranquil Swamp and Pelche Oasis.
+Travel cuts directly from the map into the original area loader. South Sector
+stops require the first arrival scene to be complete and South Station visited. See
 [availability rules and current coverage](docs/menu-map.md).
 
 Existing DuckStation memory cards can be copied into isolated test profiles; see [save imports and profile selection](docs/save-profiles.md).

@@ -18,7 +18,7 @@ extern int shinka_journal_enabled(void);
 
 struct arrival { uint32_t stage, x, y; };
 
-/* Initial arrival points: outdoor locations validated with the original loader.
+/* Arrival points validated with the original loader.
  * Asuka uses the bridge, avoiding the plot-dependent Main Lobby entrance.
  * Flawe's published Fast Travel work supplied transition/arrival investigation
  * leads; this module implements its own guarded flow and destination policy. */
@@ -28,6 +28,9 @@ static const struct { uint32_t icon, stage, x, y; } destinations[] = {
     {22, 0x21e, 111434, 91323},  /* Wire Forest Entrance */
     {21, 0x222, 87454, 66170},   /* Wire Forest */
     {15, 0x22e, 0x21fda, 0x1d3d8}, /* Seiryu City */
+    {32, 0x232, 0x15ade, 0x111cd}, /* South Station, outside the gondola */
+    {43, 0x234, 0x3dc56, 0x1f77c}, /* Bulk Bridge */
+    {44, 0x237, 0x2d205, 0x106a6}, /* Tranquil Swamp */
     {26, 0x249, 84211, 84884},   /* Pelche Oasis */
 };
 static int object(uint32_t p, uint32_t callback) {
@@ -65,6 +68,7 @@ static int visited(uint32_t stage) {
 static int source(uint32_t stage) {
     unsigned i;
     if (stage == 0x200) return 1; /* Asuka Main Lobby, including its outdoor approach */
+    if (stage == 0x233) return 1; /* Bulk Swamp shares Bulk Bridge's map icon. */
     for (i=0;i<sizeof(destinations)/sizeof(destinations[0]);++i)
         if (destinations[i].stage == stage) return 1;
     return 0;
@@ -75,6 +79,9 @@ static const char* departure(uint32_t stage, uint32_t story) {
     if (stage == 0x22e && story == 5 && !(B(TEDDY_COMPLETE) & 2))
         return "Use the city exit";
     return NULL;
+}
+static int south_stop(uint32_t stage) {
+    return stage == 0x232 || stage == 0x233 || stage == 0x234 || stage == 0x237;
 }
 static struct arrival landing(int i, uint32_t story) {
     struct arrival a={destinations[i].stage,destinations[i].x,destinations[i].y};
@@ -96,6 +103,13 @@ static const char* plan(uint32_t parent, uint32_t icon, struct arrival* out) {
     blocked=departure(stage,story);
     if (blocked) return blocked;
     if (i < 0) return "No travel point yet";
+    if (south_stop(stage) || south_stop(destinations[i].stage)) {
+        /* WSTAG440's first South Station arrival (event 0x98) completes by
+         * advancing story 6 to 7. A visible/visited map field alone can precede
+         * completion; keep both departures and arrivals behind this check. */
+        if (story < 7) return "Finish the gondola trip";
+        if (!visited(0x232)) return "Visit South Station first";
+    }
     if (!visited(destinations[i].stage)) return "Visit arrival area first";
     if (destinations[i].stage == stage) return "Already at this location";
     if (out) *out=landing(i,story);

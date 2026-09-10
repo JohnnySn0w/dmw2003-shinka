@@ -9,8 +9,9 @@ scripted exits, temporary closures and transport unlocks. A previously visited
 area can become inaccessible later. Both departure and arrival need checks.
 
 This is an implementation scope and test plan, not a completed campaign safety
-certification. The six-destination network now guards Seiryu's pending departure
-scene and adjusts Asuka's early arrival. It retains the broad story range
+certification. The nine-destination network now guards Seiryu's pending departure
+scene, adjusts Asuka's early arrival, and gates three South Sector stops behind
+the completed first arrival. It retains the broad story range
 described in [map travel](menu-map.md). That range does not prove the remaining
 events below are safe.
 
@@ -167,12 +168,62 @@ sets `0x4016` through the original script, with story still `6`. See
 coverage. These event checks do not substitute for a full campaign run through
 the badge, Blue Card errands, lockdown and reopening.
 
+## First South Sector stops
+
+South Station (`0x232`), Bulk Bridge (`0x234`) and Tranquil Swamp (`0x237`) are
+available after the first South arrival completes. Bulk Swamp (`0x233`) is also
+a departure source. The same policy runs on map selection, direct commit and
+legacy pending-state completion:
+
+1. Require story at least `7`, within the existing overall `1..36` limit.
+2. Require the recorded South Station visit, `0x8004b3c6 & 4`.
+3. Require the exact destination's visit; Bulk Swamp's visit does not substitute
+   for Bulk Bridge even though they share map icon 43.
+
+This follows the original South Station module `WSTAG440.PRO`: offsets
+`0x40..0x5c` launch arrival event `0x98` when story is `6`; the completion callback
+at `0xcc..0xd8` writes `7`. The event also moves the party to Bulk Swamp. The
+first arrival must complete before departures or arrivals involving these four
+fields. Possession of the Blue Card is not treated as completion.
+
+The original field-stage table independently maps `0x232/0x233/0x234/0x237` to
+`WSTAG440/445/450/465`. The original status table maps them to icons `32/43/43/44`.
+Landing leads came from Flawe's reference table, then were checked in Shinka:
+
+| Arrival | Coordinates | Reference table address |
+| --- | --- | --- |
+| South Station | `(0x15ade, 0x111cd)` | `0x8009bf9c` |
+| Bulk Bridge | `(0x3dc56, 0x1f77c)` | `0x8009bfc4` |
+| Tranquil Swamp | `(0x2d205, 0x106a6)` | `0x8009c000` |
+
+Annotated instruction words matched the owner's original modules. SHA-256:
+
+| Module | SHA-256 |
+| --- | --- |
+| `WSTAG440.PRO` | `65fba20ff6686a675e69255ba60e037bf987e3220f621308f4f866a29047118f` |
+| `WSTAG445.PRO` | `a26ef28702d8358fcaf0114303d39b7ab61618a6a6e0580c9f681d5e0e307c38` |
+| `WSTAG450.PRO` | `725061b3c988ab745c63e8e09f25995f9404f1c5ee7d43e7128be6eedc6f6e5e` |
+| `WSTAG465.PRO` | `1915774a80702694c9f5dd269ceb624c2522ab794a51d6a61686850cad8f8a5d` |
+
+[Live validation](menu-map.md) covers all three landings, station transport,
+ordinary bridge/swamp transitions and a controlled `6 -> 7` arrival fixture.
+The first gondola battle and preceding errands still need a naturally earned
+checkpoint; the synthetic setup must not be mistaken for a full quest replay.
+
+This extends T03 coverage. It does not add travel past Zanbamon or into the
+Suzaku forced-return sequence. Jungle Grave, Phoenix Bay, Suzaku and the
+gondola/inn/shaman interiors remain unvalidated sources and destinations.
+T04/T05 and the later Phoenix Bay approach still need their own predicates and
+live event checks before adding those locations. The pre-Zanbamon errands and
+ordinary route are described in [Dark_Zero's walkthrough](https://gamefaqs.gamespot.com/ps/562323-digimon-world-3/faqs/17652).
+
 ## Priorities for the existing network
 
 | Current field | First check before broader campaign claims |
 | --- | --- |
 | Seiryu City `0x22e` | T02 guard and native announcement release verified in a controlled fixture above. Retain a naturally earned badge checkpoint for full campaign regression. |
 | Asuka bridge `0x202` | Story-6 approach starts the original encounter. Complete the closure/reopening campaign regression; synthetic boundary tests alone do not certify all gate events. |
+| South Station / Bulk Swamp / Bulk Bridge / Tranquil Swamp | First-arrival policy is implemented. Extend naturally earned checkpoints and later NPC-phase coverage before claiming campaign-wide safety. |
 | Asuka Main Lobby `0x200` (source only) | Audit departures during forced-return, disguise and liberation sequences. Being a supported source must not allow escape from unfinished scripts. |
 | Central Park `0x21d` | Establish event-free departure and arrival positions for each allowed phase. T14 is also a prerequisite before admitting later phases or the other server. |
 | Wire Forest Entrance `0x21e` and Wire Forest `0x222` | Lower-priority candidates for broad repeat travel; no special closure was identified in the reviewed passages. This is an evidence gap, not proof that none exists. |

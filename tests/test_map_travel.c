@@ -152,7 +152,74 @@ static void story_policy(void) {
         CHECK(psx_mod_read_byte(p)==0);
     }
 }
+static void south_policy(void) {
+    const unsigned icons[]={32,43,44}, stages[]={0x232,0x234,0x237};
+    /* Visitation can exist before the arrival scene completes. Both directions
+     * must wait for its completion, not just the map icon or landing bit. */
+    for(unsigned story=6;story<=8;++story) for(unsigned i=0;i<3;++i)
+        for(unsigned outbound=0;outbound<2;++outbound) {
+        fresh();watching=0;W(0x8004b370,story);
+        if(outbound) W(RETURN,stages[i]);else target(icons[i]);
+        watching=1;writes=0;select_icon();
+        if(story==6) CHECK(writes==0);
+        else {
+            shinka_map_present();CHECK(R(RETURN)==(outbound ? 0x21du : stages[i]));
+            CHECK(R(0x8004b370)==story && gpu_count==6);
+        }
+    }
+    /* A later story value does not stand in for reaching the station. Missing
+     * exact visits also reject other rooms sharing the same map icon. */
+    for(unsigned i=0;i<3;++i) for(unsigned missing_station=0;missing_station<2;++missing_station) {
+        fresh();watching=0;target(icons[i]);
+        unsigned bit=missing_station ? 0x32 : stages[i]&255;
+        psx_mod_write_byte(0x8004b3c0+bit/8,(uint8_t)(255 & ~(1u<<(bit%8))));
+        watching=1;writes=0;select_icon();CHECK(writes==0 && R(RETURN)==0x249);
+    }
+    /* Revalidate visits after queueing, on current and old savestate paths. */
+    for(unsigned legacy=0;legacy<2;++legacy) for(unsigned i=0;i<3;++i)
+        for(unsigned outbound=0;outbound<2;++outbound) {
+        fresh();watching=0;W(0x8004b370,7);
+        if(outbound) W(RETURN,stages[i]);else target(icons[i]);
+        uint32_t initial=R(RETURN);watching=1;
+        if(legacy) { legacy_request();W(PARENT+0x7c,outbound ? 30 : icons[i]);root_close(); }
+        else select_icon();
+        watching=0;psx_mod_write_byte(0x8004b3c6,0xfb);watching=1;
+        if(legacy) transition();else shinka_map_present();
+        CHECK(R(RETURN)==initial && R(PARENT+0x78)==0 && gpu_count==0);
+        CHECK(R(0x8004b370)==7 && psx_mod_read_byte(0x8004b3c6)==0xfb);
+    }
+    /* A pending phase-6 request restored from a permissive build is rejected. */
+    for(unsigned i=0;i<3;++i) {
+        fresh();watching=0;W(0x8004b370,6);watching=1;
+        legacy_request();W(PARENT+0x7c,icons[i]);root_close();transition();
+        CHECK(R(RETURN)==0x249 && R(PARENT+0x78)==0);
+    }
+    /* Remote South progression does not grant travel past Zanbamon, into the
+     * gondola, or into an inn/shaman interior. Those sources remain excluded. */
+    const unsigned excluded[]={0x22d,0x238,0x239,0x23a};
+    for(unsigned i=0;i<sizeof(excluded)/sizeof(excluded[0]);++i) {
+        fresh();watching=0;W(RETURN,excluded[i]);watching=1;writes=0;
+        select_icon();CHECK(writes==0);
+    }
+    for(unsigned icon=45;icon<=46;++icon) {
+        fresh();watching=0;target(icon);watching=1;writes=0;
+        select_icon();CHECK(writes==0);
+    }
+    /* The first arrival exits into Bulk Swamp, the bridge icon's other field.
+     * It can depart after completion; it does not authorize the bridge landing. */
+    for(unsigned story=6;story<=7;++story) for(unsigned station=0;station<2;++station) {
+        fresh();watching=0;W(RETURN,0x233);W(0x8004b370,story);
+        psx_mod_write_byte(0x8004b3c6,station ? 0xff : 0xfb);watching=1;writes=0;
+        select_icon();
+        if(story==7 && station) { shinka_map_present();CHECK(R(RETURN)==0x21d); }
+        else CHECK(writes==0);
+    }
+    fresh();watching=0;W(RETURN,0x233);target(43);
+    psx_mod_write_byte(0x8004b3c6,0xef);watching=1;writes=0;
+    select_icon();CHECK(writes==0);
+}
 int main(void) {
+    south_policy();
     story_policy();
     fresh();cpu.gpr[31]=0x80099aa4;cpu.gpr[4]=0x80099894;cpu.gpr[5]=0x78;cpu.gpr[6]=8;
     shinka_map_allocate(&cpu);CHECK(cpu.gpr[5]==0x88 && cpu.gpr[6]==12 && writes==0);
@@ -182,8 +249,8 @@ int main(void) {
     cpu.gpr[31]=0x800997ec;cpu.gpr[16]=PARENT;shinka_map_frame(&cpu);CHECK(writes==0);
     /* Every exposed icon must lead to its own area according to the original map. */
     {
-        const unsigned icons[]={20,30,22,21,15,26};
-        for(unsigned i=0;i<6;++i) {
+        const unsigned icons[]={20,30,22,21,15,26,32,43,44};
+        for(unsigned i=0;i<sizeof(icons)/sizeof(icons[0]);++i) {
             fresh();watching=0;W(RETURN,0x200);W(MAP+0x184,icons[i]);W(MAP+0xa8+(icons[i]-1)*4,1);watching=1;
             select_icon();shinka_map_present();CHECK(R(0x8004b3fc)==R(RETURN));
             CHECK(R(RETURN)!=0x200 && map_stage_icons[R(RETURN)-0x200]+1==icons[i]);

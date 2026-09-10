@@ -18,13 +18,18 @@ The initial travel network connects these Asuka locations:
 | Wire Forest Entrance | Open path |
 | Wire Forest | Clearing near the path |
 | Seiryu City | Outdoor city path |
+| South Station | Walkway beside the gondola controls |
+| Bulk Swamp / Bulk Bridge | Bulk Bridge's wooden crossing |
+| Tranquil Swamp | Boardwalk near the inn |
 | Pelche Oasis | Path near the waterfront |
 
 The exact arrival area must already be visited in the loaded game. One icon can
-represent several rooms, so having the icon visible is insufficient. A location
-you are already standing in shows that status instead of offering travel.
+represent several rooms, so having the icon visible is insufficient. If you are
+already in the arrival field, it shows that status instead of offering travel.
 
-Travel currently starts from these same outdoor fields, plus Asuka Main Lobby.
+Travel currently starts from these same fields, plus Asuka Main Lobby and Bulk
+Swamp. Bulk Swamp shares an icon with Bulk Bridge, but only visiting the swamp
+does not unlock the bridge landing.
 Other interiors, dungeons, other servers and unvalidated late campaign states
 show an unavailable message. There is no cross-server map switch. The build
 accepts story word values 1–36 for this initial network; this is a conservative
@@ -37,6 +42,14 @@ Teddy's Wind Prairie conversation finishes. Returning to Seiryu remains allowed.
 Asuka uses the outer bridge approach while Keith's early encounter is unfinished,
 then resumes its usual bridge landing. Both arrivals remain outside the city
 entrance, preserving the original gate during the later lockdown.
+
+The three South Sector stops require the original South Station arrival scene to
+finish and the station to have been visited. Every landing also needs its own
+visit. **Finish the gondola trip** or **Visit South Station first** explains a
+missing prerequisite. This policy applies to departures as well as arrivals,
+including departure from Bulk Swamp, where the first arrival scene leaves the
+party. The gondola interior, Jungle Grave, Phoenix Bay, Suzaku and the inn/shaman
+interiors remain outside this travel network.
 
 Most unsupported icons currently mean that no arrival point has been validated;
 they do not imply a known story lock. The story range above is a broad scope
@@ -74,6 +87,10 @@ departure guard checks story 5 and flag `0x4011` clear (`0x8004b3e0`, mask `2`).
 Asuka's alternate landing checks story 6 and flag `0x4016` clear (the same byte,
 mask `0x40`), choosing `(0x27e34, 0x12bcc)` instead of `(0x2dda8, 0xf760)`.
 Original-script evidence is recorded in the [story audit](travel-story-audit.md).
+South travel additionally requires story `7..36` and the exact visit for `0x232`
+(`0x8004b3c6`, mask `4`). Its guarded sources are `0x232`, `0x233`, `0x234` and
+`0x237`; only `0x232`, `0x234` and `0x237` are arrival points. The arrival scene
+in `WSTAG440.PRO` advances story `6` to `7` before the party enters Bulk Swamp.
 
 `src/map_travel.c` extends the Status controller body from 0x78 to 0x88 bytes,
 storing a pending marker, icon, source and story snapshot. Its child array gains
@@ -119,10 +136,13 @@ name preservation and allowed write locations.
 Story tests cover Seiryu before/after the announcement, recovery travel into the
 city, Asuka's incomplete/completed encounter, lockdown phase boundaries, full-word
 story validation, and subflag changes during both current and legacy requests.
+South tests cover both directions before/after the arrival scene, missing station
+and landing visits, Bulk Swamp's shared icon, and visit changes while a current
+or legacy request is queued. Unvalidated neighboring fields remain excluded.
 The build runs six Shinka native suites. Python tests verify data generation and
 revision rejection, as well as existing configuration and patch tooling.
 
-Live testing verifies all six arrival points and movement after arrival, including
+Initial live testing verified the first six arrival points and movement after arrival, including
 a continuous route through Central Park, Wire Forest Entrance, Wire Forest,
 Asuka's bridge and Pelche Oasis, plus a separate Seiryu City trip. The checked
 story flags remain unchanged across the route. A state saved during menu closure
@@ -154,6 +174,24 @@ walking to it and confirming leaves the player outside. Both the released Seiryu
 trip and the lockdown arrival leave the checked progression bytes unchanged.
 The fixtures validate these predicates and transitions, not every prerequisite
 in a naturally played campaign. Full lockdown/reopening coverage remains pending.
+
+The South expansion was checked with another isolated copied profile. A map trip
+through all three new landings retained the checked progression bytes. The station
+console returned to East Station normally. Tranquil Swamp's boardwalks lead to its
+entrance island and the original Bulk Bridge transition; that transition was
+crossed in both directions. Walking from the Bulk Bridge teleport landing also
+reached the Tranquil Swamp exit. A battle/reward sequence returned to the field
+during these checks; later walking probes used an extended encounter countdown in
+the disposable state to isolate movement.
+
+A controlled arrival fixture reset the main story to `6` in a copied later save
+and used the station controls to enter South Station. Its original scene advanced
+to `7` and moved the party to Bulk Swamp. This tests the arrival release condition;
+it does not replay the Blue Card errands or certify the first Bulbmon battle.
+The final build restores a map savestate in Bulk Swamp, travels to Tranquil Swamp,
+and returns to Central Park. Pending-story and missing-station fixtures reject
+travel, with their instructions fitting the native map panel. Private captures,
+states and fixture details remain excluded from Git.
 
 ## Reference and next work
 

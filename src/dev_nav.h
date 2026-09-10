@@ -7,6 +7,11 @@ typedef struct {
     uint32_t quick_menu, quick_phase, quick_row;
 } ShinkaNavState;
 typedef struct { uint32_t level, hp, max_hp, mp, max_mp, strength; } ShinkaNavPartner;
+typedef struct {
+    uint32_t root, lifecycle, phase, slot, roster[3];
+    uint32_t action_menu, action_phase, action;
+} ShinkaNavLab;
+const char* shinka_nav_lab(ShinkaNavLab* lab);
 
 void shinka_nav_state(ShinkaNavState* state);
 void shinka_nav_partner(unsigned index, ShinkaNavPartner* partner);

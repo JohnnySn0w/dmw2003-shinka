@@ -25,6 +25,7 @@ void shinka_journal_transition(CPUState *cpu);
 void shinka_menu_allocate(CPUState *cpu);
 void shinka_menu_task_ready(CPUState *cpu);
 void shinka_register_journal(void);
+void shinka_lab_selection_reset(void);
 #define W psx_mod_write_word
 #define R psx_mod_read_word
 
@@ -190,6 +191,34 @@ int main(void) {
         CHECK(writes == 0 && R(0x8004b3fc) == 0);
     }
     W(0x8004b3f8u, 0x700); writes = 0; tick(); CHECK(writes == 0);
-    puts("Full lab actions, legacy restoration, root return and menu input checks passed.");
+    {
+        const uint32_t owner=0x800a0000, wrapper=0x800b0000, root=0x800c0000, chooser=0x800d0000;
+        shinka_lab_selection_reset();
+        W(0x8004b3f8,0xd01);W(0x8004b3fc,0);W(0x8005ccbc,owner);
+        W(0x8008ed0c,0x27bdff40);W(0x800891ac,0xac400064);
+        W(owner+0x28,0x80014274);W(owner+0x48,0x80020b58);W(owner+0x20,1);
+        W(owner+0x24,owner+0x100);W(owner+0x100,wrapper);
+        W(wrapper+0x28,0x80014274);W(wrapper+0x48,0x80082f48);W(wrapper+0x20,1);
+        W(wrapper+0x24,wrapper+0x100);W(wrapper+0x100,root);
+        W(root+0x28,0x80014274);W(root+0x48,0x8008ed0c);W(root+0x20,3);
+        W(root+0x24,root+0x100);W(root+0x100,chooser);
+        W(chooser+0x28,0x80014274);W(chooser+0x48,0x8008a51c);W(chooser+0x20,19);
+        W(chooser+0xc,1);W(chooser+0x10,15);W(chooser+0x60,2);
+        W(0x80048da4,1);W(0x80048da8,5);W(0x80048dac,7);
+        W(root+0x64,1);tick(); /* remember Guilmon */
+        W(chooser+0x10,3);tick();W(root+0x64,0);W(chooser+0x10,10);
+        writes=0;tick();CHECK(writes==1 && R(root+0x64)==1);
+        W(chooser+0x10,15);tick();
+        W(root+0x64,2);writes=0;tick();CHECK(writes==0); /* navigation stays responsive */
+        W(chooser+0x10,3);tick();W(0x80048da4,7);W(0x80048dac,1);
+        W(root+0x64,2);W(chooser+0x10,11);tick();CHECK(R(root+0x64)==0); /* identity after reorder */
+        W(chooser+0x10,15);tick();
+        W(chooser+0x10,3);tick();W(0x80048da4,6);W(root+0x64,0);W(chooser+0x10,10);
+        writes=0;tick();CHECK(writes==0); /* absent partner: native default */
+        shinka_lab_selection_reset();W(root+0x64,2);writes=0;tick();CHECK(writes==0);
+        W(0x8004b3f8,0xd00);W(root+0x64,0);writes=0;tick();CHECK(writes==0);
+        W(0x8004b3f8,0xd01);W(0x800891ac,0);writes=0;tick();CHECK(writes==0);
+    }
+    puts("Full lab actions, partner retention, legacy restoration, root return and menu input checks passed.");
     return 0;
 }

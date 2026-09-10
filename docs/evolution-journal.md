@@ -14,6 +14,13 @@ physical lab. The original ownership and unlock rules still apply. Cancelling
 lab submenus returns through the lab's own menus; leaving the lab interface
 returns directly to the full-screen root with DIGIVOLUTIONS highlighted.
 
+The portable lab remembers the last highlighted partner during the running
+session. Reopening its partner chooser resolves that rookie's current party slot,
+so reordering the party does not silently select a different rookie. If that
+partner is no longer present, the native initial selection is retained. The
+physical lab remains unchanged. Savestate loading clears this session preference
+so the loaded menu's own selection takes priority; it is not a memory-card option.
+
 Hints come from that rookie's own requirement table. A form can have different
 requirements for different partners; a global hint attached only to the final
 form would be misleading.
@@ -165,6 +172,33 @@ script runs all six Shinka native tests rather than unrelated dependency example
 
 Before promoting this developer feature, expand coverage across party combinations,
 locked and unlocked branches, unlocked chart pages, all field families and languages.
-Add selected-partner retention and broader hint coverage. The initial
+Expand partner-retention and hint coverage. The initial
 [map travel network](menu-map.md), EXP and [encounter settings](encounters.md)
 are now available; map destination and campaign coverage remain limited.
+
+### Partner selection trace
+
+The lab module wrapper (`0x80082f48`) owns the root (`0x8008ed0c`), which owns
+the action menu (`0x8008a51c`). Root offset `0x64` is a party-slot index, while
+action-menu offset `0x60` is the selected action. The original instruction at
+`0x800891ac` resets the slot when choosing an action. In selector phase 15,
+left/right input changes the root slot. Resident accessor `0x80016d94` maps slots
+0..2 through the rookie indices at `0x80048da4`. Chart initialization stores the
+resolved rookie index at chart offset `0xbc` (instruction `0x800843a8`).
+
+Retention runs once in opening phase 10/11, before the native summary-panel
+refresh, and observes ordinary navigation in input phase 15. It checks the
+module, owner chain, callbacks and allocation counts
+before accessing UI state. Only the root's selected slot can be written; native
+confirmation, party records and form ownership remain under the original code.
+
+Live testing on 2026-09-10 used the copied menu-test profile, entering the
+portable lab through its field-menu row. Guilmon remained selected after
+cancelling and reopening the chooser, and after exiting to the full-screen root
+and entering DIGIVOLUTIONS again. Confirming opened Guilmon's chart, verified
+in a screenshot. On the final build, Patamon remained selected across chooser
+reopening, changing from Chart to Digivolve, and a full exit and reentry. A
+chooser screenshot verified that both cursor and summary panel showed Patamon.
+Loading the original physical-lab checkpoint restored slot 0.
+Party reorder/removal and unsupported-overlay cases currently have native
+regression coverage; those cases still need broader live party testing.

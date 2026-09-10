@@ -26,6 +26,27 @@ static void fresh(void) {
 static void unchanged(void) { CHECK(writes==0 && !memcmp(before,ram,sizeof(ram))); }
 int main(void) {
     ShinkaNavPartner p;
+    {
+        ShinkaNavLab lab;
+        fresh();CHECK(shinka_nav_lab(&lab));unchanged();
+        W(0x8004b3f8,0xd01);W(0x80055d28,13);W(0x8008ed0c,0x27bdff40);
+        W(0x800b0024,0x800b0100);W(0x800b0100,0x800b1000);
+        W(0x800b1028,0x80014274);W(0x800b1048,0x80082f48);W(0x800b1020,1);
+        W(0x800b1024,0x800b1100);W(0x800b1100,0x800c0000);
+        W(0x800c0028,0x80014274);W(0x800c0048,0x8008ed0c);W(0x800c0020,3);
+        W(0x800c000c,1);W(0x800c0064,2);
+        W(0x80048da4,1);W(0x80048da8,5);W(0x80048dac,7);
+        W(0x800c0024,0x800c0100);W(0x800c0100,0x800d0000);
+        W(0x800d0028,0x80014274);W(0x800d0048,0x8008a51c);W(0x800d0020,19);
+        W(0x800d0010,3);W(0x800d0060,2);
+        writes=0;memcpy(before,ram,sizeof(ram));
+        CHECK(!shinka_nav_lab(&lab));CHECK(lab.slot==2 && lab.roster[2]==7);
+        CHECK(lab.action_menu==0x800d0000 && lab.action==2);unchanged();
+        W(0x800c0024,0xffffffff);writes=0;memcpy(before,ram,sizeof(ram));
+        CHECK(!shinka_nav_lab(&lab) && !lab.action_menu);unchanged();
+        W(0x800b0024,0xffffffff);writes=0;memcpy(before,ram,sizeof(ram));
+        CHECK(shinka_nav_lab(&lab));unchanged();
+    }
     fresh();W(0x8004b3f8,0x1000);writes=0;CHECK(!shinka_nav_warp(0x234,111,222,3,0x1000));
     CHECK(writes==6 && addresses[5]==0x8004b3fc);
     CHECK(R(0x8004b3fc)==0x234 && R(0x80048d6c)==111 && R(0x80048d74)==3);

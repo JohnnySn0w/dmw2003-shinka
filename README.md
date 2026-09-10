@@ -32,7 +32,7 @@ See the [groundwork audit and port milestones](docs/groundwork-audit.md) for pin
 - Expand EXP validation across party splits, later enemies and progression caps.
 - Expand DV validation across later forms, participation splits and natural growth limits.
 - Investigate music extraction and replacement instrument samples; compare a single track before expanding the work.
-- Add selected-partner retention to the DIGIVOLUTIONS entry; see [design and hint groundwork](docs/evolution-journal.md).
+- Expand advanced-party coverage for DIGIVOLUTIONS and its session partner retention; see [design and hint groundwork](docs/evolution-journal.md).
 - Expand the initial map travel network with validated destinations and later story/server access rules.
 
 Fresh configurations retain original EXP until enabled. The current local setup selects 3x normal EXP and fixed 10-point DV awards.

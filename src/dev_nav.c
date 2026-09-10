@@ -17,6 +17,35 @@ static int object(uint32_t p, uint32_t callback) {
     return p >= 0x80090000 && p <= 0x801eff00 && !(p & 3)
         && R(p+0x28) == 0x80014274 && R(p+0x48) == callback;
 }
+static uint32_t first_child(uint32_t p) {
+    uint32_t children=R(p+0x24);
+    return children>=0x80090000 && children<=0x801ffffc && !(children&3)
+        ? R(children) : 0;
+}
+const char* shinka_nav_lab(ShinkaNavLab* s) {
+    uint32_t mode=R(MODE),owner=R(0x8005ccbc),root,action;
+    unsigned i;
+    if ((mode!=0xd00 && mode!=0xd01) || R(MODE+4)
+        || R(0x80055d28)!=13 || R(0x8008ed0c)!=0x27bdff40)
+        return "A supported stationary Digimon Lab overlay is required";
+    if (!object(owner,0x80020b58) || R(owner+0x20)!=1)
+        return "The native mode owner is not ready";
+    root=first_child(owner);
+    if (!object(root,0x80082f48) || R(root+0x20)!=1)
+        return "The Digimon Lab module wrapper is not ready";
+    root=first_child(root);
+    if (!object(root,0x8008ed0c) || R(root+0x20)!=3)
+        return "The Digimon Lab controller is not ready";
+    s->root=root;s->lifecycle=R(root+0xc);s->phase=R(root+0x10);
+    s->slot=R(root+0x64);
+    for(i=0;i<3;++i) s->roster[i]=R(0x80048da4+i*4);
+    s->action_menu=0;s->action_phase=0;s->action=0;
+    action=first_child(root);
+    if (object(action,0x8008a51c) && R(action+0x20)==19) {
+        s->action_menu=action;s->action_phase=R(action+0x10);s->action=R(action+0x60);
+    }
+    return NULL;
+}
 static const char* ready(int expected_mode, int allow_menu) {
     uint32_t mode=R(MODE), owner=R(0x8005ccbc);
     if ((int)mode != expected_mode) return "Mode changed since the request was prepared";

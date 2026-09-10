@@ -13,6 +13,12 @@
 #define READ psx_mod_read_word
 #define WRITE psx_mod_write_word
 static int enabled;
+static uint32_t lab_selection_root, lab_selection_menu;
+static int lab_selected_rookie = -1, lab_choosing;
+void shinka_lab_selection_reset(void) {
+    lab_selected_rookie = -1; lab_choosing = 0;
+    lab_selection_root = lab_selection_menu = 0;
+}
 int shinka_journal_enabled(void) { return enabled; }
 static int object(uint32_t p, uint32_t callback) {
     return p >= 0x80090000u && p <= 0x801eff00u && !(p & 3u)
@@ -20,6 +26,53 @@ static int object(uint32_t p, uint32_t callback) {
 }
 
 #include "menu_list.inc"
+
+static uint32_t lab_child(uint32_t p) {
+    uint32_t children = READ(p + 0x24);
+    return children >= 0x80090000u && children <= 0x801ffffcu && !(children & 3)
+        ? READ(children) : 0;
+}
+/* The action menu resets root+64 before its partner selector opens. Remember
+ * identity, not position: Switch Digimon can reorder the three party slots.
+ * This is session UI memory; the savestate-load hook deliberately clears it. */
+static void retain_lab_partner(void) {
+    uint32_t root, menu, slot, i, phase;
+    if (READ(MODE) != JOURNAL || READ(MODE + 4) || READ(0x80055d28) != 13
+        || READ(0x8008ed0c) != 0x27bdff40 || READ(0x800891ac) != 0xac400064)
+        goto inactive;
+    root = READ(0x8005ccbc);
+    if (!object(root, 0x80020b58) || READ(root + 0x20) != 1) goto inactive;
+    root = lab_child(root);
+    if (!object(root, 0x80082f48) || READ(root + 0x20) != 1) goto inactive;
+    root = lab_child(root);
+    if (!object(root, 0x8008ed0c) || READ(root + 0x20) != 3) goto inactive;
+    menu = lab_child(root);
+    if (!object(menu, 0x8008a51c) || READ(menu + 0x20) != 19
+        || READ(menu + 0xc) != 1
+        || READ(menu + 0x60) > 2) goto inactive;
+    phase = READ(menu + 0x10);
+    if (phase < 10 || phase > 15) goto inactive;
+    slot = READ(root + 0x64);
+    if (slot >= 3) goto inactive;
+    if (!lab_choosing || root != lab_selection_root || menu != lab_selection_menu) {
+        /* Phases 10/11 precede 0x80088808's summary-panel refresh. Restoring
+         * only once input phase 15 begins would leave that panel stale. */
+        if (phase <= 11 && lab_selected_rookie >= 0) for (i = 0; i < 3; ++i)
+            if (READ(0x80048da4 + i * 4) == (uint32_t)lab_selected_rookie) {
+                slot = i;
+                if (READ(root + 0x64) != slot) WRITE(root + 0x64, slot);
+                break;
+            }
+    }
+    if (phase == 15) {
+        i = READ(0x80048da4 + slot * 4);
+        lab_selected_rookie = i < 8 ? (int)i : -1;
+    }
+    lab_selection_root = root; lab_selection_menu = menu; lab_choosing = 1;
+    return;
+inactive:
+    lab_choosing = 0;
+}
 
 static int restore_lab_interface(void) {
     static const uint32_t old[] = {0xae050010u, 0x8e220000u,
@@ -61,9 +114,10 @@ static void journal_vblank(void) {
     shinka_rewards_tick();
     mode = READ(MODE);
     if (mode == LAB || mode == JOURNAL) restore_lab_interface();
+    retain_lab_partner();
 }
 
-static void journal_activate(void) { enabled = 1; text_scratch = 0; shinka_rewards_activate(); }
+static void journal_activate(void) { enabled = 1; text_scratch = 0; shinka_lab_selection_reset(); shinka_rewards_activate(); }
 void shinka_register_journal(void) {
     psx_mod_register_activation_plugin("shinka.evolution-journal", journal_activate);
     psx_mod_register_vblank_plugin("shinka.evolution-journal", journal_vblank);

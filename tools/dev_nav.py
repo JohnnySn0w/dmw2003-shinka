@@ -253,6 +253,7 @@ def main(argv=None):
     flag.add_argument('value', type=int, choices=(0, 1))
     sub.add_parser('encounters').add_argument('mode', choices=('defer', 'next'))
     sub.add_parser('party')
+    sub.add_parser('lab', help='Read the live lab controller, action and party-slot mapping')
     sub.add_parser('heal').add_argument('index', type=int, choices=range(8))
     power = sub.add_parser('power')
     power.add_argument('index', type=int, choices=range(8))
@@ -300,8 +301,8 @@ def main(argv=None):
             result = nav.checkpoint(cmd, args.slot)
         elif cmd == 'shot':
             result = nav.screenshot(args.path)
-        elif cmd == 'party':
-            result = nav.nav('party')
+        elif cmd in ('party', 'lab'):
+            result = nav.nav(cmd)
         else:
             fields = {key: getattr(args, key) for key in ('value', 'flag', 'index') if hasattr(args, key)}
             if cmd == 'encounters':

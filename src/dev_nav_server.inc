@@ -5,6 +5,16 @@ static void handle_shinka_nav(int id,const char* json) {
     const char* error=NULL;
     int expected=json_get_int(json,"expected_mode",-1);
     if (!json_get_str(json,"op",op,sizeof(op))) { send_err(id,"Missing op");return; }
+    if (!strcmp(op,"lab")) {
+        ShinkaNavLab s;
+        error=shinka_nav_lab(&s);
+        if(error) { send_err(id,error);return; }
+        send_fmt("{\"id\":%d,\"ok\":true,\"schema\":1,\"root\":%u,\"lifecycle\":%u,"
+            "\"phase\":%u,\"slot\":%u,\"roster\":[%u,%u,%u],\"action_menu\":%u,"
+            "\"action_phase\":%u,\"action\":%u}",id,s.root,s.lifecycle,s.phase,s.slot,
+            s.roster[0],s.roster[1],s.roster[2],s.action_menu,s.action_phase,s.action);
+        return;
+    }
     if (!strcmp(op,"where")) {
         ShinkaNavState s;
         shinka_nav_state(&s);

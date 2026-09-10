@@ -18,6 +18,7 @@ Launch with a dedicated profile and debug port (the launch script defaults to
 
 ```powershell
 python tools/dev_nav.py where
+python tools/dev_nav.py lab
 python tools/dev_nav.py save 8
 python tools/dev_nav.py points
 python tools/dev_nav.py warp central-park
@@ -31,6 +32,12 @@ python tools/dev_nav.py load 8
 
 `save` overwrites that slot in the running profile. `load` restores it. Port
 selection precedes the command: `python tools/dev_nav.py --port 4381 where`.
+
+`lab` is a read-only, single-command snapshot of the physical or portable lab:
+root lifecycle/phase, selected party slot, rookie indices in the three slots,
+and action-menu phase/row. It rejects other overlays and invalid owner chains.
+An absent action menu is reported as address zero; its phase/row are then unused.
+This separates partner selection from action selection without injecting input.
 
 `where` is read-only and reports the **cached field-return position**, which can
 lag behind walking. `where --refresh` briefly opens and closes the field quick

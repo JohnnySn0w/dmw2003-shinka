@@ -1,6 +1,7 @@
 /* Included in a generated copy of the pinned debug server. */
 #include "dev_nav.h"
 #include "music_live.h"
+#include "view.h"
 extern int shinka_music_palette_get(void);
 extern int shinka_music_palette_set(int palette);
 static void handle_shinka_nav(int id,const char* json) {
@@ -8,6 +9,16 @@ static void handle_shinka_nav(int id,const char* json) {
     const char* error=NULL;
     int expected=json_get_int(json,"expected_mode",-1);
     if (!json_get_str(json,"op",op,sizeof(op))) { send_err(id,"Missing op");return; }
+    if (!strcmp(op,"view")) {
+        int option = json_get_int(json,"option",-1), value = json_get_int(json,"value",-1);
+        if ((option != -1 || value != -1) && !shinka_view_set(option,value)) {
+            send_err(id,"Invalid or unsaved view setting");return;
+        }
+        shinka_view_tick();
+        send_fmt("{\"id\":%d,\"ok\":true,\"width\":%d,\"zoom\":%d,\"active_wide\":%d,\"active_percent\":%d}",
+            id,shinka_view_get(0),shinka_view_get(1),shinka_view_wide_active(),shinka_view_zoom_percent());
+        return;
+    }
     if (!strcmp(op,"music")) {
         int palette = json_get_int(json,"palette",-1);
         if (palette != -1 && !shinka_music_palette_set(palette)) { send_err(id,"Invalid or unsaved palette");return; }

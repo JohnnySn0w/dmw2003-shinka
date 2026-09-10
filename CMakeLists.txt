@@ -47,6 +47,23 @@ string(REPLACE "${_main_entry}"
     "extern \"C\" void shinka_register_journal(void);\nextern \"C\" void shinka_music_init(const char*);\n${_main_entry}\n    shinka_music_init(argv[0]);\n    shinka_register_journal();"
     _frontend_text "${_frontend_text}")
 file(MAKE_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/shinka-runtime")
+file(READ "${CMAKE_CURRENT_SOURCE_DIR}/src/view_frontend.inc" _view_frontend)
+set(_view_refresh "static void refresh_widescreen_projection() {")
+string(FIND "${_frontend_text}" "${_view_refresh}" _view_refresh_pos)
+if(_view_refresh_pos EQUAL -1)
+    message(FATAL_ERROR "Review pinned widescreen frontend hook")
+endif()
+string(REPLACE "${_view_refresh}" "${_view_frontend}\n${_view_refresh}\n    shinka_view_tick();"
+    _frontend_text "${_frontend_text}")
+set(_view_headless "    if (g_headless) {\n        ep.skip_pace = 1;\n        return ep;\n    }")
+string(FIND "${_frontend_text}" "${_view_headless}" _view_headless_pos)
+if(_view_headless_pos EQUAL -1)
+    message(FATAL_ERROR "Review pinned headless camera update path")
+endif()
+string(REPLACE "${_view_headless}"
+    "    if (g_headless) {\n        if (psx_mod_game_started()) g_ws_engaged = true;\n        refresh_widescreen_projection();\n        ep.skip_pace = 1;\n        return ep;\n    }"
+    _frontend_text "${_frontend_text}")
+set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/src/view_frontend.inc")
 file(CONFIGURE OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/shinka-runtime/main.cpp"
     CONTENT "${_frontend_text}" @ONLY)
 get_target_property(_runtime_sources shinka SOURCES)
@@ -88,6 +105,7 @@ if(SHINKA_BUILD_TESTS)
     add_test(NAME dev_nav COMMAND shinka_dev_nav_test)
 endif()
 include("${CMAKE_CURRENT_SOURCE_DIR}/tools/music_live.cmake")
+include("${CMAKE_CURRENT_SOURCE_DIR}/tools/view.cmake")
 add_custom_command(TARGET shinka POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E make_directory "$<TARGET_FILE_DIR:shinka>/mods/packages/shinka.evolution-journal/0.1.0"
     COMMAND ${CMAKE_COMMAND} -E copy_if_different

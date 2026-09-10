@@ -10,6 +10,10 @@ The first gameplay feature is optional **1â€“4x normal battle EXP**, applie
 
 An experimental English menu adds **DIGIVOLUTIONS** and **SETTINGS** as selectable rows in both the world overlay and the full-screen root reached after leaving a submenu. Enable it with `python tools/configure_journal.py --enable` and restart. DIGIVOLUTIONS opens the full lab interface for switching partners, selecting battle forms, loading techniques and viewing the chart; leaving it highlights DIGIVOLUTIONS again. Select an anonymous chart node and press X for directional training hints. SETTINGS includes live EXP controls and **0%, 50%, 100%, 150%, 200% random encounter rates**. See [menu controls and implementation](docs/field-menu.md), [encounter behavior](docs/encounters.md) and [lab integration](docs/evolution-journal.md).
 
+SETTINGS also offers experimental [battle camera controls](docs/camera.md):
+**4:3 / 16:9 view** and independent **100% / 90% / 80% zoom**. Field areas retain
+their original view while their tile-streaming requirements are investigated.
+
 See [Windows build, launch, and overlay-capture instructions](docs/windows-baseline.md) for the runnable baseline and current validation limits.
 
 The portable evolution chart remembers your last branch separately for each

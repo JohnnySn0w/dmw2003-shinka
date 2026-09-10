@@ -3,7 +3,7 @@ id = "shinka.evolution-journal"
 version = "0.1.0"
 name = "Shinka Evolution Journal"
 channel = "developer"
-description = "English portable lab, evolution hints, EXP and random encounter controls."
+description = "English portable lab, evolution hints, EXP, encounters, live soundtrack and experimental battle camera controls."
 resolver = "declarative"
 
 [[target]]
@@ -28,10 +28,30 @@ default = 100
 [[option]]
 feature = "menu-chart"
 id = "soundtrack"
-label = "Soundtrack preference (alternate playback pending)"
+label = "Live soundtrack palette"
 type = "integer"
 min = 0
 max = 3
+step = 1
+default = 0
+
+[[option]]
+feature = "menu-chart"
+id = "battle_view"
+label = "Experimental battle view (0 original, 1 widescreen)"
+type = "integer"
+min = 0
+max = 1
+step = 1
+default = 0
+
+[[option]]
+feature = "menu-chart"
+id = "battle_zoom"
+label = "Experimental battle zoom (0 100%, 1 90%, 2 80%)"
+type = "integer"
+min = 0
+max = 2
 step = 1
 default = 0
 

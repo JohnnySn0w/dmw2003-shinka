@@ -4,7 +4,7 @@ from pathlib import Path
 import unittest
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'tools'))
-from field_conditions import condition, records
+from field_conditions import condition, records, range_predicates, executable_ranges
 
 
 class FieldConditionsTests(unittest.TestCase):
@@ -32,6 +32,31 @@ class FieldConditionsTests(unittest.TestCase):
         for offset, count in ((-2, 1), (1, 1), (0, 0), (0, 257), (2, 1), (0, 2)):
             with self.subTest(offset=offset, count=count), self.assertRaises(ValueError):
                 records(bytes(24), offset, count)
+
+    def test_range_dispatch_and_literal_polarity(self):
+        ranges = range_predicates(bytes((7, 0x30, 1, 8, 0x20, 0, 9, 0x31, 0, 255)),
+                                  bytes((4, 9, 20, 23)))
+        self.assertEqual(ranges, {7: (20, 23), 9: (4, 9)})
+        data = struct.pack('<6H3I', 0x7007, 0, 0x7009, 1, 1, 0x200, 0, 0, 0)
+        first, second = records(data, 0, 1, ranges)[0]['all_conditions']
+        self.assertEqual((first['minimum'], first['maximum'], first['expected_result']), (20, 23, 0))
+        self.assertEqual(second['expected_result'], 1)
+        self.assertTrue(first['inclusive'])
+        self.assertEqual(condition(0x7007, 2, ranges)['expected_result'], 2)
+        for flag in (0x7008, 0x7107, 0x7207):
+            self.assertEqual(condition(flag, 1, ranges)['meaning'], 'unresolved flag class')
+        self.assertEqual(condition(0x7007, 0)['meaning'], 'unresolved flag class')
+
+    def test_invalid_range_tables_and_executable(self):
+        for descriptors, ranges in ((b'', b''), (bytes((7,)), b''),
+                                    (bytes((7, 0x30, 0)), bytes((20, 23))),
+                                    (bytes((7, 0x30, 1, 255)), bytes((20, 23))),
+                                    (bytes((7, 0x30, 0, 255)), bytes((23, 20))),
+                                    (bytes((7, 0x20, 0, 7, 0x30, 0, 255)), bytes((20, 23)))):
+            with self.subTest(descriptors=descriptors), self.assertRaises(ValueError):
+                range_predicates(descriptors, ranges)
+        with self.assertRaises(ValueError):
+            executable_ranges(b'PS-X EXE' + bytes(2048))
 
 
 if __name__ == '__main__':

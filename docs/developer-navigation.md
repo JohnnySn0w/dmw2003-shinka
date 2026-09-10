@@ -23,6 +23,21 @@ or event completion. Verified examples: WSTAG485 offset `0x172c`, WSTAG480
 offset `0x23b8`, and the two WSTAG500 records above. Unit tests use synthetic
 bytes rather than redistributed game data.
 
+Pass `--exe PATH/TO/SLES_039.36` to resolve the class-0x70 predicates that
+dispatch to the resident inclusive story-range reader. The executable must
+match the supported original PAL SHA-256; altered or other-region executables
+are rejected. For example:
+
+```powershell
+python tools/field_conditions.py WSTAG205.PRO --offset 0x1b30 --exe SLES_039.36
+```
+
+This resolves `0x7007` to story 20–23 inclusive. `expected_result: 0` means
+the story must be outside that range; `1` means inside. Other literal values
+cannot equal the native Boolean result. Predicates using other class-0x70
+readers remain unresolved. Without `--exe`, all class-0x70 predicates remain
+unresolved. The report records both input fingerprints.
+
 ## Live navigation
 
 `tools/field_triggers.py SNAPSHOT.ram` decodes the original field's layer-7

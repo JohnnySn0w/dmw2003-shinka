@@ -9,10 +9,11 @@ scripted exits, temporary closures and transport unlocks. A previously visited
 area can become inaccessible later. Both departure and arrival need checks.
 
 This is an implementation scope and test plan, not a completed campaign safety
-certification. The ten-destination network now guards Seiryu's pending departure
+certification. The eleven-destination network now guards Seiryu's pending departure
 scene, adjusts Asuka's early arrival, gates three South Sector stops behind the
 completed first arrival, and admits Phoenix Bay only after its exact surface field
-has been visited. It retains the broad story range
+has been visited. Suzaku has event-aware arrivals and departures, and Asuka's
+Main Lobby cannot be used to teleport out during lockdown. It retains the broad story range
 described in [map travel](menu-map.md). That range does not prove the remaining
 events below are safe.
 
@@ -86,8 +87,8 @@ not been added. Shinka already uses an outside bridge landing during lockdown.
 | Reference predicate | Reference action | Interpretation / next check |
 | --- | --- | --- |
 | Destination `0x200`; story `6`; `(byte[0x8004b3e0] & 0x40) == 0` | Redirect to `0x202`, coordinates `(0x27e34, 0x12bcc)` | Keith's early encounter. Original-script confirmation and the implemented arrival are documented below. |
-| Destination `0x200`; story `20..23` | Redirect to `0x202`, `(0x2dda8, 0xf760)` | Candidate closure window. Shinka keeps this bridge landing during those phases, leaving access to the original gate script. |
-| Destination `0x23e`; story `25`; `(byte[0x8004b3bf] & 2) == 0` | Redirect to `0x23b`, `(0x509c0, 0xdde0)` | Suzaku City to Phoenix Bay. The earthquake approach in T09 is a candidate explanation; confirm what sets the bit. |
+| Destination `0x200`; story `20..23` | Redirect to `0x202`, `(0x2dda8, 0xf760)` | Closure window now confirmed against both original front-door records and live gate checks below. Shinka keeps the outside bridge landing. |
+| Destination `0x23e`; story `25`; `(byte[0x8004b3bf] & 2) == 0` | Redirect to `0x23b`, `(0x509c0, 0xdde0)` | Suzaku City to Phoenix Bay. The original earthquake and native completion bit are now verified; see the South event checks below. |
 | Destination `0x270`; story `< 37` | Redirect to `0x272`, `(0x17ec8, 0x1ac9a)` | Amaterasu City to its bridge. Inspect Knightmon's access test and the arrival's side of that gate. This does not identify story 37 as postgame. |
 | Destination `0x2c1` or `0x2c3`; story `34..36` | Redirect to `0x2c0`, `(0x15ee2, 0x23a9a)` | Amaterasu Mobius Desert / Mirage Tower to Noise Desert. Investigate Resistance approach events. This is **not** a direct Bai Hu destination redirect. |
 
@@ -168,6 +169,49 @@ sets `0x4016` through the original script, with story still `6`. See
 [map travel validation](menu-map.md) for subsequent runtime checks and remaining
 coverage. These event checks do not substitute for a full campaign run through
 the badge, Blue Card errands, lockdown and reopening.
+
+## Asuka lockdown: front gate and lobby departures
+
+The original bridge action table begins at WSTAG205 offset `0x1b30`;
+its first record requires `(0x7007, 0)` before action 1 enters Main Lobby
+`0x200`. WSTAG200's action table at `0x2150` uses the same condition for
+the reverse exit to bridge `0x202`. Its setup writes that table pointer at
+offsets `0x19c..0x1a4`. Thus the native gate closes in both directions.
+
+Class `0x70` routes through resident reader `0x80015d90`. Descriptor
+`0x80048bd4` identifies predicate 7 as range-reader type `0x30`, argument 3.
+Reader `0x80015b9c` compares the full story word at `0x8004b370` against
+the inclusive byte bounds at `0x80048cb4 + 3*2`: **20 and 23**. The outer
+reader compares the Boolean result with the literal expected value, so
+`(0x7007, 0)` permits passage outside this range. This confirms the previously
+reference-derived lockdown window against the original executable.
+
+WSTAG200 was extracted from the owner's disc: 8,784 bytes, SHA-256
+`c92594501a08953aaaf09bf74388b5a5b68b2a189e13f7e5ca2c12d8512b37fd`.
+All 175 annotated instruction words before offset `0x2c0` matched it.
+Its initialization also selects a different field configuration during 20–23
+and 39–40; the latter remains outside Shinka's supported story range.
+
+Player-map arrivals were tested separately at each story value 19 through 24.
+Each landed at the outside bridge coordinates. Walking northeast for 24 input
+frames and pressing Cross reached Main Lobby at 19 and 24, and remained outside
+at every value 20–23. These were controlled fixtures loaded from the isolated
+advanced-save copy, not a replay of the Staff Pass and sewer errands.
+
+Shinka now rejects Main Lobby departures during 20–23 with **Use the city
+route**, keeping the original interior route available. It does not block travel
+from the outside bridge or move arrivals behind the gate. Native policy tests
+cover both boundary states, each closed stage, both sources, and revalidation
+of pending current/legacy requests when lockdown begins.
+
+The reverse native exit was also exercised at each stage 19–24 from a controlled
+lobby trigger fixture `(84*256, 806*256)`: Cross returned to the bridge at 19 and
+24 and stayed inside at 20–23. With the rebuilt mod, selecting Central Park on
+the actual map and pressing Cross remained in the map at 20 and 23 with the
+restriction text visible; at 24 it reached Central Park. No completion bits
+were supplied to release the restriction. The resident reader code and both
+predicate tables were compared byte-for-byte between the owned executable and
+live RAM. The isolated baseline checkpoint was restored after testing.
 
 ## First South Sector stops
 
@@ -403,9 +447,9 @@ before replacement, and the owner's original memory cards were not modified.
 | Current field | First check before broader campaign claims |
 | --- | --- |
 | Seiryu City `0x22e` | T02 guard and native announcement release verified in a controlled fixture above. Retain a naturally earned badge checkpoint for full campaign regression. |
-| Asuka bridge `0x202` | Story-6 approach starts the original encounter. Complete the closure/reopening campaign regression; synthetic boundary tests alone do not certify all gate events. |
+| Asuka bridge `0x202` | Keith encounter and front-gate boundaries 19–24 verified in controlled fixtures. Complete the naturally earned closure/reopening campaign regression; boundary tests alone do not certify all gate events. |
 | South Station / Bulk Swamp / Bulk Bridge / Tranquil Swamp | First-arrival policy is implemented. Extend naturally earned checkpoints and later NPC-phase coverage before claiming campaign-wide safety. |
-| Asuka Main Lobby `0x200` (source only) | Audit departures during forced-return, disguise and liberation sequences. Being a supported source must not allow escape from unfinished scripts. |
+| Asuka Main Lobby `0x200` (source only) | Lockdown departure guard follows the verified original front-door predicate. Forced return 11→12 checked above; disguise and full liberation sequences still need campaign coverage. |
 | Central Park `0x21d` | Establish event-free departure and arrival positions for each allowed phase. T14 is also a prerequisite before admitting later phases or the other server. |
 | Wire Forest Entrance `0x21e` and Wire Forest `0x222` | Lower-priority candidates for broad repeat travel; no special closure was identified in the reviewed passages. This is an evidence gap, not proof that none exists. |
 | Pelche Oasis `0x249` | Verify T06 transport access and ordinary return routes. Keep T07 interiors excluded; a nearby safe outdoor point does not make the whole map group safe. |

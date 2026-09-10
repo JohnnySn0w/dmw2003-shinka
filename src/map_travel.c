@@ -79,6 +79,10 @@ static int source(uint32_t stage) {
     return 0;
 }
 static const char* departure(uint32_t stage, uint32_t story) {
+    /* WSTAG200's front exit requires 0x7007 == 0: outside story 20..23.
+     * Keep lockdown departures on the original interior/sewer route. */
+    if (stage == 0x200 && story >= 20 && story <= 23)
+        return "Use the city route";
     if (stage == 0x23e) {
         if (story == 10 && !(B(SUZAKU_INTRO_COMPLETE) & 4))
             return "Explore the city first";

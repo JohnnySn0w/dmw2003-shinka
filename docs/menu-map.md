@@ -212,6 +212,15 @@ The player-map path was checked with directional input and Cross in an isolated
 fixture, and the native dialogue completion set the flag without a debug write.
 See the [event predicate and validation limits](travel-story-audit.md#phoenix-bay-earthquake-and-jungle-grave-follow-up).
 
+## Asuka lockdown
+
+Travel to Asuka lands outside the front gate. During the original lockdown
+(story 20–23), the gate remains closed and Main Lobby departures display
+**Use the city route**. This preserves the original interior/sewer route.
+Outside-bridge departures remain available. The native gate admits passage
+again at story 24; the travel guard follows the same boundary.
+See the [original predicates and live gate checks](travel-story-audit.md#asuka-lockdown-front-gate-and-lobby-departures).
+
 ## Suzaku City events
 
 Suzaku is now supported after story 10 begins, flag `0x1c09` records Zanbamon's

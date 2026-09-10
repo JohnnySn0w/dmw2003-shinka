@@ -18,7 +18,9 @@ South Station, Bulk Bridge, Tranquil Swamp, Phoenix Bay, Suzaku City and Pelche 
 Travel cuts directly from the map into the original area loader. South Sector
 station/swamp stops require the first arrival scene to be complete and South Station visited.
 Suzaku requires Zanbamon's removal and preserves its introduction, Kail's return,
-and the later Phoenix Bay earthquake through conditional arrivals and departures. See
+and the later Phoenix Bay earthquake through conditional arrivals and departures.
+Asuka's Main Lobby cannot be used to teleport out during the city lockdown; its
+outside bridge remains available. See
 [availability rules and current coverage](docs/menu-map.md).
 
 Existing DuckStation memory cards can be copied into isolated test profiles; see [save imports and profile selection](docs/save-profiles.md).

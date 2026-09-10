@@ -321,6 +321,23 @@ static void suzaku_policy(void) {
     }
 }
 int main(void) {
+    /* The native lobby front exit is closed throughout lockdown. Keep its
+     * outside bridge usable, and recheck closure on both pending paths. */
+    for(unsigned story=19;story<=24;++story) for(unsigned legacy=0;legacy<2;++legacy)
+        for(unsigned stage=0x200;stage<=0x202;stage+=2) {
+        fresh();watching=0;W(RETURN,stage);W(0x8004b370,story);watching=1;
+        if(legacy) { legacy_request();root_close();transition(); }
+        else { select_icon();shinka_map_present(); }
+        CHECK(R(RETURN)==(stage==0x200 && story>=20 && story<=23?stage:0x21d));
+    }
+    for(unsigned legacy=0;legacy<2;++legacy) {
+        fresh();watching=0;W(RETURN,0x200);W(0x8004b370,19);watching=1;
+        if(legacy) { legacy_request();root_close(); }
+        else select_icon();
+        watching=0;W(0x8004b370,20);watching=1;
+        if(legacy) transition();else shinka_map_present();
+        CHECK(R(RETURN)==0x200 && !gpu_count);
+    }
     suzaku_policy();
     phoenix_policy();
     south_policy();
@@ -355,7 +372,8 @@ int main(void) {
     {
         const unsigned icons[]={20,30,22,21,15,26,32,43,44,46,42};
         for(unsigned i=0;i<sizeof(icons)/sizeof(icons[0]);++i) {
-            fresh();watching=0;W(RETURN,0x200);W(MAP+0x184,icons[i]);W(MAP+0xa8+(icons[i]-1)*4,1);watching=1;
+            fresh();watching=0;W(RETURN,0x200);W(0x8004b370,24);
+            W(MAP+0x184,icons[i]);W(MAP+0xa8+(icons[i]-1)*4,1);watching=1;
             select_icon();shinka_map_present();CHECK(R(0x8004b3fc)==R(RETURN));
             CHECK(R(RETURN)!=0x200 && map_stage_icons[R(RETURN)-0x200]+1==icons[i]);
         }

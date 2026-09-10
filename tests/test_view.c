@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "view.h"
+#include "battle_hud.h"
 #define CHECK(c) do { if (!(c)) { fprintf(stderr,"line %d: %s\n",__LINE__,#c); exit(1); } } while (0)
 static uint32_t mode;
 static int started = 1, options[2], frontend;
@@ -23,6 +24,50 @@ int main(void) {
     CHECK(x==65536 && y==-65536); /* immediate scene change before present */
     started=0;mode=0x600;shinka_view_tick();
     CHECK(!frontend && shinka_view_zoom_percent()==100);
+    started=1;mode=0x600;options[0]=1;shinka_view_tick();
+    for(int band=0;band<=256;band+=256) {
+        uint32_t panel[]={0x64808080,0x001400CB,0x3E2059C4,0x001C0018};
+        shinka_battle_hud_command(panel,4,0,band,0,band,319,band+239,53);
+        CHECK(panel[1]==0x00140100 && panel[2]==0x3E2059C4 && panel[3]==0x001C0018);
+        uint32_t bar[]={0x38287100,0x0025008F,0x003EC800,0x0025000F,0x00287100,0x002B008F,0x003EC800,0x002B000F};
+        shinka_battle_hud_command(bar,8,0,band,0,band,319,band+239,53);
+        CHECK(bar[1]==0x0025005A && bar[3]==0x0025FFDA && bar[5]==0x002B005A && bar[7]==0x002BFFDA);
+        uint32_t description[]={0x64808080,0x00D00125,0x3B171580,0x000C0008};
+        shinka_battle_hud_command(description,4,0,band,0,band,319,band+239,53);
+        CHECK(description[1]==0x00D000F0); /* rightmost text follows left-aligned box */
+        uint32_t cap[]={0x64808080,0x003E0082,0x3EA05940,0x00150020};
+        shinka_battle_hud_command(cap,4,0,band,0,band,319,band+239,53);
+        CHECK(cap[1]==0x003E004D); /* 162px list edge must not split at x=160 */
+        uint32_t tag[]={0x64808080,0x00500098,0x3EA05940,0x000C0060};
+        shinka_battle_hud_command(tag,4,0,band,0,band,319,band+239,53);
+        CHECK(tag[1]==0x00500063); /* Tag bars crossing the midpoint stay together */
+        uint32_t portrait[]={0x66808080,0x004A00CE,0x3EE30000,0x00400068};
+        shinka_battle_hud_command(portrait,4,0,band,0,band,319,band+239,53);
+        CHECK(portrait[1]==0x004A0103);
+        uint32_t tl=0xe3000000u|208u|((76u+band)<<10);
+        uint32_t br=0xe4000000u|307u|((135u+band)<<10);
+        uint32_t origin=0xe5000000u|258u|((106u+band)<<11);
+        shinka_battle_hud_command(&tl,1,0,band,0,band,319,band+239,53);
+        shinka_battle_hud_command(&br,1,0,band,261,band+76,319,band+239,53);
+        shinka_battle_hud_command(&origin,1,0,band,261,band+76,360,band+135,53);
+        CHECK((tl&1023)==261 && (br&1023)==360 && (origin&2047)==311);
+        CHECK(shinka_battle_hud_portrait(261,band+76,360,band+135,53));
+        CHECK(!shinka_battle_hud_portrait(261,band+76,359,band+135,53));
+        for(int tile=0;tile<12;++tile)
+            CHECK(shinka_battle_hud_cursor(tile*12,244,14,band+69,12,12,53));
+        CHECK(!shinka_battle_hud_cursor(144,244,14,band+69,12,12,53));
+        CHECK(!shinka_battle_hud_cursor(13,244,14,band+69,12,12,53));
+        CHECK(!shinka_battle_hud_cursor(48,240,14,band+69,12,12,53));
+        CHECK(shinka_battle_hud_cursor(48,244,168,band+147,12,12,53));
+        CHECK(!shinka_battle_hud_cursor(48,244,320,band+69,12,12,53));
+    }
+    for(int scenario=0;scenario<4;++scenario) {
+        uint32_t sprite[]={0x64808080,0x006D0025,0x3A1715D8,0x000C0008};
+        mode=scenario==0 ? 0x21d : 0x600;
+        shinka_battle_hud_command(sprite,4,scenario==1 ? 160 : 0,scenario==1 ? 120 : 0,
+            0,0,319,239,scenario==2 ? 0 : 53);
+        CHECK(sprite[1]==(scenario==3 ? 0x006DFFF0u : 0x006D0025u));
+    }
     puts("Battle projection, scene isolation and independent camera settings passed.");
     return 0;
 }

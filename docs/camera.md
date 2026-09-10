@@ -10,8 +10,10 @@ SETTINGS provides two independent battle controls:
 
 They can be combined. Defaults retain 4:3 and 100%. Changes persist in the
 existing mod state and apply to ordinary battles (mode `0x600`). Fields, the lab,
-card battles, full-screen menus and rewards retain their original view. The HUD
-stays at its original size and position within the central 4:3 region.
+card battles, full-screen menus and rewards retain their original view. In 16:9,
+enemy health, battle commands/submenus and bottom dialogue stay aligned on the
+left; player health/MP and the miniature portrait move to the right. HUD sizes
+remain unchanged. The 4:3 layout retains the original positions.
 
 These are experiments, not a claim that every arena or cinematic was authored
 for the expanded framing. Attack effects, arena boundaries, sky geometry and
@@ -26,6 +28,17 @@ updates presentation aspect, and gates gameplay presentation on the battle mode.
 the X/Y perspective terms before adding OFX/OFY. H, camera transforms, SZ, lighting
 and depth cue calculation retain their original values. Ordinary HUD sprites do
 not pass through this hook. The framework checkout is never edited.
+
+`src/battle_hud.c` translates collected host GPU commands in the battle's
+zero-origin HUD draw environment, leaving guest packet RAM and arena geometry
+alone. Submenu panels move together, including Tag bars and DV choices that
+cross the old midpoint. The portrait's separate viewport, origin and backdrop
+move together to the right. Generated GPU/GL copies retain its horizontal clip
+and wide target in both vertical framebuffer bands. The animated cursor uses
+twelve 12x12 CopyImage tiles at VRAM y=244; `src/battle_hud_gpu.inc` draws those
+through the renderer facade so a negative left-margin destination cannot wrap
+into texture memory. These hooks are gated on ordinary battle mode and an
+active native-wide view.
 
 Debug tooling uses `shinka_nav` operation `view`. With no arguments it reports
 stored width/zoom and effective wide/percent values. To persist a choice, supply
@@ -49,6 +62,14 @@ ordinary directional input, and cancel returned the highlight to SETTINGS.
 Local captures are under `output/view-01/`; these tests do not establish coverage
 of every arena, special attack or story cinematic. Headless mode can exercise the
 projection logic but did not supply a composed wide surface in this setup.
+
+The HUD follow-up passed all nine project native suites (excluding the upstream
+unbuilt `example` target). Added checks cover panel translation, UV/size
+preservation, wide Tag bars, description text, portrait clipping in both bands,
+all twelve cursor tiles and rejection outside the supported environment.
+Live copied-save checks under `output/hud-01/` cover Fight, Tech, DV, Tag and Item
+layouts, all six width/zoom combinations on the Tech screen, and left-aligned
+attack dialogue. Player settings were restored after the diagnostic run.
 
 ## Field expansion audit
 

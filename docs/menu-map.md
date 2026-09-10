@@ -22,6 +22,7 @@ The initial travel network connects these Asuka locations:
 | Bulk Swamp / Bulk Bridge | Bulk Bridge's wooden crossing |
 | Tranquil Swamp | Boardwalk near the inn |
 | Phoenix Bay | South-side bridge, or northern approach while its earthquake event is pending |
+| Suzaku City | Plaza, with event approaches for the first conversation, Kail's return and the later earthquake |
 | Pelche Oasis | Path near the waterfront |
 
 The exact arrival area must already be visited in the loaded game. One icon can
@@ -49,7 +50,7 @@ finish and the station to have been visited. Every landing also needs its own
 visit. **Finish the gondola trip** or **Visit South Station first** explains a
 missing prerequisite. This policy applies to departures as well as arrivals,
 including departure from Bulk Swamp, where the first arrival scene leaves the
-party. The gondola interior, Jungle Grave, Suzaku and the inn/shaman interiors
+party. The gondola interior, Jungle Grave and the inn/shaman interiors
 remain outside this travel network. Phoenix Bay is now a surface destination once
 its exact field has been visited. Jungle Grave remains excluded because its first
 entry owns the Zanbamon encounter and returns the party through the native event.
@@ -210,6 +211,27 @@ fixture. Once the game completes the event, travel returns to the south bridge.
 The player-map path was checked with directional input and Cross in an isolated
 fixture, and the native dialogue completion set the flag without a debug write.
 See the [event predicate and validation limits](travel-story-audit.md#phoenix-bay-earthquake-and-jungle-grave-follow-up).
+
+## Suzaku City events
+
+Suzaku is now supported after story 10 begins, flag `0x1c09` records Zanbamon's
+removal, and Suzaku itself has been visited. A visible icon or story number alone
+does not grant access. Its event policy is:
+
+| State | Arrival | Departure |
+| --- | --- | --- |
+| Story 10, introduction pending (`0x400a` clear) | Native conversation trigger | **Explore the city first** |
+| Story 11 | Kail's original return trigger | **Meet Kail in the city** |
+| Story 25, earthquake pending (`0x1c51` clear) | Phoenix Bay's earthquake approach; its exact visit is also required | **Use the city exit** |
+| Other states within the existing story 10–36 range | Suzaku plaza | Ordinary travel |
+
+These rules are rechecked at the deferred cut and for legacy pending save
+states. Player-map travel never grants removal, intro, earthquake, inventory or
+quest completion. Jungle Grave remains excluded because its later encounters
+and routing are separate from proving the early removal interaction.
+
+See the [completed South event checks](travel-story-audit.md#verified-south-events-and-suzaku-travel)
+for original-file evidence, controlled-fixture limits and player-map validation.
 
 ## Reference and next work
 

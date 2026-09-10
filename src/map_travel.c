@@ -16,6 +16,8 @@ extern int shinka_journal_enabled(void);
 #define TEDDY_COMPLETE 0x8004b3e0u /* flag 0x4011, bit 1 */
 #define KEITH_COMPLETE 0x8004b3e0u /* flag 0x4016, bit 6 */
 #define PHOENIX_COMPLETE 0x8004b3bfu /* flag 0x1c51, bit 1 */
+#define ZANBAMON_REMOVED 0x8004b3b6u /* flag 0x1c09, bit 1 */
+#define SUZAKU_INTRO_COMPLETE 0x8004b3dfu /* flag 0x400a, bit 2 */
 
 struct arrival { uint32_t stage, x, y; };
 
@@ -33,6 +35,7 @@ static const struct { uint32_t icon, stage, x, y; } destinations[] = {
     {43, 0x234, 0x3dc56, 0x1f77c}, /* Bulk Bridge */
     {44, 0x237, 0x2d205, 0x106a6}, /* Tranquil Swamp */
     {46, 0x23b, 0x437f2, 0x29469}, /* Phoenix Bay, south-side bridge */
+    {42, 0x23e, 0x24f57, 0x2cff4}, /* Suzaku City plaza */
     {26, 0x249, 84211, 84884},   /* Pelche Oasis */
 };
 static int object(uint32_t p, uint32_t callback) {
@@ -76,6 +79,13 @@ static int source(uint32_t stage) {
     return 0;
 }
 static const char* departure(uint32_t stage, uint32_t story) {
+    if (stage == 0x23e) {
+        if (story == 10 && !(B(SUZAKU_INTRO_COMPLETE) & 4))
+            return "Explore the city first";
+        if (story == 11) return "Meet Kail in the city";
+        if (story == 25 && !(B(PHOENIX_COMPLETE) & 2))
+            return "Use the city exit";
+    }
     /* WSTAG420 writes 5 after the badge. WSTAG395's Wind Prairie scene
      * requires 5 and flag 0x4011 clear; its completion sets that flag. */
     if (stage == 0x22e && story == 5 && !(B(TEDDY_COMPLETE) & 2))
@@ -87,6 +97,17 @@ static int south_stop(uint32_t stage) {
 }
 static struct arrival landing(int i, uint32_t story) {
     struct arrival a={destinations[i].stage,destinations[i].x,destinations[i].y};
+    if (a.stage == 0x23e) {
+        /* Native trigger-layer regions 5 and 6 run events 0xfa and 0x10e.
+         * Enter the original scenes rather than skipping them at the plaza. */
+        if (story == 10 && !(B(SUZAKU_INTRO_COMPLETE) & 4)) {
+            a.x=296*256; a.y=416*256;
+        } else if (story == 11) {
+            a.x=384*256; a.y=336*256;
+        } else if (story == 25 && !(B(PHOENIX_COMPLETE) & 2)) {
+            a.stage=0x23b; /* Preserve the earthquake on the approach. */
+        }
+    }
     /* WSTAG205's Keith event completes flag 0x4016. Before it completes,
      * use the bridge approach identified by Flawe instead of its inner end. */
     if (a.stage == 0x202 && story == 6 && !(B(KEITH_COMPLETE) & 0x40)) {
@@ -110,6 +131,10 @@ static const char* plan(uint32_t parent, uint32_t icon, struct arrival* out) {
     blocked=departure(stage,story);
     if (blocked) return blocked;
     if (i < 0) return "No travel point yet";
+    if (stage == 0x23e || destinations[i].stage == 0x23e) {
+        if (story < 10 || !(B(ZANBAMON_REMOVED) & 2))
+            return "Finish the jungle route";
+    }
     if (south_stop(stage) || south_stop(destinations[i].stage)) {
         /* WSTAG440's first South Station arrival (event 0x98) completes by
          * advancing story 6 to 7. A visible/visited map field alone can precede
@@ -118,6 +143,7 @@ static const char* plan(uint32_t parent, uint32_t icon, struct arrival* out) {
         if (!visited(0x232)) return "Visit South Station first";
     }
     if (!visited(destinations[i].stage)) return "Visit arrival area first";
+    if (!visited(landing(i,story).stage)) return "Visit arrival area first";
     if (destinations[i].stage == stage) return "Already at this location";
     if (out) *out=landing(i,story);
     return NULL;

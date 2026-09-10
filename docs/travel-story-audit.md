@@ -331,6 +331,73 @@ the missing scene in this fixture. The event's actual trigger and prerequisites
 still need tracing. Both commands are developer-queued transitions, not natural
 exit interactions, and do not justify opening Suzaku to player-map travel.
 
+## Verified South events and Suzaku travel
+
+This section supersedes the unresolved-trigger notes above. The missing step was
+the original layer-7 map lookup, not a missing event script. FIELDSTG offsets
+`0x55d8..0x5644` query that layer under the player, split the returned byte into
+bank and index, then select a 24-byte action record. Offsets `0xfb4c..0xfddc`
+resolve and query the compressed layer. `tools/field_triggers.py` reproduces the
+lookup read-only from a supported RAM snapshot.
+
+In Suzaku, trigger 5 covers sampled pixels `(256,400)..(320,432)` and selects
+the story-10 event; trigger 6 covers `(352,320)..(416,352)` and selects the
+story-11 event. Interior fixture points `(296,416)` and `(384,336)`, scaled by
+256 into field-return coordinates, started the original scenes in Shinka.
+The bounds are sampled, not a statement that every enclosed pixel is a trigger.
+
+The story-10 introduction completed naturally and set `0x400a`. The story-11
+scene displayed **Kail: Hey Junior! Good timing.**, moved to Asuka stage `0x204`,
+continued the original conversation, then advanced to story **12** and returned
+to Main Lobby `0x200`. No debug command supplied those resulting story or mode
+changes. It is not enough to stop verification at the first area load: story
+remained 11 during the intermediate Asuka scene.
+
+The Zanbamon fixture initially retained removal flag `0x1c09` from the copied
+advanced save. Clearing just that bit in the isolated profile made the NPC
+visible again. At story 9 he refused passage. At story 10 the original interaction
+set the bit from clear to set, ran his departure, and ended with Junior's
+**Oh yeah! Now I can go!** dialogue. The field menu became available again after
+closing that final dialogue. Story stayed 10: advancing the story to 10 does not
+itself stand in for completing removal.
+
+WSTAG480's condition list at `0x119c` selects the story-10 dialogue. The associated
+list at `0x11a4` contains `(0x1c09,1)` and `(0x901f,1)`, with the NPC descriptor
+at `0x11f4` using `0x1c09` clear for visibility. The original class-0x1c storage
+maps that bit to `0x8004b3b6`, mask 2. The class-0x90 setter calls `0x8008bfa4`;
+FIELDSTG offsets `0x92f4..0x934c` use index `0x1f` in the halfword table at
+`0x800978d8`, obtaining event **0xf0**, then invoke the original scene launcher.
+Thus `0x901f` launches the departure event; it is not an identified inventory
+consumption operation. The 188 annotated words in this launcher and compressed
+lookup ranges matched the owner's original FIELDSTG. These tests did not replay
+the preceding mask/Smelly Herb errands, and do not claim to certify that chain.
+
+Suzaku is now a player-map destination and source with exact visit, story >=10
+and Zanbamon-removal requirements, within the existing global story cutoff.
+Pending story-10/11 scenes receive their native trigger coordinates instead of
+the plaza. Departures wait for the intro or Kail sequence respectively. At story
+25 with the earthquake pending, selecting Suzaku redirects to the independently
+validated Phoenix approach and requires Phoenix's visit too; departures from
+Suzaku instruct the player to use the ordinary city exit.
+
+Native regression tests cover the story 9/10/11/12 boundaries, removal and intro
+bits, exact visits, earthquake redirection, and changes while requests are
+pending on both current and legacy paths. The runtime checks use copied,
+synthetically prepared fixtures; they establish these specific event behaviors,
+not a full naturally earned campaign replay. Jungle Grave's later encounters,
+Admin interiors, other-server travel and postgame remain outside this change.
+
+The actual player map was exercised with directional input and Cross in all
+three event fixtures: story 10 ran the introduction and then allowed return
+travel; story 11 ran Kail's conversation, returned to Asuka and advanced to
+story 12 through native dialogue; story 25 ran the Phoenix earthquake before
+a subsequent Suzaku trip reached the plaza. Separate player-map checks rejected
+departures with each of the three events pending. From the completed story-25
+plaza, walking to the southwest exit and pressing Cross loaded Phoenix Bay
+normally. The completed Suzaku checkpoint also reloaded at the plaza. These
+checks used an isolated save profile; the previous test checkpoint was archived
+before replacement, and the owner's original memory cards were not modified.
+
 ## Priorities for the existing network
 
 | Current field | First check before broader campaign claims |

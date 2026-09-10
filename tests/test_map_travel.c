@@ -49,6 +49,7 @@ static void fresh(void) {
         for(unsigned j=0;j<map_guards[i].count;++j) W(map_guards[i].address+j*4,map_guards[i].words[j]);
     for(unsigned i=0;i<sizeof(map_stage_icons);++i) psx_mod_write_byte(0x8009b5fc+i,map_stage_icons[i]);
     memset(ptr(0x8004b3c0),255,30);
+    psx_mod_write_byte(0x8004b3b6,2);
     for(unsigned i=0;i<16;++i) psx_mod_write_byte(0x8004b874+i,(uint8_t)i);
     object(MAP,0x8009913c);W(MAP+0x50,PARENT);W(MAP+0x180,1);W(MAP+0x184,30);W(MAP+0xa8+29*4,1);
     object(PARENT,0x80099894);W(PARENT+0x20,3);W(PARENT+0x24,0x800af000);W(0x800af000,ROOT);
@@ -246,7 +247,81 @@ static void phoenix_policy(void) {
         CHECK(psx_mod_read_byte(0x8004b3bf)==(0xa5|(done<<1)));
     }
 }
+static void suzaku_policy(void) {
+    for(unsigned story=9;story<=12;++story) for(unsigned intro=0;intro<2;++intro)
+        for(unsigned legacy=0;legacy<2;++legacy) {
+        fresh();watching=0;target(42);W(0x8004b370,story);
+        psx_mod_write_byte(0x8004b3df,(uint8_t)(intro*4));watching=1;
+        if(legacy) { legacy_request();W(PARENT+0x7c,42);root_close();transition(); }
+        else { select_icon();shinka_map_present(); }
+        if(story==9) { CHECK(R(RETURN)==0x249 && !gpu_count);continue; }
+        CHECK(R(RETURN)==0x23e);
+        CHECK(R(RETURN+4)==(story==11?384*256u:story==10&&!intro?296*256u:0x24f57u));
+        CHECK(R(RETURN+8)==(story==11?336*256u:story==10&&!intro?416*256u:0x2cff4u));
+        CHECK(R(0x8004b370)==story && psx_mod_read_byte(0x8004b3df)==intro*4);
+    }
+    for(unsigned source=0;source<2;++source) for(unsigned story=9;story<=12;++story) {
+        fresh();watching=0;W(0x8004b370,story);
+        if(source) W(RETURN,0x23e);else target(42);
+        psx_mod_write_byte(0x8004b3b6,0);watching=1;writes=0;
+        select_icon();CHECK(!writes);
+    }
+    for(unsigned story=10;story<=12;++story) for(unsigned intro=0;intro<2;++intro) {
+        fresh();watching=0;W(RETURN,0x23e);W(0x8004b370,story);
+        psx_mod_write_byte(0x8004b3df,(uint8_t)(intro*4));watching=1;writes=0;
+        select_icon();shinka_map_present();
+        CHECK(R(RETURN)==(story==11 || (story==10&&!intro)?0x23eu:0x21du));
+    }
+    /* Completion/visitation changes between selection and cut are rechecked,
+     * including requests restored from older save states. */
+    for(unsigned legacy=0;legacy<2;++legacy) for(unsigned change=0;change<3;++change) {
+        fresh();watching=0;target(42);W(0x8004b370,10);watching=1;
+        if(legacy) { legacy_request();W(PARENT+0x7c,42);root_close(); }
+        else select_icon();
+        watching=0;
+        if(change==0) psx_mod_write_byte(0x8004b3b6,0);
+        if(change==1) psx_mod_write_byte(0x8004b3df,4);
+        if(change==2) psx_mod_write_byte(0x8004b3c7,0xbf);
+        watching=1;
+        if(legacy) transition();else shinka_map_present();
+        CHECK(R(RETURN)==(change==1?0x23eu:0x249u));
+        if(change==1) CHECK(R(RETURN+4)==0x24f57);
+    }
+    for(unsigned done=0;done<2;++done) for(unsigned legacy=0;legacy<2;++legacy) {
+        fresh();watching=0;target(42);W(0x8004b370,25);
+        psx_mod_write_byte(0x8004b3bf,(uint8_t)(done*2));watching=1;
+        if(legacy) { legacy_request();W(PARENT+0x7c,42);root_close();transition(); }
+        else { select_icon();shinka_map_present(); }
+        CHECK(R(RETURN)==(done?0x23eu:0x23bu));
+        CHECK(R(RETURN+4)==(done?0x24f57u:0x509c0u));
+    }
+    fresh();watching=0;target(42);W(0x8004b370,25);
+    psx_mod_write_byte(0x8004b3c7,0xf7);watching=1;writes=0;
+    select_icon();CHECK(!writes); /* redirected Phoenix landing needs its visit */
+    fresh();watching=0;W(RETURN,0x23e);W(0x8004b370,25);watching=1;writes=0;
+    select_icon();CHECK(!writes);
+    for(unsigned legacy=0;legacy<2;++legacy) for(unsigned change=0;change<5;++change) {
+        fresh();watching=0;W(0x8004b370,change==0?10:25);
+        unsigned initial=(change==0||change==3)?0x23e:0x249;
+        W(RETURN,initial);if(initial==0x249) target(42);
+        psx_mod_write_byte(0x8004b3df,4);
+        psx_mod_write_byte(0x8004b3bf,(change==2||change==3)?2:0);watching=1;
+        if(legacy) { legacy_request();W(PARENT+0x7c,initial==0x249?42:30);root_close(); }
+        else select_icon();
+        watching=0;
+        if(change==0) psx_mod_write_byte(0x8004b3df,0);
+        if(change==1) psx_mod_write_byte(0x8004b3bf,2);
+        if(change==2||change==3) psx_mod_write_byte(0x8004b3bf,0);
+        if(change==4) psx_mod_write_byte(0x8004b3c7,0xf7);
+        watching=1;
+        if(legacy) transition();else shinka_map_present();
+        if(change==1) CHECK(R(RETURN)==0x23e && R(RETURN+4)==0x24f57);
+        else if(change==2) CHECK(R(RETURN)==0x23b && R(RETURN+4)==0x509c0);
+        else CHECK(R(RETURN)==initial && !gpu_count);
+    }
+}
 int main(void) {
+    suzaku_policy();
     phoenix_policy();
     south_policy();
     story_policy();
@@ -278,7 +353,7 @@ int main(void) {
     cpu.gpr[31]=0x800997ec;cpu.gpr[16]=PARENT;shinka_map_frame(&cpu);CHECK(writes==0);
     /* Every exposed icon must lead to its own area according to the original map. */
     {
-        const unsigned icons[]={20,30,22,21,15,26,32,43,44,46};
+        const unsigned icons[]={20,30,22,21,15,26,32,43,44,46,42};
         for(unsigned i=0;i<sizeof(icons)/sizeof(icons[0]);++i) {
             fresh();watching=0;W(RETURN,0x200);W(MAP+0x184,icons[i]);W(MAP+0xa8+(icons[i]-1)*4,1);watching=1;
             select_icon();shinka_map_present();CHECK(R(0x8004b3fc)==R(RETURN));

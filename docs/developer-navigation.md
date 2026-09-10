@@ -25,6 +25,26 @@ bytes rather than redistributed game data.
 
 ## Live navigation
 
+`tools/field_triggers.py SNAPSHOT.ram` decodes the original field's layer-7
+trigger map from a complete 2 MiB RAM snapshot. It resolves the loaded resource
+through the resident resource table and follows the native 128/64/32/16/8-pixel
+compressed lookup. It reports each nonzero trigger byte, its index and input bank, sampled
+bounds and an actual point with that trigger value. Multiply map pixel
+coordinates by 256 for a field-return coordinate fixture.
+
+The default sample stride is 4; `--step 1` checks every pixel. Bounds can merge
+disconnected regions and are not walkable polygons; use the reported sample or
+query `TriggerMap.at(x, y)` for a specific point. Smaller regions may be missed
+at coarser strides. Trigger indices select 24-byte records in the field's action
+table; they are not event IDs. Story conditions still decide whether an event
+runs. Index zero is valid with nonzero bank bits; only byte zero is empty.
+Unsupported overlays, unloaded resources, invalid pointers and out-of-map
+queries are rejected. Synthetic tests compare every pixel of a two-block map
+against independently populated data and cover all compression levels.
+
+This is an offline, read-only investigation tool. A RAM dump and the decoded
+map remain local in ignored output; no game resources are included in Git.
+
 `tools/dev_nav.py` controls the local runtime built with `PSX_DEBUG_TOOLS=ON`.
 It provides named warps, position bookmarks, frame-counted input, route scripts,
 screenshots, savestate checkpoints and explicit progression/combat edits.
@@ -77,7 +97,7 @@ coordinate deltas for that step; collisions and path bends limit extrapolation.
 Cross is explicit (`press cross 4`): automatic confirmation near water can start
 fishing instead of taking an exit.
 
-Eleven built-in points include the ten player travel destinations plus the outer
+Twelve built-in points include the eleven player travel destinations plus the outer
 Asuka bridge approach. Named bookmarks default to ignored
 `output/dev-nav-points.json`; `--bookmarks PATH` selects another file. Bookmarks
 store only stage, position and facing. They never restore a captured story value.

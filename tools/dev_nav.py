@@ -32,6 +32,7 @@ POINTS = {
     'bulk-bridge': (0x234, 0x3dc56, 0x1f77c),
     'tranquil-swamp': (0x237, 0x2d205, 0x106a6),
     'phoenix-bay': (0x23b, 0x437f2, 0x29469),
+    'suzaku-city': (0x23e, 0x24f57, 0x2cff4),
     'pelche-oasis': (0x249, 84211, 84884),
 }
 

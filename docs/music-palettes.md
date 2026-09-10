@@ -1,6 +1,51 @@
-# Sampled and chiptune soundtrack auditions
+# Soundtrack auditions: DS-inspired, sampled, and chiptune
 
-Two offline BGM001 previews now use the same original note timeline:
+**Preferred direction: DS-era sound**, following the user's 2026-09-10 preference.
+The default preview is now a sample/synth hybrid, with bright melodic accents,
+sampled rhythm instruments, a compact stereo mix, and light room ambience.
+This is an aesthetic target to refine by listening, not a claim that every DS
+soundtrack shared one sound.
+
+## DS-inspired hybrid
+
+The DS combined sample playback with pulse/noise capabilities, as described by
+[Introduction to Nintendo DS Programming](https://www.patater.com/manual-git/sound.html).
+The new arrangement uses that combination as inspiration: eight source parts
+use the verified CC0 sample banks and four use generated pulse, square,
+triangle, or wavetable voices. Piano, reeds, bass, strings, and drums retain a
+sampled character while the synth parts add a handheld-game edge.
+
+After installing the dependencies and fetching the banks below, render it with:
+
+```powershell
+python tools/music_preview.py output/music-bgm001/sequence-000.mid --output output/audition-ds
+```
+
+`--backend ds` is now the default. Its separate profile is
+`assets/music/bgm001-ds.json`; the sampled and chip backends still select the
+earlier profile by default. The DS profile chooses each part's renderer and a
+32,768 Hz output rate, an 8 kHz low-pass cutoff, and quiet stereo early reflections
+at 29/43/71/113 ms. These mix choices are our treatment, not hardware requirements.
+The causal 41-tap filter adds approximately 0.61 ms of group delay. The finite
+reflections are not a model of a particular game's reverb engine.
+
+This mode is **not Nintendo DS hardware emulation**. It does not decode SDAT,
+SSEQ, or SBNK assets, copy a DS game's sample bank, reproduce hardware timing,
+or enforce the DS's shared 16-channel hardware limit. Its sample and chip synths
+retain their own voice allocation. `preview.json` records channel routing and
+the chip bus's peak/stealing counts separately from the whole mix.
+
+The first DS preview preserves all 2,346 note-on events and the same roughly
+60.173-second score plus two-second tail. It has 2,037,286 stereo frames at
+32,768 Hz, final peak approximately 0.536 and RMS 0.1. Sampled routes receive
+the same per-key silence preflight as the earlier sampled preview. Four new
+tests cover exclusive routing of notes/controllers, bus mixing, causal stereo
+reflections, high-frequency attenuation, and invalid settings; the complete
+Python suite now passes 68 tests.
+
+## Earlier comparison palettes
+
+The two earlier offline BGM001 previews use the same original note timeline:
 
 - **Sampled:** piano, finger bass, clarinet, synth strings, and electronic drums
   from individually verified CC0 FreePats banks, rendered with TinySoundFont.
@@ -8,7 +53,7 @@ Two offline BGM001 previews now use the same original note timeline:
   waveform table, synthesized pitched percussion, and noise percussion. It uses
   at most 24 simultaneous voices, with deterministic voice stealing.
 
-These are creative arrangement prototypes, not menu options yet. The voice
+All three are creative arrangement prototypes, not menu options yet. The voice
 assignments are provisional; they do not establish the original instruments'
 identities. Song titles and scene associations remain unmapped. Audition before
 expanding the profile to other banks.
@@ -128,7 +173,8 @@ PS1 controller commands are counted in `preview.json` and ignored; their loop/ef
 semantics remain unresolved. Other unsupported
 events are likewise reported. Sequence loops are not expanded. SoundFont samples
 use their own authored tuning/envelopes, and chip voices use the audition ADSR;
-neither reproduces the original VAB tone behavior. Effects are currently dry.
+neither reproduces the original VAB tone behavior. The original sampled and chip
+comparison modes are dry; the DS mode adds the mix treatment described above.
 
 The previews establish working render paths, timing, and output bounds. They
 still need listening feedback on instrument choices and balance. Runtime music

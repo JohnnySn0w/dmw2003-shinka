@@ -2,8 +2,9 @@
 
 The owned European disc's 30 `MPBGM`/`MVBGM` pairs successfully export to
 standard MIDI, decoded sample WAVs, and instrument metadata. This is offline
-tooling. [CC0 sampled and oscillator-chip auditions](music-palettes.md) now render
-the first main sequence; in-game replacement playback is still pending.
+tooling. [Sampled, chip, and DS-inspired auditions](music-palettes.md) now render
+the first main sequence. The DS-inspired hybrid is the preferred direction;
+in-game replacement playback is still pending.
 
 ## Reproduce
 
@@ -90,7 +91,7 @@ all 475 sample files' frame counts and PCM format. These checks establish file
 structure and timing, not an audible match to the game's synth. Battle, title,
 and other non-BGM pack families have not been audited by this export pass.
 
-Next: audition the [two replacement palettes](music-palettes.md), identify the
+Next: refine the [DS-inspired palette](music-palettes.md), identify the
 song in-game, and resolve controller/loop behavior before adding runtime music
 selection, transitions, and settings. Original-instrument tuning remains a
 separate fidelity task.

@@ -1,7 +1,7 @@
-"""Render one guarded arrangement as CC0 SoundFont or oscillator-chip audio.
+"""Render one guarded arrangement as sampled, chip, or DS-inspired hybrid audio.
 
 Offline auditions only. Does not alter the runtime or implement PS1 SPU fidelity.
-Requires numpy; the soundfont backend additionally requires tinysoundfont 0.3.7.
+Requires numpy; sampled and DS backends additionally require tinysoundfont 0.3.7.
 """
 import argparse
 from collections import Counter
@@ -15,9 +15,11 @@ import wave
 import numpy as np
 from music_export import midi_events, require
 from music_chip import ChipSynth
+from music_ds import HybridSynth, split_channels, validate_mix
 from music_fetch_banks import CATALOG, checked
 
 PROFILE = Path(__file__).resolve().parents[1] / 'assets/music/bgm001-audition.json'
+DS_PROFILE = PROFILE.with_name('bgm001-ds.json')
 CONTROLLERS = {7, 10, 11, 64, 120, 121, 123}
 WAVES = {'triangle', 'pulse', 'square', 'wave', 'drums'}
 
@@ -156,7 +158,8 @@ def verify_soundfont_keys(timeline, channels, banks, rate):
     """Isolated preflight: each used channel/key must produce non-silent audio."""
     probe = SoundFontSynth(channels, banks, rate)
     keys = sorted({(status & 15, mapped_key(channels[status & 15], payload[0]))
-                   for _, status, payload in timeline if status & 0xf0 == 0x90 and payload[1]})
+                   for _, status, payload in timeline
+                   if status & 0xf0 == 0x90 and payload[1] and status & 15 in channels})
     for channel, key in keys:
         probe.synth.sounds_off()
         probe.render(round(.1 * rate))
@@ -195,6 +198,8 @@ def render(timeline, channels, info, synth, rate, tail=2):
     advance(info['frames'])
     synth.finish()
     advance(len(audio))
+    if hasattr(synth, 'process_audio'):
+        audio = synth.process_audio(audio)
     require(np.all(np.isfinite(audio)), 'Non-finite synth output')
     peak = float(np.max(np.abs(audio)))
     rms = float(np.sqrt(np.mean(audio.astype(np.float64) ** 2)))
@@ -217,23 +222,33 @@ def render(timeline, channels, info, synth, rate, tail=2):
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('midi', type=Path)
-    parser.add_argument('--profile', type=Path, default=PROFILE)
-    parser.add_argument('--backend', choices=('chip', 'soundfont'), required=True)
+    parser.add_argument('--profile', type=Path)
+    parser.add_argument('--backend', choices=('chip', 'soundfont', 'ds'), default='ds',
+                        help='Audition palette (default: ds)')
     parser.add_argument('--banks', type=Path, default=Path('output/music-banks'))
     parser.add_argument('--output', type=Path, required=True)
     args = parser.parse_args()
     try:
         require(not args.output.exists(), 'Choose a new output directory')
-        profile_bytes = args.profile.read_bytes()
+        profile_path = args.profile or (DS_PROFILE if args.backend == 'ds' else PROFILE)
+        profile_bytes = profile_path.read_bytes()
         profile = json.loads(profile_bytes)
-        timeline, channels, info = score(args.midi.read_bytes(), profile, 44100)
-        if args.backend == 'soundfont':
-            info['verified_soundfont_keys'] = verify_soundfont_keys(timeline, channels, args.banks, 44100)
-        synth = ChipSynth(channels) if args.backend == 'chip' else SoundFontSynth(channels, args.banks, 44100)
-        audio, metrics = render(timeline, channels, info, synth, 44100)
+        rate = validate_mix(profile['ds_mix']) if args.backend == 'ds' else 44100
+        timeline, channels, info = score(args.midi.read_bytes(), profile, rate)
+        if args.backend == 'ds':
+            sampled, chip = split_channels(channels)
+            info['verified_soundfont_keys'] = verify_soundfont_keys(timeline, sampled, args.banks, rate)
+            synth = HybridSynth(SoundFontSynth(sampled, args.banks, rate),
+                                ChipSynth(chip, rate), channels, profile['ds_mix'])
+        elif args.backend == 'soundfont':
+            info['verified_soundfont_keys'] = verify_soundfont_keys(timeline, channels, args.banks, rate)
+            synth = SoundFontSynth(channels, args.banks, rate)
+        else:
+            synth = ChipSynth(channels, rate)
+        audio, metrics = render(timeline, channels, info, synth, rate)
         args.output.mkdir(parents=True)
         with wave.open(str(args.output / 'preview.wav'), 'wb') as file:
-            file.setparams((2, 2, 44100, 0, 'NONE', 'not compressed'))
+            file.setparams((2, 2, rate, 0, 'NONE', 'not compressed'))
             file.writeframes(np.rint(audio * 32767).astype('<i2').tobytes())
         report = dict(backend=args.backend, arrangement=profile['name'],
                       profile_sha256=hashlib.sha256(profile_bytes).hexdigest(),
@@ -241,9 +256,14 @@ def main():
                       limitations=['Offline creative audition; not original SPU emulation.',
                                    'Custom PS1 controllers and sequence loops are not interpreted.',
                                    'Instrument identities and balancing are provisional.'])
-        if args.backend == 'soundfont':
+        if args.backend in ('soundfont', 'ds'):
             report['banks'] = json.loads(CATALOG.read_text(encoding='utf-8'))
             report['renderer'] = 'tinysoundfont 0.3.7 (MIT), offline float output'
+        if args.backend == 'ds':
+            report['mix'] = profile['ds_mix']
+            report['routes'] = {str(ch): route['renderer'] for ch, route in channels.items()}
+            report['chip_bus'] = dict(peak_voices=synth.chip.peak_voices, stolen_voices=synth.chip.stolen)
+            report['limitations'].append('DS-inspired palette; no DS hardware timing or global 16-voice limit.')
         (args.output / 'preview.json').write_text(json.dumps(report, indent=2) + '\n', encoding='utf-8')
         print(json.dumps(dict(output=str(args.output), **metrics)))
     except (OSError, ValueError, KeyError, ImportError) as error:

@@ -1,0 +1,20 @@
+{
+  "name": "BGM001 DS-inspired hybrid",
+  "notes": "Preferred soundtrack direction: sampled rhythm and acoustic voices with pulse/wavetable accents, a compact stereo mix, and light room reflections. An aesthetic treatment, not Nintendo DS hardware emulation.",
+  "midi_sha256": "66435e4ff19f51928c98cf7e3b84b2a9dacec648430b29286e1ecc3cb11bf72a",
+  "ds_mix": {"sample_rate": 32768, "cutoff_hz": 8000, "room_mix": 0.12},
+  "programs": {
+    "0": {"label": "Electronic kit", "renderer": "sampled", "soundfont": "drums", "chip": "drums", "gain": 0.9, "pan": 0.5, "key_map": {"36": 36, "38": 38, "46": 46, "52": 49}, "soundfont_key_map": {"36": 48, "38": 50, "46": 54, "49": 55}},
+    "1": {"label": "Finger bass", "renderer": "sampled", "soundfont": "bass", "chip": "triangle", "gain": 1.0, "pan": 0.5, "soundfont_key_offset": -12, "soundfont_tuning": 12},
+    "2": {"label": "Soft sampled strings", "renderer": "sampled", "soundfont": "strings", "chip": "wave", "gain": 0.35, "pan": 0.57},
+    "3": {"label": "Reed lead", "renderer": "sampled", "soundfont": "clarinet", "chip": "pulse", "gain": 0.85, "pan": 0.43},
+    "4": {"label": "Pulse lead harmony", "renderer": "chip", "soundfont": "clarinet", "chip": "pulse", "gain": 0.5, "pan": 0.57, "adsr": [0.006, 0.15, 0.5, 0.09]},
+    "5": {"label": "Piano figures", "renderer": "sampled", "soundfont": "piano", "chip": "wave", "gain": 0.8, "pan": 0.53},
+    "6": {"label": "Wavetable sparkle", "renderer": "chip", "soundfont": "piano", "chip": "wave", "gain": 0.35, "pan": 0.4, "adsr": [0.002, 0.16, 0.08, 0.06]},
+    "7": {"label": "Piano chord accents", "renderer": "sampled", "soundfont": "piano", "chip": "square", "gain": 0.7, "pan": 0.45},
+    "8": {"label": "Reed countermelody", "renderer": "sampled", "soundfont": "clarinet", "chip": "wave", "gain": 0.65, "pan": 0.55},
+    "9": {"label": "Square rhythm figures", "renderer": "chip", "soundfont": "piano", "chip": "square", "gain": 0.32, "pan": 0.6, "adsr": [0.003, 0.09, 0.2, 0.06]},
+    "10": {"label": "Triangle low accents", "renderer": "chip", "soundfont": "piano", "chip": "triangle", "gain": 0.6, "pan": 0.5, "adsr": [0.002, 0.12, 0.05, 0.05]},
+    "11": {"label": "Sampled toms", "renderer": "sampled", "soundfont": "drums", "chip": "drums", "gain": 0.65, "pan": 0.58, "key_map": {"36": 45, "37": 47, "38": 50}, "soundfont_key_map": {"45": 57, "47": 59, "50": 61}}
+  }
+}

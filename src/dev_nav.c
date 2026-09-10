@@ -94,9 +94,12 @@ const char* shinka_nav_flag(int flag,int value,int expected_mode) {
     if (error) return error;
     /* Only flags traced in the story audit. Other flag classes have distinct
      * storage; accepting an arbitrary ID here could overwrite another system. */
-    if ((flag!=0x4006 && flag!=0x4011 && flag!=0x4016 && flag!=0x4018)
+    if ((flag!=0x4006 && flag!=0x4011 && flag!=0x4016 && flag!=0x4018 && flag!=0x1c51)
         || (value!=0 && value!=1)) return "Unsupported story flag or value";
-    address=0x8004b3deu+((unsigned)flag&0x1ff)/8;mask=1u<<((unsigned)flag%8);
+    /* Resident class-0x1c storage is distinct from class-0x40. WSTAG485's
+     * event completion callback sets 0x1c51 through the native setter. */
+    address=(flag==0x1c51?0x8004b3b5u:0x8004b3deu)+((unsigned)flag&0x1ff)/8;
+    mask=1u<<((unsigned)flag%8);
     psx_write_byte(address,(uint8_t)((psx_read_byte(address)&~mask)|(value?mask:0)));
     return NULL;
 }

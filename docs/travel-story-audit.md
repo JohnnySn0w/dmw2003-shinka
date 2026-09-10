@@ -215,11 +215,73 @@ This extends T03 coverage. It does not add travel past Zanbamon or into the
 Suzaku forced-return sequence. Jungle Grave remains excluded because its first
 entry owns the Zanbamon encounter and returns the party through the native event.
 Phoenix Bay is now a validated surface landing at stage `0x23b`, icon `46`, gated
-by its exact visit bit; its map round-trip was checked from an isolated story-7
-profile. The gondola, inn/shaman interiors and Suzaku remain outside the network.
+by its exact visit bit; its landing was checked using developer warps from an
+isolated story-7 profile. Those warps bypass the player-map policy. The gondola,
+inn/shaman interiors and Suzaku remain outside the network.
 T04/T05 and the later Phoenix Bay approach still need their own predicates and
 live event checks before broader campaign claims. The pre-Zanbamon errands and
 ordinary route are described in [Dark_Zero's walkthrough](https://gamefaqs.gamespot.com/ps/562323-digimon-world-3/faqs/17652).
+
+## Phoenix Bay earthquake and Jungle Grave follow-up
+
+The original Phoenix Bay module `WSTAG485.PRO` contains two conditions at
+offsets `0x172c` and `0x1730`: `(0x6019, 1)` and `(0x1c51, 0)` as pairs of
+little-endian halfwords. These mean **story exactly 25** and **flag 0x1c51 clear**.
+`FIELDSTG.PRO` offsets `0x56d4..0x5738` evaluate both pairs through resident
+function pointer `0x80048acc` (`0x800163b0`), rejecting either false condition.
+The class-0x60 reader calls `0x80015ec8`, which compares the story word at
+`0x8004b370` for equality (or inequality when its second argument is zero).
+
+The record requests event `0x5fa`. Its completion callback at module offset
+`0xa8..0xd0` sets flag `0x1c51` through pointer `0x80048ac8` (`0x800165ac`).
+The resident class-0x1c reader/writer use base `0x8004b3b5`; this flag is byte
+`0x8004b3bf`, mask `2`. This is distinct from the class-0x40 quest-bit storage.
+The pointer values and storage operands were checked against the original EXE.
+All 131 annotated code words in WSTAG485 and all 76 annotated words in the
+reviewed FIELDSTG predicate/event-dispatch range matched the owner's files.
+
+In an isolated story-25 fixture with that bit cleared, developer arrival at
+`(0x509c0, 0xdde0)` produced the earthquake and Junior's **Tremors!** dialogue.
+Finishing the dialogue naturally changed the byte from `0x09` to `0x0b`, with
+story remaining 25. Repeating the setup at the usual south-side landing
+`(0x437f2, 0x29469)` did not start the scene. The northern coordinate was a
+reference-table investigation lead; these tests establish its behavior in Shinka.
+
+Player-map travel now chooses the northern approach while that exact predicate
+holds, and the ordinary landing otherwise. Selection, deferred cut and legacy
+pending-savestate paths share the same calculation. Travel never sets the
+completion flag. Native tests cover stories 24/25/26, both flag states, and
+flag changes in either direction while a trip is pending.
+
+The rebuilt runtime was also checked through the actual map: directional input
+snapped to Phoenix Bay, its **X: Travel** prompt appeared, and Cross queued the
+northern arrival and native event. Dialogue completion again set the bit
+naturally. After a developer warp back to Central Park, a second actual map trip
+reached the ordinary south bridge with the flag still set and no earthquake
+replay. This was a controlled fixture built from a copied checkpoint, not a
+replay of the preceding liberation quests. Suzaku remains excluded, and this
+does not certify its forced-return sequence or every later South Sector event.
+Local captures are under ignored `output/south-event-audit/`.
+
+Jungle Grave's original `WSTAG480.PRO` confirms an entry condition at
+`0x3f0..0x424`: story 7 plus flag `0x4000` set starts event `0xab`.
+Its completion callback at `0x4f8..0x504` writes story 8. The field configuration
+at `0x650..0x67c` selects different tables for story below 10, 10 through 23,
+and 24 onward. That is evidence of multiple field phases, not proof that
+Zanbamon can safely be bypassed at story 10. The item-dependent removal and
+later encounter still need their own natural-route checks; Jungle Grave remains
+excluded. All 417 annotated code words matched the original module.
+
+Additional original module SHA-256 values:
+
+| Module | SHA-256 |
+| --- | --- |
+| `WSTAG480.PRO` | `c18172ad722bac069ec366f2b2e4e753ef8b7be6adfda27d0cd12fafa007c51e` |
+| `WSTAG485.PRO` | `7c08907352abb4ce92d19a14cc235a5e90f4aa03b47e8cbcea23bce020c63ca6` |
+| `WSTAG500.PRO` | `c3b155360bc56eb12dadf5eb2ee5ee905e7f4774e61067985a1fb5a892386ecc` |
+
+WSTAG500's 138 annotated code words also matched; this comparison alone is not
+a Suzaku event audit.
 
 ## Priorities for the existing network
 

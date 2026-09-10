@@ -15,6 +15,7 @@ extern int shinka_journal_enabled(void);
 #define PAGE 5u
 #define TEDDY_COMPLETE 0x8004b3e0u /* flag 0x4011, bit 1 */
 #define KEITH_COMPLETE 0x8004b3e0u /* flag 0x4016, bit 6 */
+#define PHOENIX_COMPLETE 0x8004b3bfu /* flag 0x1c51, bit 1 */
 
 struct arrival { uint32_t stage, x, y; };
 
@@ -90,6 +91,11 @@ static struct arrival landing(int i, uint32_t story) {
      * use the bridge approach identified by Flawe instead of its inner end. */
     if (a.stage == 0x202 && story == 6 && !(B(KEITH_COMPLETE) & 0x40)) {
         a.x=0x27e34; a.y=0x12bcc;
+    }
+    /* WSTAG485 event 0x5fa requires story 25 and flag 0x1c51 clear.
+     * Its northern approach runs the native scene; the south landing misses it. */
+    if (a.stage == 0x23b && story == 25 && !(B(PHOENIX_COMPLETE) & 2)) {
+        a.x=0x509c0; a.y=0xdde0;
     }
     return a;
 }

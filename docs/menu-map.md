@@ -21,7 +21,7 @@ The initial travel network connects these Asuka locations:
 | South Station | Walkway beside the gondola controls |
 | Bulk Swamp / Bulk Bridge | Bulk Bridge's wooden crossing |
 | Tranquil Swamp | Boardwalk near the inn |
-| Phoenix Bay | South-side bridge |
+| Phoenix Bay | South-side bridge, or northern approach while its earthquake event is pending |
 | Pelche Oasis | Path near the waterfront |
 
 The exact arrival area must already be visited in the loaded game. One icon can
@@ -196,12 +196,20 @@ and returns to Central Park. Pending-story and missing-station fixtures reject
 travel, with their instructions fitting the native map panel. Private captures,
 states and fixture details remain excluded from Git.
 
-Phoenix Bay was subsequently loaded from Central Park at its native south-side
+Phoenix Bay was subsequently loaded using developer warps from Central Park at its native south-side
 bridge coordinates and returned to Central Park with exact stage and position
 checks; reloading the copied savestate preserved the Phoenix landing. The native
 Jungle Grave entry was also exercised from a story-7 fixture: its Zanbamon scene
 returned the party to Bulk Bridge and advanced the story to 8. Jungle Grave remains
 excluded so that event-owned return stays under the original field script.
+
+The chapter-25 Phoenix Bay earthquake now has a conditional arrival: while
+native flag `0x1c51` is clear, travel lands at the northern approach so the
+original event can run. The regular landing missed this trigger in a controlled
+fixture. Once the game completes the event, travel returns to the south bridge.
+The player-map path was checked with directional input and Cross in an isolated
+fixture, and the native dialogue completion set the flag without a debug write.
+See the [event predicate and validation limits](travel-story-audit.md#phoenix-bay-earthquake-and-jungle-grave-follow-up).
 
 ## Reference and next work
 

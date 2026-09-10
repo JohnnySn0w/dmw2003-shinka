@@ -220,7 +220,34 @@ static void south_policy(void) {
     psx_mod_write_byte(0x8004b3c6,0xef);watching=1;writes=0;
     select_icon();CHECK(writes==0);
 }
+static void phoenix_policy(void) {
+    for(unsigned story=24;story<=26;++story) for(unsigned done=0;done<2;++done)
+        for(unsigned legacy=0;legacy<2;++legacy) {
+        fresh();watching=0;target(46);W(0x8004b370,story);
+        psx_mod_write_byte(0x8004b3bf,(uint8_t)(0xa5|(done<<1)));watching=1;
+        if(legacy) { legacy_request();W(PARENT+0x7c,46);root_close();transition(); }
+        else { select_icon();shinka_map_present(); }
+        CHECK(R(RETURN)==0x23b);
+        CHECK(R(RETURN+4)==(story==25 && !done ? 0x509c0u : 0x437f2u));
+        CHECK(R(RETURN+8)==(story==25 && !done ? 0xdde0u : 0x29469u));
+        CHECK(R(0x8004b370)==story && psx_mod_read_byte(0x8004b3bf)==(0xa5|(done<<1)));
+    }
+    /* The completion bit can change without changing the story word. Resolve
+     * the landing at the cut, including pending requests from old savestates. */
+    for(unsigned done=0;done<2;++done) for(unsigned legacy=0;legacy<2;++legacy) {
+        fresh();watching=0;target(46);W(0x8004b370,25);
+        psx_mod_write_byte(0x8004b3bf,(uint8_t)(0xa5|((1-done)<<1)));watching=1;
+        if(legacy) { legacy_request();W(PARENT+0x7c,46);root_close(); }
+        else select_icon();
+        watching=0;psx_mod_write_byte(0x8004b3bf,(uint8_t)(0xa5|(done<<1)));watching=1;
+        if(legacy) transition();else shinka_map_present();
+        CHECK(R(RETURN)==0x23b && R(RETURN+4)==(done ? 0x437f2u : 0x509c0u));
+        CHECK(R(RETURN+8)==(done ? 0x29469u : 0xdde0u));
+        CHECK(psx_mod_read_byte(0x8004b3bf)==(0xa5|(done<<1)));
+    }
+}
 int main(void) {
+    phoenix_policy();
     south_policy();
     story_policy();
     fresh();cpu.gpr[31]=0x80099aa4;cpu.gpr[4]=0x80099894;cpu.gpr[5]=0x78;cpu.gpr[6]=8;

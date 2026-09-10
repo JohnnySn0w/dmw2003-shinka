@@ -66,6 +66,16 @@ int main(void) {
     fresh();CHECK(shinka_nav_flag(0x4000,1,0x21d));unchanged();
     W(0x8004b3e0,0xa5a5a5a5);writes=0;
     CHECK(!shinka_nav_flag(0x4011,1,0x21d));CHECK(R(0x8004b3e0)==0xa5a5a5a7 && writes==1);
+    fresh();CHECK(shinka_nav_flag(0x1c50,1,0x21d));
+    CHECK(shinka_nav_flag(0x1c51,2,0x21d));unchanged();
+    W(0x8004b3bc,0xa5a5a5a5);writes=0;
+    CHECK(!shinka_nav_flag(0x1c51,1,0x21d));
+    CHECK(writes==1 && addresses[0]==0x8004b3bf && R(0x8004b3bc)==0xa7a5a5a5);
+    CHECK(!shinka_nav_flag(0x1c51,0,0x21d));
+    CHECK(writes==2 && addresses[1]==0x8004b3bf && R(0x8004b3bc)==0xa5a5a5a5);
+    fresh();CHECK(shinka_nav_flag(0x1c51,1,0x202));unchanged();
+    W(0x8004b3fc,0x23b);writes=0;memcpy(before,ram,sizeof(ram));
+    CHECK(shinka_nav_flag(0x1c51,0,0x21d));unchanged();
     fresh();CHECK(!shinka_nav_heal(0,0x21d));CHECK(writes==2);
     shinka_nav_partner(0,&p);CHECK(p.hp==400 && p.mp==200 && p.strength==42);
     CHECK(R(0x800494c4)==((55u<<16)|42));

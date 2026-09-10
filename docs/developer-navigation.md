@@ -94,7 +94,10 @@ Normal loading/reset logic can replace the countdown; scripted encounters and
 the player's encounter-rate setting still apply.
 
 Story writes accept 0..255. Flag writes are restricted to the four class-0x40
-flags traced during the current travel audit: 0x4006, 0x4011, 0x4016 and 0x4018.
+flags traced during the current travel audit: 0x4006, 0x4011, 0x4016 and 0x4018,
+plus Phoenix Bay's class-0x1c flag 0x1c51. The latter uses its own native storage
+base. Clear it only in an isolated fixture to investigate the pending event;
+observe the native completion callback setting it during a successful replay.
 See [story evidence and limitations](travel-story-audit.md). No command claims
 to jump to a fully reconstructed plot chapter.
 

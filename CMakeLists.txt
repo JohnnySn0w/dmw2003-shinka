@@ -55,6 +55,7 @@ set_property(TARGET shinka PROPERTY SOURCES "${_runtime_sources}")
 target_sources(shinka PRIVATE "${CMAKE_CURRENT_BINARY_DIR}/shinka-runtime/main.cpp")
 target_include_directories(shinka PRIVATE "${PSXRECOMP_ROOT}/runtime/src")
 include("${CMAKE_CURRENT_SOURCE_DIR}/tools/journal_hooks.cmake")
+include("${CMAKE_CURRENT_SOURCE_DIR}/tools/dev_nav.cmake")
 if(SHINKA_OVERLAY_SOURCE)
     # Redirect only generated static-overlay calls; keep upstream sources intact.
     set_property(SOURCE "${SHINKA_OVERLAY_SOURCE}" APPEND PROPERTY
@@ -82,6 +83,9 @@ if(SHINKA_BUILD_TESTS)
     add_executable(shinka_map_travel_test tests/test_map_travel.c src/map_travel.c)
     target_include_directories(shinka_map_travel_test PRIVATE "${PSXRECOMP_ROOT}/runtime/include" "${CMAKE_CURRENT_BINARY_DIR}/shinka-runtime")
     add_test(NAME map_travel COMMAND shinka_map_travel_test)
+    add_executable(shinka_dev_nav_test tests/test_dev_nav.c src/dev_nav.c)
+    target_include_directories(shinka_dev_nav_test PRIVATE src)
+    add_test(NAME dev_nav COMMAND shinka_dev_nav_test)
 endif()
 add_custom_command(TARGET shinka POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E make_directory "$<TARGET_FILE_DIR:shinka>/mods/packages/shinka.evolution-journal/0.1.0"

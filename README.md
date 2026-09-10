@@ -21,6 +21,10 @@ stops require the first arrival scene to be complete and South Station visited. 
 
 Existing DuckStation memory cards can be copied into isolated test profiles; see [save imports and profile selection](docs/save-profiles.md).
 
+The [developer navigation tool](docs/developer-navigation.md) provides named
+warps, position bookmarks, measured movement, routes and checkpoints, plus
+explicit story/quest and HP/MP/strength edits for testing in copied profiles.
+
 See the [groundwork audit and port milestones](docs/groundwork-audit.md) for pinned sources, verified findings, feature analysis, and reproduction commands.
 
 ## Planned work

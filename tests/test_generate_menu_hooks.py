@@ -45,18 +45,25 @@ class CardTransferHookTests(unittest.TestCase):
 
 class FrameHookTests(unittest.TestCase):
     SITE = '    PGXP_ALU(0x24020001u, cpu->gpr[2], _pgx1, 0x00000001u); }  /* 0x8001D5A0: 0x24020001 */'
+    ENTRY = '    debug_server_log_call_entry(0x8001D504u);'
 
     def test_requires_the_verified_draw_sync_return(self):
         for code in ('', self.SITE + '\n' + self.SITE,
                      self.SITE.replace('8001D5A0', '8001D598')):
             with self.assertRaises(ValueError):
-                shard(code, '04')
+                shard(self.ENTRY + '\n' + code, '04')
 
     def test_hook_follows_the_resume_site(self):
-        code = '#include "SLES_039.36_decls.h"\n' + self.SITE + '\n/* buffer exchange */'
+        code = '#include "SLES_039.36_decls.h"\n' + self.ENTRY + '\n' + self.SITE + '\n/* buffer exchange */'
         result = shard(code, '04')
         self.assertLess(result.index(self.SITE), result.index('    shinka_map_present();'))
         self.assertLess(result.index('    shinka_map_present();'), result.index('/* buffer exchange */'))
+        self.assertLess(result.index('if (cpu->gpr[4]) shinka_field_prepare();'), result.index(self.SITE))
+
+    def test_field_hook_rejects_changed_or_duplicate_entry(self):
+        for entry in ('', self.ENTRY * 2, self.ENTRY.replace('8001D504', '8001D508')):
+            with self.assertRaises(ValueError):
+                shard(entry + '\n' + self.SITE, '04')
 
 
 if __name__ == '__main__':

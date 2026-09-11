@@ -29,8 +29,9 @@ keep their own timing; action poses include attacks and reactions.
 SETTINGS offers [Screen view and battle camera controls](docs/camera.md):
 independent **4:3 / 16:9** choices for battles and an opt-in **field preview**,
 plus **100% / 90% / 80% battle zoom**. The field preview reveals extra scenery
-without stretching sprites, but scrolling can expose missing background strips;
-it is not yet a complete widescreen conversion. Full-screen menus retain 4:3.
+without stretching sprites. The OpenGL renderer fills additional edge tiles from
+the game's preloaded scenery; untested maps, object culling and camera boundaries
+still make this experimental. Full-screen menus retain 4:3.
 
 See [Windows build, launch, and overlay-capture instructions](docs/windows-baseline.md) for the runnable baseline and current validation limits.
 

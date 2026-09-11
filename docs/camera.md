@@ -5,9 +5,9 @@ SETTINGS provides independent view and battle zoom controls:
 - **Screen view → Battle:** 4:3 or 16:9. Native widescreen extends the horizontal rendering
   surface instead of stretching characters.
 - **Screen view → Field:** 4:3 or **16:9 test**. The default is 4:3. The test
-  reveals field scenery already submitted outside the original viewport, without
-  changing sprite proportions. Scrolling can expose blank or incomplete strips
-  at the edges because the guest's tile loader still covers the original view.
+  reveals field scenery outside the original viewport without changing sprite
+  proportions. OpenGL also draws preloaded tiles missing from the original
+  submission. Unready or unsupported tiles can still leave incomplete edges.
   Small interiors can have authored black space outside their artwork. This is
   a preview, not a complete field widescreen conversion.
 - **Battle zoom:** 100%, 90%, or 80% projected size. At 80%, the same viewport
@@ -158,6 +158,46 @@ build was smoke-tested at the default 4:3 field view with the new submenu; playe
 settings and original memory cards were not changed. Captures and scene reports
 are local under `output/field-wide-01/`.
 
-The next step is expanding the field tile working set, including its temporary
-list and residency/VRAM scheme, then testing scrolling, object culling, and
-camera bounds. Merely raising the four-column loop limit is not sufficient.
+### Supplemental field scenery — 2026-09-11
+
+The field owner preloads thirty tile buffers into main RAM while keeping twelve
+tiles resident in VRAM. The missing edge cells observed during scrolling were
+already among those ready buffers. The OpenGL implementation now decodes those
+cells into private indexed textures, avoiding changes to the guest's temporary
+list, tile residency, VRAM allocation, disc requests, or camera movement.
+
+`src/field_tile_decode.c` bounds-checks raw and RLEN-compressed containers: three
+rectangle lists followed by an 8-bit indexed TIM with a 256-color palette. Some
+foreground pieces overlap the neighboring 128-pixel cell by one pixel. Palette
+indexing, transparency and native field modulation use the existing GL shader.
+`src/field_tiles.c` finds the active field owner from the live task tree and
+checks revision, mode, camera callbacks, dimensions and ready flags. Only cells
+outside the stock four-by-three window are supplemented. Their primitives join
+the original three layer buckets in a separate double-buffered DMA arena.
+
+Each prefetch slot has a content-checked texture cache. Save-state loads invalidate
+decoded data and packet associations; restored supplemental packets are skipped
+until valid data is prepared again. Software rendering and CPU-authoritative
+dual rendering retain the earlier preview without supplemental textures.
+`SHINKA_FIELD_TILES=0` disables supplementation for comparisons. The read-only
+debug operation `shinka_nav` / `field-tiles` reports owner, cumulative prepared
+frames, last-frame packet count and missing-cell count (cells outside the stock
+window, including cells successfully filled).
+
+Live copied-save checks filled Central Park's 21-pixel strip, including its
+overlapping wall cap, and two additional edge tiles while moving through Wire
+Forest Entrance. The same Central Park checkpoint with supplementation disabled
+reproduced the strip; screenshots with it enabled filled it. Animated water and
+characters differed in phase between captures, so this was not a pixel-identical
+whole-frame comparison. Asuka Inn, battle, map, field width changes and restoring
+a newly created edge checkpoint also rendered correctly. A developer warp to
+Pelche Oasis rendered six supplemental pieces, but its navigation helper timed
+out waiting for the quick menu; no traversal coverage is claimed for that warp.
+
+All 15 native suites, 148 Python tests and Ruff passed. New native checks cover
+raw/compressed truncation, repeat runs, invalid geometry and UVs, overlapping
+pieces, packet links, double buffering, prefetch content reuse, state invalidation
+and rejection in unrelated scenes. Local evidence is in
+`output/field-stream-02/`. Coverage remains limited: untested tile formats,
+NPC/object culling, native camera clamps, map boundaries and transition effects
+still need investigation. Authored empty space in small interiors is preserved.

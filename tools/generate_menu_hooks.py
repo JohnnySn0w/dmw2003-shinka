@@ -30,6 +30,11 @@ def shard(code, number):
         code = code.replace(needle, needle + f'\n    {callback}(cpu);')
         declarations.append(f'extern void {callback}(CPUState*);')
     if number == '04':
+        needle = '    debug_server_log_call_entry(0x8001D504u);'
+        if code.count(needle) != 1:
+            raise ValueError('Review resident frame submission entry')
+        code = code.replace(needle, needle + '\n    if (cpu->gpr[4]) shinka_field_prepare();')
+        declarations.append('extern void shinka_field_prepare(void);')
         needle = '    PGXP_ALU(0x24020001u, cpu->gpr[2], _pgx1, 0x00000001u); }  /* 0x8001D5A0: 0x24020001 */'
         if code.count(needle) != 1:
             raise ValueError('Review frame DrawSync return before buffer exchange')

@@ -6,11 +6,17 @@ extern int shinka_music_palette_get(void);
 extern int shinka_music_palette_set(int palette);
 extern int shinka_motion_get(int option);
 extern int shinka_motion_set(int option, int value);
+extern uint32_t shinka_field_stat(unsigned);
 static void handle_shinka_nav(int id,const char* json) {
     char op[32];
     const char* error=NULL;
     int expected=json_get_int(json,"expected_mode",-1);
     if (!json_get_str(json,"op",op,sizeof(op))) { send_err(id,"Missing op");return; }
+    if (!strcmp(op,"field-tiles")) {
+        send_fmt("{\"id\":%d,\"ok\":true,\"owner\":%u,\"prepared\":%u,\"packets\":%u,\"missing_cells\":%u}",
+            id,shinka_field_stat(0),shinka_field_stat(1),shinka_field_stat(2),shinka_field_stat(3));
+        return;
+    }
     if (!strcmp(op,"motion")) {
         int option = json_get_int(json,"option",-1), value = json_get_int(json,"value",-1);
         /* Old diagnostic callers used integer multipliers. New callers use percent. */

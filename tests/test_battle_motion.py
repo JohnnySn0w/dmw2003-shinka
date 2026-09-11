@@ -156,6 +156,151 @@ class BattleMotionTests(unittest.TestCase):
             with self.assertRaises(ValueError):
                 validate_trace(bad)
 
+    def script(self, callback=0x8008c590):
+        address = 0xc0000
+        self.object(address, callback)
+        self.capture['scripts'] = [0x800c0000]
+        self.capture['spans'].append((address, address + 0xb4))
+        return address
+
+    def registers(self, **values):
+        self.capture['trace'][-1].update({key: hex(value) for key, value in values.items()})
+
+    def test_reused_menu_storage_is_decoded_only_during_script_lifetime(self):
+        script = self.script(0x80093e44)
+        self.write(script + 0x8c, 0, 2, 0x8008c480)  # Same store PC, wrong owner: ignored.
+        self.write(script + 0x48, 0x80093e44, 0x8008c590, 0x800144bc)
+        self.write(script + 0x8c, 2, 4, 0x8008c480)
+        self.registers(a0=99, a1=0)
+        self.write(script + 0x48, 0x8008c590, 0, 0x80017cec)
+        self.write(script + 0x8c, 4, 6, 0x8008c480)
+        self.write(script + 0x48, 0, 0x8008c590, 0x800144bc, 101)
+        report = analyze(self.capture, self.ram)
+        self.assertEqual([e['kind'] for e in report['events']],
+                         ['script_activated', 'sound_command', 'script_deactivated', 'script_activated'])
+        summary = report['scripts'][0]
+        self.assertEqual(summary['ignored_non_script_writes'], 2)
+        self.assertEqual([l['ended_by'] for l in summary['lifetimes']], ['callback_replaced', 'capture_end'])
+        self.assertEqual([l['epoch'] for l in summary['lifetimes']], [1, 2])
+        self.assertEqual(report['events'][1]['selector'], 99)  # Preserve unresolved selector.
+
+    def test_script_cursor_halfwords_and_retry_attempts(self):
+        script = self.script()
+        cursor = 0xa0190086
+        self.write(script + 0x8c, cursor, cursor + 2, 0x8008c724)
+        self.registers(s1=script, v1=2)
+        self.write(script + 0x8c, cursor + 2, cursor + 8, 0x8008b880)
+        self.write(script + 0x8c, cursor + 8, cursor, 0x8008bb14)
+        self.registers(s1=0)
+        self.write(script + 0x8c, cursor, cursor + 2, 0x8008c724, 102)
+        self.registers(s1=0xa00c0000, v1=2)
+        report = analyze(self.capture, self.ram)
+        command = report['scripts'][0]['commands'][0]
+        self.assertEqual((command['cursor'], command['attempts']), ('0x80190086', 2))
+        self.assertEqual((command['first_frame'], command['last_frame']), (100, 102))
+        self.assertEqual(report['scripts'][0]['waits'], {'clip_completion_wait': 1})
+
+    def test_script_delay_underflow_means_elapsed_not_a_huge_delay(self):
+        script = self.script()
+        self.write(script + 0x9c, 0, 2, 0x8008c268)
+        self.write(script + 0x9c, 2, 0xffffffff, 0x8008c28c, 101)
+        self.write(script + 0x9c, 0xffffffff, 0, 0x8008c2ac, 101)
+        report = analyze(self.capture, self.ram)
+        self.assertEqual([e['kind'] for e in report['events']], ['script_delay_started', 'script_delay_elapsed'])
+        self.assertEqual(report['events'][0]['duration'], 2)
+        self.assertEqual(report['scripts'][0]['waits'], {'script_delay_updates': 1})
+
+    def test_effect_wait_at_shared_rewind_site_is_not_a_clip_wait(self):
+        script = self.script()
+        self.write(script + 0x8c, 0x80190008, 0x80190000, 0x8008bb14)
+        self.registers(s1=5)
+        self.write(script + 0x8c, 0x80190000, 0x8018fffa, 0x8008be74)
+        report = analyze(self.capture, self.ram)
+        self.assertEqual(report['scripts'][0]['waits'], {'actor_command_5_wait': 1, 'effect_resource_wait': 1})
+
+    def test_effect_command_records_request_selector_without_resolving_it(self):
+        script = self.script()
+        self.write(script + 0x8c, 0x80190004, 0x80190006, 0x8008c31c)
+        self.registers(s0=0x38, a2=0)
+        event = analyze(self.capture, self.ram)['events'][0]
+        self.assertEqual((event['kind'], event['selector'], event['operation']), ('effect_command', 0x38, 0))
+
+    def test_script_register_evidence_is_required_and_owner_must_match(self):
+        script = self.script()
+        self.write(script + 0x8c, 0x80190000, 0x80190002, 0x8008c724)
+        with self.assertRaisesRegex(ValueError, 'Missing s1'):
+            analyze(self.capture, self.ram)
+        self.registers(s1=0x800d0000, v1=2)
+        with self.assertRaisesRegex(ValueError, 'does not match'):
+            analyze(self.capture, self.ram)
+
+    def test_script_lead_needs_full_coverage_and_word_writes(self):
+        script = self.script()
+        self.write(script + 0x48, 0x8008c590, 0, 0x80017cec)
+        self.capture['spans'][-1] = (script, script + 0xb0)
+        with self.assertRaisesRegex(ValueError, 'coverage'):
+            analyze(self.capture, self.ram)
+        self.capture['spans'][-1] = (script, script + 0xb4)
+        self.capture['trace'] = []
+        self.write(script + 0x4a, 0x8008, 0, 0x80017cec, width=2)
+        with self.assertRaisesRegex(ValueError, 'Partial script'):
+            analyze(self.capture, self.ram)
+
+    def test_script_initial_owner_comes_from_first_old_callback_when_available(self):
+        script = self.script(0x80093e44)
+        self.write(script + 0x9c, 0, 15, 0x8008c268)
+        self.write(script + 0x48, 0x8008c590, 0, 0x80017cec)
+        report = analyze(self.capture, self.ram)
+        self.assertTrue(report['scripts'][0]['lifetimes'][0]['began_before_capture'])
+        self.assertEqual(report['events'][0]['kind'], 'script_delay_started')
+
+    def test_battle_hp_subtraction_and_clamp_are_one_ordered_pair(self):
+        self.capture['spans'].append((0xa44d0, 0xa44f0))
+        struct.pack_into('<7H', self.ram, 0xa44d0, 32, 0, 0, 120, 120, 9999, 9999)
+        self.write(0xa44d8, 120, 0xfd49, 0x8008d064, width=2)
+        self.write(0xa44d8, 0xfd49, 0, 0x8008d074, width=2)
+        report = analyze(self.capture, self.ram)
+        self.assertEqual(report['battle_stats'][0]['slot'], 3)
+        self.assertEqual(report['battle_stats'][0]['max_hp'], 120)
+        self.assertEqual([e['kind'] for e in report['events']], ['basic_hp_subtract', 'basic_hp_clamp'])
+        self.assertEqual(report['events'][0]['new_signed'], -695)
+        self.assertEqual(report['events'][1]['new'], 0)
+
+    def test_technique_hp_and_early_mp_updates_are_separate(self):
+        self.capture['spans'].append((0xa4470, 0xa4530))
+        self.write(0xa447c, 1231, 1207, 0x80096de0, width=2)
+        self.write(0xa44d8, 120, 0xfec0, 0x8008fbc0, 110, width=2)
+        self.write(0xa44d8, 0xfec0, 0, 0x8008fbd4, 110, width=2)
+        report = analyze(self.capture, self.ram)
+        self.assertEqual([e['kind'] for e in report['events']],
+                         ['battle_mp_write', 'technique_hp_subtract', 'technique_hp_clamp'])
+        self.assertEqual(report['events'][1]['new_signed'], -320)
+        self.assertEqual(report['events'][0]['old'] - report['events'][0]['new'], 24)
+
+    def test_unrecognized_hp_writer_stays_visible_and_mixed_width_is_rejected(self):
+        self.capture['spans'].append((0xa4470, 0xa4490))
+        self.write(0xa4478, 120, 115, 0x80090000, width=2)
+        self.assertEqual(analyze(self.capture, self.ram)['events'][0]['kind'], 'battle_hp_write')
+        self.capture['trace'] = []
+        self.write(0xa4476, 0, 1, 0x80090000, width=2)  # Max HP is not current HP.
+        self.assertEqual(analyze(self.capture, self.ram)['events'], [])
+        self.capture['trace'] = []
+        self.write(0xa4478, 120, 115, 0x80090000, width=4)
+        with self.assertRaisesRegex(ValueError, 'Non-halfword'):
+            analyze(self.capture, self.ram)
+
+    def test_prepared_damage_is_separate_from_later_hp_commit(self):
+        self.capture['spans'].append((0xa43f4, 0xa4530))
+        self.write(0xa441c, 0, 815, 0x8009e234)
+        self.write(self.model + 0x78, 1, 15, 0x80083a94, 180)
+        self.write(0xa44d8, 120, 0xfd49, 0x8008d064, 436, width=2)
+        self.write(0xa44d8, 0xfd49, 0, 0x8008d074, 436, width=2)
+        events = analyze(self.capture, self.ram)['events']
+        self.assertEqual([e['kind'] for e in events],
+                         ['basic_damage_prepared', 'clip_selected', 'basic_hp_subtract', 'basic_hp_clamp'])
+        self.assertEqual(events[0]['new'], 815)
+        self.assertEqual(events[2]['old'] - events[2]['new_signed'], 815)
+
 
 if __name__ == '__main__':
     unittest.main()

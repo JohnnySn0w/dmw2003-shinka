@@ -187,15 +187,94 @@ externally released phases; clip IDs alone are insufficient for a speed policy.
 No additional game process or always-on tracing was needed to analyze these
 existing captures. The runtime and installed binary remain unchanged.
 
+## Live script, damage, and resource audit — 2026-09-11
+
+Fresh bounded captures now include script allocation leads, their callback
+changes, script cursors/delays, shared damage results, and battle-local HP/MP.
+The final basic and Air Blast traces retained 10,732 and 10,868 writes;
+both recorded `total == available == saved entries`, with sequence and overlapping
+byte-continuity validation. Local evidence is under `output/battle-events/`.
+
+The normal graphics launch stalled before gameplay. A one-second host stack
+sample found all 151 samples inside AMD's OpenGL context-creation path, with zero
+main-thread CPU time during that interval. The stalled diagnostic process was
+stopped; captures used the existing `PSX_HEADLESS=1` frontend, preserving normal
+launch settings. This bypass allowed code/state tracing, **not** visual or audible
+acceptance. Do not infer rendered hit alignment, sound pitch, or host performance
+from these headless captures. No driver/system setting was changed.
+
+### Script ownership and delay boundaries
+
+In the basic fixture, `0x801345c8` changed from menu callback `0x80093e44`, through
+`0x80098c9c`, to script callback `0x8008c590`. It reverted after the action.
+The defender's script occupied `0x801350dc`; Air Blast instead used `0x800bdb28`.
+The analyzer now closes/reopens script lifetimes on callback changes and ignores
+unrelated writes in those allocations. Neither a prior header nor an address
+from another move establishes current script ownership.
+
+The explicit delay command initializes `+0x9c` at `0x8008c268`, subtracts elapsed
+steps at `0x8008c28c`, then clears the wait at/below zero. Observed basic delays
+were 15, 39, 39, and 39 units; Air Blast used 28, 50, 60, 10, and 100. These are
+script-step units, not counts of model poses or host milliseconds.
+
+The rewind at `0x8008bb14` is shared: actor command zero polls clip completion,
+while actor command five also reaches it while waiting on its child controller.
+The earlier label "completion poll" was incomplete without the command context.
+The report now distinguishes those cases and separate effect/resource polling
+at `0x8008bdd0`, `0x8008be74`, and `0x8008c438`.
+
+Outer command 10 parses sound selectors at `0x8008c480` before dispatch toward
+`0x8009b774` and the resident sound interface. Outer command 4 parses
+effect/resource selectors at `0x8008c31c`. The reporter preserves the requested
+selectors; 98/99 and the effect selector 56 can be resolved later from action
+data. Repeated fetches can be polls, not repeated sound/effect starts. No raw
+command stream or game asset is published with the tool.
+
+### Prepared damage versus committed battle HP
+
+The shared result record is at `0x800a43f4`, with damage at `+0x28`. Captured
+stores `0x8009e234` (basic) and `0x8009e378` (technique) produce the result before
+the corresponding attack/cast pose starts. The later action controller copies
+the result before applying it to battle-local HP.
+
+| Final capture | Damage prepared | First attack/cast clip selected | HP subtraction/clamp |
+| --- | --- | --- | --- |
+| Basic | 815 at guest frame 36,080 | Clip 15 at 36,160 | 36,416 |
+| Air Blast | 440 at guest frame 43,805 | Clip 39 at 43,927 | 44,237 |
+
+The six battle-local stat records start at `0x800a4470`, stride `0x20` (three
+slots per side). Current HP is `+0x08`, current MP is `+0x0c`. In these captures,
+Kunemon's current HP at `0x800a44d8` goes from 120 to a negative 16-bit intermediate
+and then zero:
+
+- Basic: subtract store `0x8008d064`, intermediate `0xfd49` (-695), clamp
+  `0x8008d074`. This is 815 damage, not a second hit from the clamp.
+- Air Blast: subtract store `0x8008fbc0`, intermediate `0xfec0` (-320), clamp
+  `0x8008fbd4`, corresponding to 440 damage.
+
+Air Blast spends MP earlier: store `0x80096de0` changes battle MP from 1231 to
+1207 at frame 43,801, before damage preparation and casting. These battle-local
+records are separate from the saved party records. A completed Air Blast replay
+returned to the field with Patamon at 1207/1231 MP. A completed basic replay
+matched all 7,904 party-record bytes of the prior reference result.
+
+This supports isolating model timeline advancement from result preparation,
+sound/effect dispatch, explicit waits, and HP/MP updates. It does **not** yet prove
+that accelerating all poses preserves every visual hit or reaction. Keep damage
+calculation/commit callbacks single-execution, retain marker crossings, and test
+the guarded speed prototype against these independently observable boundaries.
+All diagnostic processes were stopped; the installed runtime is unchanged.
+
 ## Next runtime work
 
 1. Extend the verified timeline to additional actors, misses, recoil and
    multi-hit actions at 1x. Classify idle versus attack/recovery motion from
    controller ownership and action state, rather than hardcoding the observed
    Patamon clip IDs. Verify clip lengths and marker crossings for each case.
-2. Extend the separate camera/direct-set baseline to script cursor, hit, effect,
-   sound, and recovery events. Compare pose progress with action-script progress
-   to identify which waits may change without moving camera events.
+2. Use the script, damage, HP/MP and camera baselines above to compare a guarded
+   model-only prototype. Extend visible/audible hit alignment and effect-frame
+   checks when the graphical diagnostic launch is working again; do not treat
+   headless event timing as that acceptance test.
 3. Hook only the verified model timeline, with overlay/instruction validation and
    safe fallback to original playback. Use fractional accumulation for 1.25x and
    1.5x. Reset per-object state on clip changes, object reuse, load, and battle exit.

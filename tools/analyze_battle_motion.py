@@ -100,6 +100,161 @@ def histogram(counter):
     return {str(key): value for key, value in sorted(counter.items())}
 
 
+def signed(value):
+    return value - 0x100000000 if value & 0x80000000 else value
+
+
+def analyze_scripts(capture, ram, entries, spans):
+    """Decode watched allocation leads only while their callback owns a script.
+
+    Register observations are tied to individual verified store sites. Commands
+    report parsed requests, not proof that the effect/sound subsequently ran.
+    """
+    scripts = [offset(value, 0xb4) for value in capture.get('scripts', [])]
+    if len(scripts) != len(set(scripts)):
+        raise ValueError('Duplicate script allocation leads')
+    states, reports, events = {}, [], []
+    for address in scripts:
+        if not any(lo <= address and address + 0xb4 <= hi for lo, hi in spans):
+            raise ValueError('Script allocation needs complete header/payload watch coverage')
+        first = next((e for e in entries if e['addr'] == address + 0x48 and e['w'] == 4), None)
+        callback = first['old'] if first else struct.unpack_from('<I', ram, address + 0x48)[0]
+        report = dict(address=canonical(address), initial_callback=f'0x{callback:08X}',
+                      initial_callback_source='first_store_old' if first else 'snapshot',
+                      lifetimes=[], commands=[], waits=Counter(), ignored_non_script_writes=0)
+        reports.append(report)
+        states[address] = dict(callback=callback, epoch=0, report=report, command=None)
+        if canonical(callback) == '0x8008C590':
+            report['lifetimes'].append(dict(epoch=0, start_seq=0, start_frame=entries[0]['frame'],
+                                            began_before_capture=True))
+
+    for e, raw in zip(entries, capture['trace']):
+        for address, state in states.items():
+            if not address <= e['addr'] < address + 0xb4:
+                continue
+            relative = e['addr'] - address
+            report = state['report']
+            active = canonical(state['callback']) == '0x8008C590'
+            if relative & ~3 in (0x48, 0x8c, 0x9c) and e['w'] != 4:
+                raise ValueError('Partial script field writes need a new decoder')
+            kind, details = None, {}
+            if relative == 0x48:
+                now_active = canonical(e['new']) == '0x8008C590'
+                state['callback'] = e['new']
+                if active and not now_active:
+                    report['lifetimes'][-1].update(end_seq=e['seq'], end_frame=e['frame'],
+                                                   ended_by='callback_replaced')
+                    kind = 'script_deactivated'
+                    state['command'] = None
+                elif now_active and not active:
+                    state['epoch'] += 1
+                    report['lifetimes'].append(dict(epoch=state['epoch'], start_seq=e['seq'],
+                                                    start_frame=e['frame'], began_before_capture=False))
+                    kind = 'script_activated'
+            elif not active:
+                report['ignored_non_script_writes'] += 1
+                continue
+            elif relative in (0x8c, 0x9c):
+                pc = e['pc']
+
+                def register(name):
+                    if name not in raw:
+                        raise ValueError(f'Missing {name} register at script store {canonical(pc)}')
+                    return number(raw[name])
+
+                if relative == 0x8c and pc == 0x8c724:
+                    if canonical(register('s1')) != canonical(address):
+                        raise ValueError('Script cursor writer register does not match its allocation')
+                    opcode = signed(register('v1'))
+                    command = state['command']
+                    cursor = canonical(e['old'] & ~3)
+                    if cursor is None or e['old'] & 1:
+                        raise ValueError('Script command cursor is outside halfword-aligned main RAM')
+                    cursor = f"0x{0x80000000 + (e['old'] & 0x1fffffff):08X}"
+                    if command is None or (command['cursor'], command['opcode']) != (cursor, opcode):
+                        command = dict(epoch=state['epoch'], cursor=cursor, opcode=opcode,
+                                       first_frame=e['frame'], last_frame=e['frame'], attempts=0)
+                        report['commands'].append(command)
+                        state['command'] = command
+                        kind, details = 'script_command_entered', dict(cursor=cursor, opcode=opcode)
+                    command['last_frame'] = e['frame']
+                    command['attempts'] += 1
+                elif relative == 0x8c and pc in (0x8bb14, 0x8bdd0, 0x8be74, 0x8c438):
+                    if pc == 0x8bb14:
+                        opcode = register('s1')
+                        kind = 'clip_completion_wait' if opcode == 0 else f'actor_command_{opcode}_wait'
+                    else:
+                        kind = 'effect_resource_wait'
+                    report['waits'][kind] += 1
+                elif relative == 0x9c and pc == 0x8c268:
+                    kind, details = 'script_delay_started', dict(duration=signed(e['new']))
+                elif relative == 0x9c and pc == 0x8c28c:
+                    report['waits']['script_delay_updates'] += 1
+                    if signed(e['old']) > 0 and signed(e['new']) <= 0:
+                        kind = 'script_delay_elapsed'
+                elif relative == 0x8c and pc == 0x8c480:
+                    kind, details = 'sound_command', dict(selector=signed(register('a0')),
+                                                         argument=signed(register('a1')))
+                elif relative == 0x8c and pc == 0x8c31c:
+                    kind, details = 'effect_command', dict(selector=signed(register('s0')),
+                                                          operation=signed(register('a2')))
+            if kind:
+                events.append(dict(seq=e['seq'], frame=e['frame'], script=canonical(address),
+                                   epoch=state['epoch'], kind=kind, old=e['old'], new=e['new'],
+                                   pc=canonical(e['pc']), caller=e['ra'], **details))
+    for report in reports:
+        report['waits'] = histogram(report['waits'])
+        if report['lifetimes'] and 'end_seq' not in report['lifetimes'][-1]:
+            report['lifetimes'][-1].update(end_seq=entries[-1]['seq'], end_frame=entries[-1]['frame'],
+                                           ended_by='capture_end')
+    return reports, events
+
+
+def analyze_battle_stats(ram, entries, spans):
+    """Report the supported battle-local stat table, distinct from party saves."""
+    records, events = [], []
+    for slot in range(6):
+        address = 0xa4470 + slot * 0x20
+        if not any(lo <= address and address + 0x20 <= hi for lo, hi in spans):
+            continue
+        words = struct.unpack_from('<16H', ram, address)
+        records.append(dict(slot=slot, address=canonical(address), resource_id=words[0],
+                            snapshot_hp=words[4], max_hp=words[3],
+                            snapshot_mp=words[6], max_mp=words[5]))
+    slots = {0xa4470 + record['slot'] * 0x20: record['slot'] for record in records}
+    result_watched = any(lo <= 0xa441c and 0xa4420 <= hi for lo, hi in spans)
+    for e in entries:
+        if result_watched and e['addr'] < 0xa4420 and e['addr'] + e['w'] > 0xa441c:
+            if e['addr'] != 0xa441c or e['w'] != 4:
+                raise ValueError('Partial damage-result writes need a new decoder')
+            kind = {0x9e234: 'basic_damage_prepared', 0x9e378: 'technique_damage_prepared'}.get(
+                e['pc'], 'damage_result_write')
+            events.append(dict(seq=e['seq'], frame=e['frame'], kind=kind,
+                               old=e['old'], new=e['new'], pc=canonical(e['pc']), caller=e['ra']))
+        address = 0xa4470 + ((e['addr'] - 0xa4470) // 0x20) * 0x20
+        if address not in slots:
+            continue
+        relative = e['addr'] - address
+        # Do not silently miss byte/word writes overlapping a decoded halfword.
+        if not any(relative < field + 2 and relative + e['w'] > field for field in (8, 12)):
+            continue
+        if e['w'] != 2 or relative not in (8, 12):
+            raise ValueError('Non-halfword battle HP/MP writes need a new decoder')
+        field = 'hp' if relative == 8 else 'mp'
+        kind = {0x8d064: 'basic_hp_subtract', 0x8d074: 'basic_hp_clamp',
+                0x8fbc0: 'technique_hp_subtract', 0x8fbd4: 'technique_hp_clamp'}.get(e['pc'])
+        if kind and field != 'hp':
+            raise ValueError('Known HP store wrote a different battle stat')
+        event = dict(seq=e['seq'], frame=e['frame'], battle_slot=slots[address],
+                     kind=kind or f'battle_{field}_write', old=e['old'], new=e['new'],
+                     pc=canonical(e['pc']), caller=e['ra'])
+        if field == 'hp':
+            # A negative intermediate HP is followed by a clamp, not a heal.
+            event['new_signed'] = e['new'] - 0x10000 if e['new'] & 0x8000 else e['new']
+        events.append(event)
+    return records, events
+
+
 def analyze(capture, ram):
     entries, spans, has_totals = validate_trace(capture)
     actors, camera_addresses = discover(ram)
@@ -211,16 +366,24 @@ def analyze(capture, ram):
     for camera in cameras.values():
         camera['progress_writers'] = histogram(camera['progress_writers'])
         camera['setter_callers'] = histogram(camera['setter_callers'])
+    scripts, script_events = analyze_scripts(capture, ram, entries, spans)
+    battle_stats, stat_events = analyze_battle_stats(ram, entries, spans)
+    events.extend(script_events)
+    events.extend(stat_events)
+    events.sort(key=lambda event: event['seq'])
     return dict(schema=1, ram_sha256=hashlib.sha256(ram).hexdigest(),
                 integrity=dict(writes=len(entries), first_frame=entries[0]['frame'],
                                last_frame=entries[-1]['frame'], recorder_totals_verified=has_totals),
-                actors=summaries, cameras=list(cameras.values()),
+                actors=summaries, cameras=list(cameras.values()), scripts=scripts, battle_stats=battle_stats,
                 shared_step_histogram=histogram(shared_steps), events=events,
                 caveats=['Guest frames and timeline entries are different units.',
                          'Snapshot ownership can become stale if objects are replaced during capture.',
                          'Clip IDs are resource-specific; events do not classify attacks universally.',
                          'A clip selection can replace an unfinished loop; capture end is not clip completion.',
                          'Consecutive sequences cannot detect an omitted tail without recorder totals.',
+                         'Script commands are parsed requests, not proof of audible sound, rendered effects, or damage.',
+                         'Consecutive command fetches at the same cursor are grouped as attempts, not unique executions.',
+                         'Battle-local HP/MP updates are not final party-save commits or visible hit timestamps.',
                          'Trace and snapshot hashes identify inputs, not the running executable.',
                          'No accelerated runtime behavior or combat outcome is inferred.'])
 

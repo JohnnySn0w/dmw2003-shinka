@@ -43,6 +43,26 @@ static uint32_t lab_child(uint32_t p) {
     return children >= 0x80090000u && children <= 0x801ffffcu && !(children & 3)
         ? READ(children) : 0;
 }
+int shinka_menu_items_active(void) {
+    uint32_t p, children;
+    if (READ(MODE) != STATUS || READ(MODE + 4)
+        || READ(0x8005cca8) != 2 /* verified English layout */
+        || READ(0x80091d18) != 0x27bdffd8 || READ(0x80091d1c) != 0xafb10014
+        || READ(0x80099894) != 0x27bdffa8) return 0;
+    /* Follow the live owner chain, not a RAM scan or a pointer retained across
+     * savestate loads. Other Status children use a different final callback. */
+    p = READ(0x8005ccbc);
+    if (!object(p, 0x80020b58) || READ(p + 0x20) != 1 || READ(p + 0xc) > 1) return 0;
+    p = lab_child(p);
+    if (!object(p, 0x80083558) || READ(p + 0x20) != 1 || READ(p + 0xc) > 1) return 0;
+    p = lab_child(p);
+    if (!object(p, 0x80099894) || READ(p + 0xc) > 1
+        || READ(p + 0x20) < 2 || READ(p + 0x20) > 3) return 0;
+    children = READ(p + 0x24);
+    if (children < 0x80090000 || children > 0x801ffff8 || (children & 3)) return 0;
+    p = READ(children + 4);
+    return object(p, 0x80091d18) && READ(p + 0x20) == 53 && READ(p + 0xc) <= 1;
+}
 /* The action menu resets root+64 before its partner selector opens. Remember
  * identity, not position: Switch Digimon can reorder the three party slots.
  * This is session UI memory; the savestate-load hook deliberately clears it. */

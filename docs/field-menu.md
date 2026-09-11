@@ -23,7 +23,7 @@ SETTINGS has eight rows:
 - **DV EXP:** 1x, 2x, 3x, 4x final DV EXP, or fixed 10 points per participating form.
 - **Encounters:** 0%, 50%, 100%, 150%, 200% random encounter frequency; default 100%.
 - **Soundtrack:** Original, DS, Sampled, Chip; switches live instruments.
-- **Screen view:** separate battle and field 4:3 / 16:9 controls; the experimental field setting also widens the gym/shop interfaces and both expanded Start-menu roots.
+- **Screen view:** separate battle and field 4:3 / 16:9 controls; the experimental field setting also widens the gym/shop interfaces, both expanded Start-menu roots and Items.
 - **Battle zoom:** 100%, 90%, 80% (experimental).
 - **Battle motion:** opens separate Idle poses and Action poses speed controls.
 - **BACK:** return to the field menu. Triangle also returns.
@@ -42,7 +42,8 @@ built music pack is present. Original is the default; the three alternate
 palettes remain available. This row selects curated palettes, not arbitrary
 `.sf2` files. The [camera options](camera.md) apply independently to battles and
 fields. The OpenGL field preview draws additional preloaded scenery tiles;
-map boundaries and object culling still limit coverage. Full-screen menus retain 4:3.
+map boundaries and object culling still limit coverage. The Start roots and Items
+support widescreen; other full-screen Status children retain 4:3.
 
 **Battle motion** offers **100%, 125%, 150% or 200%** for each category, both defaulting to 100% (original speed).
 Idle follows each combatant's own default pose. Action includes attacks,

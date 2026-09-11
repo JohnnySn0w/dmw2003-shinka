@@ -7,7 +7,9 @@
 static uint32_t mode;
 static int started = 1, options[3], frontend;
 static int root_menu;
+static int items_menu;
 int shinka_menu_root_active(void) { return root_menu; }
+int shinka_menu_items_active(void) { return items_menu; }
 int psx_mod_game_started(void) { return started; }
 uint32_t psx_mod_read_word(uint32_t addr) { CHECK(addr == 0x8004b3f8); return mode; }
 int shinka_view_get(int option) { return options[option]; }
@@ -112,6 +114,44 @@ int main(void) {
         root_menu=0;shinka_view_tick();
         CHECK(frontend==!fullscreen); /* full-screen map/status child keeps its own mode */
     }
+    mode=0x1000;items_menu=1;options[2]=1;shinka_view_tick();CHECK(frontend);
+    for(int band=0;band<=256;band+=256) for(int margin=1;margin<=160;++margin) {
+        const unsigned backgrounds[]={0x7da81060,0x7deb1090,0x7da93000};
+        for(int layer=0;layer<3;++layer) {
+            int end=-margin;
+            for(int x=0;x<384;x+=48) {
+                uint32_t tile[]={0x64808080,0x00200000u|(unsigned)x,backgrounds[layer],0x00300030};
+                int width=shinka_menu_wide_rect(tile,4,0,band,0,band,319,band+239,margin);
+                CHECK((int16_t)tile[1]==end && width>0);
+                CHECK(tile[2]==backgrounds[layer] && tile[3]==0x00300030);end+=width;
+            }
+        }
+        /* Captured anchors: list columns, full description, page numerator,
+         * separator/denominator, summary counts, tab, ribbon, portrait frame. */
+        const int positions[][3]={{57,37,-1},{188,37,1},{190,203,-1},
+            {149,156,0},{160,156,0},{172,156,0},{218,175,0},{290,175,1},
+            {20,20,-1},{153,19,1},{116,19,-1},{253,152,1}};
+        for(unsigned i=0;i<sizeof(positions)/sizeof(*positions);++i) {
+            uint32_t glyph[]={0x64808080,((unsigned)positions[i][1]<<16)|(unsigned)positions[i][0],
+                i==10 ? 0x7f28c14cu : i==11 ? 0x7faa0098u : 0x3a170000u,0x000c0008};
+            CHECK(!shinka_menu_wide_rect(glyph,4,0,band,0,band,319,band+239,margin));
+            CHECK((int16_t)glyph[1]==positions[i][0]+positions[i][2]*margin);
+            CHECK(glyph[3]==0x000c0008);
+        }
+        uint32_t panel[]={0x64808080,0x00c20000,0x7deab368,0x00260028};
+        CHECK(shinka_menu_wide_rect(panel,4,0,band,0,band,319,band+239,margin)>0);
+        CHECK((int16_t)panel[1]==-margin && panel[3]==0x00260028);
+        for(unsigned palette=0x3057;palette<=0x3157;palette+=64) {
+            uint32_t advance[]={0x64808080,0x00d60123,(palette<<16)|0x3c54,0x000c000c};
+            CHECK(!shinka_menu_wide_rect(advance,4,0,band,0,band,319,band+239,margin));
+            CHECK((int16_t)advance[1]+12==303*(320+2*margin)/320-margin);
+            CHECK(advance[3]==0x000c000c);
+        }
+    }
+    options[2]=0;shinka_view_tick();CHECK(!frontend);
+    { uint32_t glyph[]={0x64808080,0x002500bc,0x3a170000,0x000c0008};
+      CHECK(!shinka_menu_wide_rect(glyph,4,0,0,0,0,319,239,53));CHECK(glyph[1]==0x002500bc); }
+    items_menu=0;options[2]=1;shinka_view_tick();CHECK(!frontend);
     started=1;mode=0x600;options[0]=1;shinka_view_tick();
     for(int band=0;band<=256;band+=256) {
         uint32_t panel[]={0x64808080,0x001400CB,0x3E2059C4,0x001C0018};

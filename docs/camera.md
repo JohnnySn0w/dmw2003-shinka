@@ -10,8 +10,8 @@ SETTINGS provides independent view and battle zoom controls:
   submission. Unready or unsupported tiles can still leave incomplete edges.
   Small interiors can have authored black space outside their artwork. This is
   a preview, not a complete field widescreen conversion. It also widens the
-  shared gym/shop interfaces and anchors both expanded Start-menu roots to
-  the edges of the wider canvas.
+  shared gym/shop interfaces and Items, and anchors both expanded Start-menu
+  roots to the edges of the wider canvas.
 - **Battle zoom:** 100%, 90%, or 80% projected size. At 80%, the same viewport
   covers approximately 25% more world span along each axis. This changes the
   effective field of view; it does not move the scripted camera backwards.
@@ -19,8 +19,8 @@ SETTINGS provides independent view and battle zoom controls:
 They can be combined. Defaults retain 4:3 and 100%. Changes persist in the
 existing mod state. Battle controls apply to ordinary battles (mode `0x600`);
 the field preference applies to modes `0x200..0x2ff`, the gym (`0xa00`), shops
-(`0xf00`), and the expanded Start root in the Status overlay (`0x1000`) while
-that root is active. The lab, card battles, other Status children (including the
+(`0xf00`), and the expanded Start root and Items in the Status overlay (`0x1000`)
+while their menu tasks are active. The lab, card battles, other Status children (including the
 map), movies and rewards retain their original view. In battle 16:9,
 enemy health, battle commands/submenus and bottom dialogue stay aligned on the
 left; player health/MP and the miniature portrait move to the right. The bottom
@@ -224,7 +224,7 @@ from the resident menu callback gates those transforms; it is cleared on state
 loads and rejected during another mode, queued transitions, teardown or the
 map's close path. Only the root panel/font palettes are moved over a field.
 Other scenery and NPC dialogue remain in their world positions. The Status
-overlay returns to 4:3 for its other children; widening ITEMS, the map, the lab,
+overlay also supports Items, but returns to 4:3 for its other children; widening the map, the lab,
 card battles and remaining interfaces is still separate work.
 
 Copied-save OpenGL checks covered Leomon's dialogue, training choice and TP
@@ -238,6 +238,29 @@ Native tests check both framebuffer bands, adjacent panel seams at every allowed
 margin, original texture dimensions, glyph spacing, cursor anchoring, 4:3 and
 unrelated-scene isolation, plus root lifecycle/state-reset guards. Local captures
 and copied checkpoints are under `output/npc-wide-01/`.
+
+### Items
+
+The category selector, two-column inventory lists and item recipient chooser
+now use the field widescreen preference. Party summaries and animated portraits
+stay together on the left; categories and the instruction ribbon move right.
+Inventory panels and the bottom description expand, while names, icons and
+underlines retain their original sizes. The page counter stays centered and
+the shoulder-button hints follow their respective columns. The selected-item
+summary keeps its equipped and inventory counts in separate sections.
+
+The guard follows four live task objects from the mode owner to the Items
+callback (`0x80091d18`), validating callbacks, child counts, lifecycle, English
+layout and overlay instruction signatures. It uses no RAM scan or retained
+pointer across savestate loads. Other Status children cannot opt into this
+layout merely by sharing mode `0x1000`. Only host drawing packets are changed.
+
+Copied-save checks cover all five categories, a populated two-page item list,
+recipient cursor movement, returning to the Start root, map isolation, checkpoint
+restoration and live 4:3/16:9 switching. Native tests cover task reuse, malformed
+child pointers, transitions, alternate languages, panel seams, texture sizes and
+text anchors in both framebuffer bands. Captures remain local under
+`output/items-wide-01/`.
 
 The first pass recognized only one of the three 48×48 scrolling background
 layers. The other two incorrectly followed the UI-column translation rule,

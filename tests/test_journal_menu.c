@@ -27,6 +27,7 @@ void shinka_menu_task_ready(CPUState *cpu);
 void shinka_register_journal(void);
 void shinka_lab_selection_reset(void);
 int shinka_menu_root_active(void);
+int shinka_menu_items_active(void);
 void shinka_chart_selection_reset(void) {}
 #define W psx_mod_write_word
 #define R psx_mod_read_word
@@ -344,6 +345,35 @@ int main(void) {
         shinka_lab_selection_reset();W(root+0x64,2);writes=0;tick();CHECK(writes==0);
         W(0x8004b3f8,0xd00);W(root+0x64,0);writes=0;tick();CHECK(writes==0);
         W(0x8004b3f8,0xd01);W(0x800891ac,0);writes=0;tick();CHECK(writes==0);
+    }
+    {
+        const uint32_t owner=0x800a0000, wrapper=0x800b0000, root=0x800c0000, items=0x800d0000;
+        const uint32_t objects[]={owner,wrapper,root,items};
+        const uint32_t callbacks[]={0x80020b58,0x80083558,0x80099894,0x80091d18};
+        W(0x8004b3f8,0x1000);W(0x8004b3fc,0);W(0x8005cca8,2);W(0x8005ccbc,owner);
+        W(0x80091d18,0x27bdffd8);W(0x80091d1c,0xafb10014);W(0x80099894,0x27bdffa8);
+        for(int i=0;i<4;++i) {
+            W(objects[i]+0x28,0x80014274);W(objects[i]+0x48,callbacks[i]);
+            W(objects[i]+0xc,1);W(objects[i]+0x24,objects[i]+0x100);
+            W(objects[i]+0x20,i<2 ? 1 : i==2 ? 2 : 53);
+        }
+        W(owner+0x100,wrapper);W(wrapper+0x100,root);W(root+0x104,items);
+        writes=0;CHECK(shinka_menu_items_active());CHECK(writes==0);
+        W(root+0x20,3);CHECK(shinka_menu_items_active());
+        /* Reused tasks, teardown and every malformed link must fail closed. */
+        for(int i=0;i<4;++i) {
+            W(objects[i]+0x48,0x8001270c);CHECK(!shinka_menu_items_active());W(objects[i]+0x48,callbacks[i]);
+            W(objects[i]+0xc,2);CHECK(!shinka_menu_items_active());W(objects[i]+0xc,1);
+            if(i<3) {
+                W(objects[i]+0x24,0x801fffff);CHECK(!shinka_menu_items_active());W(objects[i]+0x24,objects[i]+0x100);
+            }
+        }
+        W(0x8004b3fc,0x200);CHECK(!shinka_menu_items_active());W(0x8004b3fc,0);
+        W(0x8004b3f8,0xd00);CHECK(!shinka_menu_items_active());W(0x8004b3f8,0x1000);
+        W(0x8005cca8,3);CHECK(!shinka_menu_items_active());W(0x8005cca8,2);
+        W(0x80091d1c,0);CHECK(!shinka_menu_items_active());W(0x80091d1c,0xafb10014);
+        W(root+0x104,0);CHECK(!shinka_menu_items_active());W(root+0x104,items);
+        shinka_lab_selection_reset();CHECK(shinka_menu_items_active()); /* load follows live owners */
     }
     puts("Full lab actions, partner retention, legacy restoration, root return and menu input checks passed.");
     return 0;

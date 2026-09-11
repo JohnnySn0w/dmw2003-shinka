@@ -1,4 +1,5 @@
-# Windows format conversion only; artwork is maintained in assets/shinka.png.
+# Windows format conversion only; assets/shinka.png is the authoritative artwork.
+# The earlier SVG is retained as a separate reference, not the current PNG source.
 $ErrorActionPreference = 'Stop'
 Add-Type -AssemblyName System.Drawing
 $assetDir = Join-Path (Split-Path $PSScriptRoot -Parent) 'assets'

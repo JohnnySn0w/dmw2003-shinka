@@ -1,0 +1,4 @@
+# Synthetic Python tests and CI checks; no soundfont or disc assets required.
+numpy==2.3.5
+coverage==7.10.7
+ruff==0.12.12

@@ -1,4 +1,16 @@
-# dmw2003-shinka
+<p align="center">
+  <img src="assets/shinka.png" alt="Shinka emblem" width="160" height="160">
+</p>
+
+<h1 align="center">Digimon World 2003 — Shinka</h1>
+
+<p align="center">
+  <a href="https://github.com/JohnnySn0w/dmw2003-shinka/actions/workflows/tests.yml"><img src="https://github.com/JohnnySn0w/dmw2003-shinka/actions/workflows/tests.yml/badge.svg?branch=main" alt="Python tests"></a>
+  <a href="https://github.com/JohnnySn0w/dmw2003-shinka/actions/workflows/lint.yml"><img src="https://github.com/JohnnySn0w/dmw2003-shinka/actions/workflows/lint.yml/badge.svg?branch=main" alt="Python lint"></a>
+  <a href="https://github.com/JohnnySn0w/dmw2003-shinka/actions/workflows/coverage.yml"><img src="https://github.com/JohnnySn0w/dmw2003-shinka/actions/workflows/coverage.yml/badge.svg?branch=main" alt="Python coverage report"></a>
+  <a href="docs/windows-baseline.md"><img src="https://img.shields.io/badge/platform-Windows%20x64-0078D4" alt="Platform: Windows x64"></a>
+  <a href="#status"><img src="https://img.shields.io/badge/status-experimental-orange" alt="Status: experimental"></a>
+</p>
 
 Mod development for Digimon World 2003, targeting the European multilingual PlayStation release (`SLES-03936`).
 
@@ -51,6 +63,14 @@ auditions are **Asuka City**; other track arrangements are still pending.
 **Original, DS, Sampled, or Chip** changes music instruments mid-song. The local
 pack covers 42 music banks with provisional sample-level arrangements; effects,
 ambience and unidentified banks keep their original audio.
+
+## Checks
+
+The badges track the Python tooling's [tests, lint checks and coverage reports](docs/testing.md).
+The coverage badge shows report-job status; measured percentages and per-file results
+are in that run's summary and downloadable report. These checks use synthetic test
+data and do not require a game disc. Native regression tests and in-game validation
+are separate local checks; Python coverage does not measure campaign or emulator coverage.
 
 ## Planned work
 

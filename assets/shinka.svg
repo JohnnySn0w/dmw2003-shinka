@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="-24 -23 580 580">
+  <title>Shinka emblem</title>
+  <desc>Reference-traced angular head with an open zigzag mouth and a separate blue ring. Mouth, ring interior, and clearance are transparent.</desc>
+  <defs>
+    <!-- Trace of the user-provided 561 x 525 reference, without its backdrop
+         or drop shadow. The inward mouth contour is part of the silhouette;
+         it must not be closed by a triangle spanning the jaw tips. -->
+    <path id="head" d="M 18,177 L 438,83 L 355,133 L 513,401
+      L 273,401 L 284,326 L 109,389 L 118,303 L 159,331
+      L 186,270 L 244,310 L 256,253 L 246,253 L 241,279
+      L 183,241 L 171,247 L 157,291 L 118,253 L 111,253
+      L 82,309 Z"/>
+    <path id="mouth-opening" d="M 118,303 L 159,331 L 186,270 L 244,310 L 284,326 L 109,389 Z"/>
+    <mask id="head-fill" maskUnits="userSpaceOnUse" x="-24" y="-23" width="580" height="580">
+      <rect x="-24" y="-23" width="580" height="580" fill="white"/>
+      <use href="#mouth-opening" fill="black"/>
+    </mask>
+    <!-- A clearance around BOTH jaw contours separates the orbit from the
+         emblem. This is an alpha cutout, not a white painted keyline. -->
+    <mask id="orbit-clearance" maskUnits="userSpaceOnUse" x="-24" y="-23" width="580" height="580">
+      <rect x="-24" y="-23" width="580" height="580" fill="white"/>
+      <use href="#head" fill="black" stroke="black" stroke-width="34" stroke-linejoin="miter" stroke-miterlimit="3"/>
+      <path d="M 82,309 L 118,303 L 159,331 L 186,270 L 244,310 L 284,326 L 109,389 Z" fill="black" stroke="black" stroke-width="34" stroke-linejoin="round"/>
+    </mask>
+  </defs>
+  <ellipse cx="281" cy="265" rx="195" ry="199" fill="none" stroke="#364ef6" stroke-width="42" mask="url(#orbit-clearance)"/>
+  <use href="#head" fill="white" mask="url(#head-fill)"/>
+  <use href="#head" fill="none" stroke="#364ef6" stroke-width="12" stroke-linejoin="miter" stroke-miterlimit="3"/>
+  <ellipse cx="257" cy="195" rx="35" ry="36" fill="none" stroke="#364ef6" stroke-width="11"/>
+</svg>

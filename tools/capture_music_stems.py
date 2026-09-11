@@ -39,14 +39,15 @@ def families(metadata, available):
     return sorted(groups, key=lambda g: min(g['programs']))
 
 
-def source_bank(pack, report, name):
+def source_bank(pack, report, name=None):
     with pack.open('rb') as f:
         digest = hashlib.file_digest(f, 'sha256').hexdigest()
     if digest != report['sha256'] or report.get('pack_format') != 'SHKMUS03':
         raise ValueError('Need a matching SHKMUS03 pack and routing report')
     index = next((i for i, bank in enumerate(report['banks']) if bank['bank'] == name), None)
-    if index is None:
+    if name is not None and index is None:
         raise ValueError('Bank is absent from the live pack')
+    inventory = []
     with pack.open('rb') as f:
         if f.read(8) != b'SHKMUS03' or struct.unpack('<II', f.read(8)) != (RATE, len(report['banks'])):
             raise ValueError('Invalid live pack header')
@@ -55,8 +56,12 @@ def source_bank(pack, report, name):
             if count != len(bank['samples']) or not 16 <= size <= 524288:
                 raise ValueError('Invalid live bank bounds')
             original = f.read(size)
+            if len(original) != size:
+                raise ValueError('Truncated original bank')
             if i == index:
                 return index, bank, original
+            if name is None:
+                inventory.append((i, bank, original))
             for _ in range(count):
                 f.seek(12, 1)
                 for _ in range(3):
@@ -64,7 +69,32 @@ def source_bank(pack, report, name):
                     if not 1 <= frames <= 132300:
                         raise ValueError('Invalid live wave bounds')
                     f.seek(frames * 2, 1)
+    if name is None:
+        return inventory
     raise ValueError('Bank not found')
+
+
+def identify_export(inventory, ram, exports):
+    """Require a unique complete bank match; filenames alone cannot identify music."""
+    matches = [bank for _, bank, original in inventory if original in ram]
+    if len(matches) != 1:
+        raise ValueError(f'Expected one live music bank, found {len(matches)}; '
+                         'wait for music or specify --export explicitly')
+    bank = matches[0]
+    export = exports/bank['bank']
+    metadata = json.loads((export/'music.json').read_text())
+    if metadata['inputs'] != bank['source_sha256']:
+        raise ValueError('Detected bank export does not match pack identity')
+    return export
+
+
+def detect_export(pack, exports, port):
+    report = json.loads(pack.with_suffix('.json').read_text())
+    inventory = source_bank(pack, report)
+    nav = Navigator(port)
+    ram = b''.join(bytes.fromhex(nav.call(dict(cmd='spu_ram', addr=i, len=4096))['hex'])
+                   for i in range(0, 524288, 4096))
+    return identify_export(inventory, ram, exports)
 
 
 def write_wav(path, pcm, gain):
@@ -127,7 +157,10 @@ def capture(pack, export, output, seconds=None, port=4380, slot=None):
     index, bank, original = source_bank(pack, report, name)
     if bank['source_sha256'] != metadata['inputs']:
         raise ValueError('Owned export does not match the live pack')
-    seconds = seconds if seconds is not None else math.ceil(metadata['sequences'][0]['seconds_one_pass']) + 2
+    musical = [s for s in metadata['sequences'] if s['seconds_one_pass'] >= 1
+               and s['program_usage'] and not s['unmapped_programs']]
+    seconds = seconds if seconds is not None else math.ceil(max(
+        (s['seconds_one_pass'] for s in musical), default=0)) + 2
     if not 1 <= seconds <= 120:
         raise ValueError('Use 1..120 seconds')
     frames = round(seconds * RATE)
@@ -181,10 +214,19 @@ def capture(pack, export, output, seconds=None, port=4380, slot=None):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--pack', type=Path, required=True)
-    parser.add_argument('--export', type=Path, required=True)
+    source = parser.add_mutually_exclusive_group(required=True)
+    source.add_argument('--export', type=Path)
+    source.add_argument('--exports', type=Path,
+                        help='Auto-detect the current bank among this owned export catalog')
     parser.add_argument('--output', type=Path, required=True)
     parser.add_argument('--seconds', type=float)
     parser.add_argument('--port', type=int, default=4380)
     parser.add_argument('--slot', type=int, choices=range(10))
     args = parser.parse_args()
+    if args.exports:
+        if args.slot is not None:
+            Navigator(args.port).checkpoint('load', args.slot)
+        args.export = detect_export(args.pack, args.exports, args.port)
+        args.slot = None
+        print(f'Detected {args.export.name}', flush=True)
     capture(args.pack, args.export, args.output, args.seconds, args.port, args.slot)

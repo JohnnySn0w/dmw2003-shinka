@@ -377,3 +377,84 @@ duration/reset, source isolation, headroom beyond 16-bit range, silent-frame
 alignment, overwrite refusal, family grouping, shared export gain and active
 audition selection. The diagnostic game was closed and settings restored before
 presenting the solo previews so its full mix would not play over them.
+
+### Batch the owned catalog without navigating the game
+
+`tools/split_music_ost.py` splits every eligible sequence in an owned export
+catalog in one invocation. It uses original decoded samples and scores; no
+replacement SoundFont, running game or per-area checkpoint is required.
+
+```powershell
+python tools/split_music_ost.py --exports output/music-catalog-export --output output/ost-stems
+```
+
+Open `output/ost-stems/index.html` for a local listening page, with track/scene
+labels where the source MIDI hash has a unique catalog match. Each track has
+aligned full WAV stems, independently normalized eight-second auditions, and
+per-family MIDI files. Key zones and shared-sample echo programs are grouped.
+Program/sample IDs and input hashes remain in `stems.json`; audible names still
+need listening. This is a batch conversion, not automatic instrument recognition.
+
+**Offline WAVs are approximate auditions, not native SPU captures.** They use
+linear sample interpolation, approximate register-derived envelopes and volume/
+pan, and one linear score pass. Standard volume, pan, sustain and pitch bend are
+handled. Custom controllers/loops, vibrato, portamento, noise mode, shared reverb
+and hardware voice allocation are not emulated. Unsupported events and notes
+without a declared key zone are counted per part rather than assigned invented
+instruments. A silent family is a failure, not a successful empty export. Use
+the native recorder when these differences matter to identification or balance.
+
+The splitter enumerates declared sequences, including BGM031 sequence 002, rather
+than assuming sequence 000 or counting every tiny cue as a song. Cues shorter
+than one second, empty sequences and sequences referencing absent programs are
+listed as skipped in `batch.json`. Other failures are reported and cause a
+nonzero exit after the remaining tracks are attempted. A new output directory
+is required; input exports and existing results are never overwritten. `--bank
+BGM018` optionally limits an audition run. Audio is rendered one family at a time
+and temporary family buffers are removed after WAV export.
+
+The initial full catalog run produced 49 sequences across 42 banks, with 410
+families (820 full/short WAVs and 410 MIDI splits), no failed sequences, and 623
+explicitly skipped cues. Independent checks verified source hashes, WAV format,
+non-silence, headroom, shared gain, full-stem alignment and split-MIDI duration.
+EVO_00 reports one unrendered program-9/key-48 note outside its declared zones.
+This validates export structure, not audible equivalence to native playback.
+All 182 Python tests and Ruff passed; no runtime binary changed. Local results
+are under `output/music-ost-split-03/` (about 4.6 GB of uncompressed audio).
+
+### Walk between areas and capture exact original parts
+
+With a copied-profile debug session running and the area's music loaded, the
+native recorder can select the export automatically:
+
+```powershell
+python tools/capture_music_stems.py --port 4384 --pack output/music-live-07/music-live.bin --exports output/music-catalog-export --output output/area-stems-01
+```
+
+Stay in the area until recording finishes. Repeat with a new output directory
+after walking to another area. All instruments are recorded together. Detection
+requires exactly one complete original bank match in live SPU RAM and matching
+export hashes; if music is absent or bank identity is ambiguous, the tool refuses
+to guess. Specify `--export` for a known bank when necessary. Bank detection does
+not identify which sequence within that bank is playing, and cached banks can
+still be present; listen to confirm the scene and inspect non-silence/unmatched
+counts. Default duration uses the longest substantial local sequence plus two
+seconds, subject to the recorder's existing memory/duration limits. For a bank
+that exceeds those limits, choose a shorter explicit `--seconds` window.
+
+### Badlands ear identifications
+
+The player's labels below refer to the **native** BGM018 auditions, not the new
+offline approximations. No additional replacement mappings were changed during
+this labeling pass.
+
+| Part | Programs | Samples | Player identification |
+| --- | --- | --- | --- |
+| 1 | 0 | 1, 2 | Piano |
+| 2 | 1 | 3 | String-like synth; possibly violin, uncertain |
+| 3 | 2 | 4 | Bell |
+| 4 | 3, 4 | 6 | Flute |
+| 5 | 5 | 7 | Accordion |
+
+Parts 6–8 await listening. IDs are specific to the BGM018 source hashes already
+recorded in the guarded routing profile; they are not global MIDI program names.

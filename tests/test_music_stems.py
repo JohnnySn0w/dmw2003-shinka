@@ -1,6 +1,8 @@
+import hashlib
 import json
 from pathlib import Path
 import sys
+import struct
 import tempfile
 import unittest
 import wave
@@ -8,10 +10,37 @@ import wave
 import numpy as np
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'tools'))
-from capture_music_stems import assemble, audition_window, families
+from capture_music_stems import assemble, audition_window, families, identify_export, source_bank
 
 
 class MusicStemTests(unittest.TestCase):
+    def test_auto_detect_requires_unique_complete_bank_and_export_identity(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            banks = [dict(bank=name, samples=[], source_sha256={'owned': name}) for name in ('A', 'B')]
+            bodies = [b'abcdefghijklmnop', b'ponmlkjihgfedcba']
+            data = b'SHKMUS03'+struct.pack('<II', 44100, 2)
+            for body in bodies:
+                data += struct.pack('<II', len(body), 0)+body
+            pack = root/'pack.bin'
+            pack.write_bytes(data)
+            report = dict(sha256=hashlib.sha256(data).hexdigest(), pack_format='SHKMUS03', banks=banks)
+            inventory = source_bank(pack, report)
+            for b in banks:
+                (root/b['bank']).mkdir()
+                (root/b['bank']/'music.json').write_text(json.dumps(dict(inputs=b['source_sha256'])))
+            self.assertEqual(identify_export(inventory, b'prefix'+bodies[1]+b'suffix', root), root/'B')
+            self.assertEqual(source_bank(pack, report, 'B')[2], bodies[1])
+            for ram in (bodies[0][:-1], bodies[0]+bodies[1]):
+                with self.assertRaisesRegex(ValueError, 'Expected one'):
+                    identify_export(inventory, ram, root)
+            (root/'B'/'music.json').write_text('{"inputs": {}}')
+            with self.assertRaisesRegex(ValueError, 'identity'):
+                identify_export(inventory, bodies[1], root)
+            pack.write_bytes(data+b'changed')
+            with self.assertRaisesRegex(ValueError, 'matching'):
+                source_bank(pack, report)
+
     def test_key_zones_and_delayed_programs_form_sound_families(self):
         def program(p, *samples):
             return dict(program=p, tones=[dict(sample=s) for s in samples])

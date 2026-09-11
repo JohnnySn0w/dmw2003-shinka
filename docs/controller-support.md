@@ -38,4 +38,8 @@ The intended optional path is to launch the executable through Steam with a game
 - D-pad and left-stick movement, every PS1 button, triggers, simultaneous presses, and rumble where the controller supports it. Keep keyboard recovery available.
 - Verify language confirmation with Start, menus, exploration, and battle controls against actual game behavior. Test digital-pad defaults before enabling analog emulation.
 
-No physical-controller matrix has passed yet. Debug-server injected button presses validate game input handling, not USB/Bluetooth/controller compatibility.
+The user confirmed D-pad and A-button input on an **8BitDo Ultimate 2C Wireless
+over Bluetooth** after the runtime opened the device. This verifies that device
+and connection for basic input; the full physical-controller matrix has not
+passed. Debug-server injected presses validate game input handling, not hardware
+compatibility, reconnect behavior or rumble.

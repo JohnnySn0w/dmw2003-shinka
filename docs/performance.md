@@ -1,5 +1,23 @@
 # Runtime profiling
 
+## Reading this report
+
+This is a dated evidence log. Earlier targets and limitations describe the build
+tested in that section, not necessarily the current implementation.
+
+- **Battle geometry:** the retained six-routine native unit reduced process CPU
+  per frame by 31.4% in the matched idle-battle test below. This is optional and
+  does not establish a campaign-wide speedup.
+- **Memory cards:** see the separate [read/write timing report](save-timing.md).
+- **Movies:** native decoder/transfer work and fewer redundant scheduling checks
+  improved short samples to about 50 guest updates/sec; longer stutter remains.
+- **Memory:** default-off retrospective history avoids a 128 MiB allocation;
+  repeated tests did not establish a CPU speedup from that change.
+- **Background use:** [minimizing suspends offline gameplay](minimized-pause.md).
+
+For measurement tools and subsystem relationships, see [host stack profiling](host-stack-profiling.md)
+and the [runtime timing map](runtime-timing-map.md).
+
 ## Opt-in retrospective RAM history — 2026-09-11
 
 The debug server's catch-all RAM-write ring allocated 4,194,304 entries of

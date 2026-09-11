@@ -59,7 +59,12 @@ Wait for the process to exit before rebuilding. At the audited framework revisio
 
 Supply the same optional `-RetailBios` choice as the first build. This generates a local `output/overlays/overlays_static.c` and links it with MSVC; GCC is not needed for this static route. Omitting `-OverlayCaptures` explicitly disables the optional overlay source on the next build. The generated dispatcher validates current RAM code before running a captured implementation. Unseen or changed code falls back to the interpreter.
 
-## Validation and remaining work
+## Early validation record
+
+This section preserves the initial baseline observations. For current movie and
+battle measurements see [runtime profiling](performance.md); card read/write
+batching and compatibility checks are in [save timing](save-timing.md). The
+[project status](../README.md#status) summarizes current coverage and limitations.
 
 The first user playthrough exited at the registration/partner-selection transition. A replay reproduced stale native-overlay execution; Shinka's live-byte guard now rejects it. The corrected build passes that checkpoint through name entry, starter-pack selection, and completed registration. See [failure evidence and correction](partner-selection-exit.md). Other progression and performance checks remain open.
 
@@ -73,7 +78,7 @@ The first user playthrough exited at the registration/partner-selection transiti
 - After the overlay fix, the user reported that Central Park, a normal battle, the gym, and shops worked. These are user playtest results; broader progression coverage remains open.
 - The user reported successful in-game saving/loading and savestates, with slow card save/load screens. Disk inspection confirmed a 128 KiB card with an allocated `BESLES-03936DMW3-EUR` entry (32 KiB). A stable-read backup is preserved locally under `output/save-backups/first-guardromon-save/`.
 - A subsequent agent-controlled test used copied cards in `output/performance-saves/`, restored the inn checkpoint, traversed Asuka City, Asuka Bridge and Central Park, and triggered a Kunemon encounter in Wire Forest Entrance. The battle scene, party switching and combat ran, followed by return to a responsive field. The reward/result screen was not separately captured. Local diagnostic slots 2, 3 and 4 preserve the park, battle-entry and post-battle states; `output/encounter-entry.png` and `output/encounter-return.png` record the endpoints. This is one encounter, not broad combat coverage.
-- A Guardromon overwrite trace observed 80 successful sector writes spanning approximately 29 seconds while the guest ran at 50 frames/second. The Saved message appeared around 30 seconds. See [save timing evidence and sampling limitations](save-timing.md); no save-speed patch has been applied.
+- An initial Guardromon overwrite trace observed 80 successful sector writes spanning approximately 29 seconds while the guest ran at 50 frames/second. The Saved message appeared around 30 seconds. This was the unmodified baseline, before the subsequent [read/write batching work](save-timing.md).
 - The initial overlay-fallback movie run measured approximately 0.31–0.34 times real time. The lowered overlay floor allowed interpreter-local chaining; performance remains a validation target.
 - First static overlay generation processed six retained capture regions: five built, one skipped for lack of walk-root seeds, zero failures, 325 exact function identities. This capture covers only paths visited during boot/movie playback.
 - The overlay-enabled executable linked, restored the movie savestate, and continued rendering. Its static-overlay validator reported 186,277 successful dispatches at one snapshot. The generic `dispatch_native` counter counts the dynamic DLL route and stayed zero; use `static_hits` in `overlay_loader_status` for this build. Short diagnostic timing samples rose to roughly 0.48–0.57 times real time, still below the target and not a controlled benchmark.

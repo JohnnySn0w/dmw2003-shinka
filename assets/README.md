@@ -1,4 +1,4 @@
-# Shinka app icon
+# Shinka branding
 
 `shinka.png` is the authoritative app artwork: the user's improved 909 x 909 RGBA image, with blue strokes and orbit, a white head interior, and transparent background and jaw clearances. It is a reference-derived game motif, not an independently designed logo.
 
@@ -16,10 +16,15 @@ CMake embeds the ICO into the executable and stages the PNG as `assets/psxrecomp
 
 `branding/shinka-title.png` is the user's stacked emblem/SHINKA/進化 artwork,
 cropped to its alpha bounds and resized to 1536 x 975 RGBA from the local
-`shinka_test.png` source. The game uses it on the [title screen](../docs/title-screen.md),
-retaining its transparency and shadow.
+`shinka_test.png` source. It is the full title image used in the repository README
+and website. The game also uses it on the [title screen](../docs/title-screen.md),
+retaining its transparency and shadow. The compact app icon remains separate
+so that it stays readable at taskbar sizes.
 
 `branding/shinka-banner.png` preserves the approved 3000 x 1000 transparent
 horizontal banner for the website, with the emblem beside outlined block
 lettering and smaller Japanese text. Both are reference-derived branding;
-neither replaces the authoritative app icon above.
+neither replaces the authoritative app icon above. The horizontal banner is
+preserved as an alternate composition; the current website leads with the user's
+stacked title. See [website media provenance](../website/MEDIA.md) for the selected
+gameplay captures published alongside the branding.

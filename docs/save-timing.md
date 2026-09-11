@@ -1,5 +1,16 @@
 # Save timing investigation
 
+## Current result
+
+Read and write batching are implemented. In matched copied-profile tests, the
+last save-body read sector was first observed at **6.11 s instead of 25.02 s**;
+the last overwrite file-sector write at **7.63 s instead of 28.72 s**. These
+windows exclude confirmation input and are not total menu-to-world timings.
+Per-sector checks, disk flushes and asynchronous completion remain intact.
+The September 11 sections below give the methods and data-parity checks.
+
+## September 9: original investigation
+
 The September 9, 2026 windowed test found sustained card writes during the slow
 Guardromon save animation. Removing the loading bar alone would not remove the
 underlying wait. No card timing or game behavior was patched in this test.

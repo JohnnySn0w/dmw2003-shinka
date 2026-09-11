@@ -2,7 +2,8 @@
 
 Each row gives you a place or situation to picture while judging the instrumental
 (Sampled) palette, plus a specific question about whether the new timbres fit.
-The same context applies to the DS and Chip alternatives; all three remain planned.
+The same context applies to the DS and Chip alternatives; all three are now
+available through the provisional [live instrument pack](music-live.md).
 Later locations and boss names appear below.
 
 **Ready to hear: Asuka City (BGM001, sequence 000).**

@@ -458,3 +458,46 @@ this labeling pass.
 
 Parts 6–8 await listening. IDs are specific to the BGM018 source hashes already
 recorded in the guarded routing profile; they are not global MIDI program names.
+
+## Instrument labeling notebook
+
+The local listening library now has an editable companion workspace:
+
+```powershell
+python tools/label_music_stems.py --library output/music-ost-split-03 --native BGM018-000=output/music-stems-01/BGM018 --port 4387
+```
+
+Open the printed local address. Choose a track by title or area, play a short
+isolate or its full stem, and enter an instrument name, confidence and optional
+notes. **Save label** writes the record to disk; **Save & next unlabeled** (or
+Ctrl+Enter) advances through remaining parts. Track progress and an unfinished
+filter help with the catalog. Starting a second player pauses the first.
+
+The Badlands native capture imports the player's five prior identifications,
+including the tentative string-synth/violin description, and defaults to native
+audio. Other tracks use clearly labeled offline approximations. Add repeatable
+`--native TRACK=DIRECTORY` arguments as new in-game captures become available.
+Matches require the bank's source hashes plus the family's program/sample sets;
+the explicit track association supplies sequence context. No general MIDI
+instrument names are inferred from bank program numbers.
+
+Labels are stored separately in `output/music-instrument-labels.json` (override
+with `--labels`), so regenerating audio does not erase them. Stable identities
+include the source hashes, bank, sequence, programs and samples, not display part
+numbers. Existing labels take precedence over imported seeds. Writes are atomic;
+stale edits from another tab are rejected and disk failures remain visible with
+form edits intact. The server's in-memory state changes only after a successful
+write. Use one labeling server per label file. Export labels downloads the same
+JSON for backup or later route authoring; labels do not automatically change
+the game's replacement instruments.
+
+The server binds only to loopback, serves explicitly indexed audio with range
+support for seeking, and accepts writes only with its session token and local
+origin. The UI offers a read-only `read_instrument_labels` WebMCP tool when the
+browser supports it. No original music is uploaded or committed.
+
+Validation: 188 Python tests and Ruff pass, including identity-safe imports,
+persistence across store restarts, stale-write rejection, failed-write recovery,
+audio path boundaries, HTTP saves/readback and byte ranges. Browser checks cover
+search, full/short selection, native playback, saving an existing identification,
+advancing to Part 6, reload persistence and read-only label retrieval.

@@ -74,5 +74,5 @@ list(APPEND _sources "${_generated}/mod_runtime.cpp")
 set_property(TARGET shinka PROPERTY SOURCES "${_sources}")
 set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS
     "${_runtime}" "${CMAKE_CURRENT_SOURCE_DIR}/src/menu_settings_bridge.inc")
-target_sources(shinka PRIVATE src/journal_menu.c src/menu_exp.c src/evolution_chart.c src/encounters.c src/map_travel.c)
+target_sources(shinka PRIVATE src/journal_menu.c src/menu_exp.c src/evolution_chart.c src/encounters.c src/map_travel.c src/card_loading.c)
 target_include_directories(shinka PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/output/recompiled" "${_generated}")

@@ -27,7 +27,11 @@ of the original subtractive Gouraud effect. The title scene's outgoing owner
 modes remain eligible only while its module is resident, avoiding a flash of
 the original logo during the handoff.
 
-The image stays at host resolution rather than being quantized into PSX VRAM.
+The loader downsamples the artwork once to its native 220 x 140 title-screen
+footprint, averaging colors with alpha weighting to preserve transparent edges
+and shadows. Linear filtering enlarges that texture with the soft appearance
+of the surrounding menu. The high-resolution source PNG remains unchanged.
+The image is still a presentation layer rather than a texture in PSX VRAM.
 Use the debug `present_shot` command to capture it; raw guest-framebuffer
 screenshots do not include this layer.
 

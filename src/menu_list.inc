@@ -10,6 +10,8 @@ extern int shinka_music_palette_set(int);
 extern int shinka_music_available(void);
 extern int shinka_view_get(int);
 extern int shinka_view_set(int, int);
+extern int shinka_motion_get(int);
+extern int shinka_motion_set(int, int);
 extern void shinka_rewards_refresh(void);
 extern void shinka_rewards_tick(void);
 extern void shinka_rewards_activate(void);
@@ -24,7 +26,8 @@ static uint32_t rate_tag(int battle, int dv, int fixed) {
     return (uint32_t)((battle << 8) | (dv << 12) | (fixed ? 0x10000 : 0)
         | ((shinka_encounter_rate_get() / 50 + 1) << 20)
         | (shinka_music_palette_get() << 24)
-        | (shinka_view_get(0) << 26) | (shinka_view_get(1) << 27));
+        | (shinka_view_get(0) << 26) | (shinka_view_get(1) << 27)
+        | ((shinka_motion_get(0) - 1) << 17) | ((shinka_motion_get(1) - 1) << 18));
 }
 
 uint32_t shinka_menu_slot(uint32_t p, uint32_t address) {
@@ -96,13 +99,22 @@ void shinka_menu_text(CPUState* cpu) {
     static const char* labels[] = {"ITEMS", "SORT", "MAP", "TECHNIQUES", "STATUS", "CARD FOLDERS", "DIGIVOLUTIONS", "SETTINGS"};
     if (!expanded(p)) return;
     if (cpu->gpr[31] == 0x8001288c) {
-        label = READ(p + 0xa4) & 1 ? "Settings save failed" : READ(p + 0xa0) == 1
+        label = READ(p + 0xa4) & 1 ? "Settings save failed" : READ(p + 0xa0) == 4
+            ? "Actions: Attacks and reactions" : READ(p + 0xa0) == 1
             ? (shinka_music_palette_get() && !shinka_music_available() ? "Music pack missing" : "SETTINGS: Left Right") : READ(MODE) == STATUS
             ? "Triangle: Close Status" : "Triangle: Close Menu";
     } else if (cpu->gpr[31] == 0x80012938) {
         row = READ(p + 0x18);
         if (row >= 8) return;
-        if (READ(p + 0xa0) == 1) {
+        if (READ(p + 0xa0) == 4) {
+            int battle, dv, fixed;
+            shinka_rates_get(&battle, &dv, &fixed);
+            if (!row) WRITE(p + 0xa4, (READ(p + 0xa4) & 1) | rate_tag(battle, dv, fixed));
+            if (row < 2) {
+                snprintf(value, sizeof(value), "%s poses: %dx", row ? "Action" : "Idle", shinka_motion_get(row));
+                label = value;
+            } else label = row == 2 ? "BACK" : "";
+        } else if (READ(p + 0xa0) == 1) {
             int battle, dv, fixed;
             shinka_rates_get(&battle, &dv, &fixed);
             if (row == 0) {
@@ -124,7 +136,7 @@ void shinka_menu_text(CPUState* cpu) {
             } else if (row == 5) {
                 snprintf(value, sizeof(value), "Battle zoom: %d%%", 100 - shinka_view_get(1) * 10);
                 label = value;
-            } else label = row == 6 ? "BACK" : "";
+            } else label = row == 6 ? "Battle motion" : "BACK";
         } else label = !enabled && row >= 5 + (READ(p + 0x60) != 0) ? ""
             : labels[row + (row >= 5 && !READ(p + 0x60))];
     }
@@ -153,7 +165,8 @@ void shinka_menu_background(CPUState* cpu) {
     WRITE(panel_scratch, 16); WRITE(panel_scratch + 4, 100); WRITE(panel_scratch + 8, 104);
     psx_mod_write_byte(panel_scratch + 100, 0); /* one sprite, id zero */
     for (i = 0; i < 84; ++i) psx_mod_write_byte(panel_scratch + 16 + i, psx_mod_read_byte(textures + i));
-    rows = READ(p + 0xa0) == 1 ? 7 : (enabled ? 7 : 5) + (READ(p + 0x60) != 0);
+    rows = READ(p + 0xa0) == 4 ? 3 : READ(p + 0xa0) == 1 ? 8
+        : (enabled ? 7 : 5) + (READ(p + 0x60) != 0);
     psx_mod_write_half(panel_scratch + 104, (uint16_t)(rows * 4));
     psx_mod_write_half(panel_scratch + 106, 0);
     psx_mod_write_half(panel_scratch + 108, 0xffff);
@@ -177,7 +190,9 @@ static void refresh_menu(uint32_t p, unsigned page, unsigned selection) {
     uint32_t children = READ(p + 0x24), cursor = READ(children + 0x24);
     WRITE(p + 0xa0, page); WRITE(p + 0x58, selection);
     WRITE(p + 0x10, 0); /* rerun original text setters, retaining the open panels */
-    WRITE(p + 0x5c, 7 + (READ(p + 0x60) != 0));
+    /* Rebuild all labels, including blanks, before reducing the input count
+     * for the smaller motion page. This clears text from the previous page. */
+    WRITE(p + 0x5c, page == 1 || page == 4 ? 8 : 7 + (READ(p + 0x60) != 0));
     if (object(cursor, 0x8001b0a4)) {
         WRITE(cursor + 0x58, 176); WRITE(cursor + 0x5c, 49 + 14 * selection);
         WRITE(cursor + 0x68, 1); /* request the stock cursor's position update */
@@ -216,14 +231,16 @@ void shinka_journal_quick_menu(CPUState* cpu) {
         return;
     }
     if (READ(p + 0xa0) == 1 && READ(p + 0x10) == 3
-        && (READ(p + 0x5c) == 4 || READ(p + 0x5c) == 5)) {
-        /* Old four/five-row states retain BACK instead of changing an option. */
-        refresh_menu(p, 1, READ(p + 0x58) == READ(p + 0x5c) - 1 ? 6 : READ(p + 0x58));
+        && READ(p + 0x5c) >= 4 && READ(p + 0x5c) < 8) {
+        /* Old settings states retain BACK instead of entering a new submenu. */
+        refresh_menu(p, 1, READ(p + 0x58) == READ(p + 0x5c) - 1 ? 7 : READ(p + 0x58));
         return;
     }
-    WRITE(p + 0x5c, READ(p + 0xa0) == 1 && READ(p + 0x10) == 3 ? 7 : count);
+    WRITE(p + 0x5c, READ(p + 0x10) == 3
+        ? (READ(p + 0xa0) == 4 ? 3 : READ(p + 0xa0) == 1 ? 8 : count)
+        : (READ(p + 0xa0) == 1 || READ(p + 0xa0) == 4 ? 8 : count));
     if (READ(p + 0x10) != 3) return;
-    if (READ(p + 0xa0) > 1) { refresh_menu(p, 0, 4); return; }
+    if (READ(p + 0xa0) > 1 && READ(p + 0xa0) != 4) { refresh_menu(p, 0, 4); return; }
     pressed = psx_mod_read_half(0x8004b818);
     row = READ(p + 0x58);
     if (!READ(p + 0xa0)) {
@@ -234,12 +251,23 @@ void shinka_journal_quick_menu(CPUState* cpu) {
         int battle, dv, fixed;
         shinka_rates_get(&battle, &dv, &fixed);
         if ((READ(p + 0xa4) & ~1u) != rate_tag(battle, dv, fixed)) {
-            refresh_menu(p, 1, row < 7 ? row : 0);
+            refresh_menu(p, READ(p + 0xa0), row < (READ(p + 0xa0) == 4 ? 3u : 8u) ? row : 0);
             return; /* current settings remain authoritative after state load */
         }
     }
-    if ((pressed & button(14)) || (row == 6 && (pressed & button(13)))) {
+    if (READ(p + 0xa0) == 4) {
+        if ((pressed & button(14)) || (row == 2 && (pressed & button(13)))) {
+            WRITE(p + 0xa4, 0); refresh_menu(p, 1, 6);
+        } else if (row < 2 && (pressed & (button(5) | button(7) | button(13)))) {
+            WRITE(p + 0xa4, !shinka_motion_set(row, 3 - shinka_motion_get(row)));
+            refresh_menu(p, 4, row);
+        }
+        return;
+    }
+    if ((pressed & button(14)) || (row == 7 && (pressed & button(13)))) {
         WRITE(p + 0xa4, 0); refresh_menu(p, 0, count - 1);
+    } else if (row == 6 && (pressed & button(13))) {
+        WRITE(p + 0xa4, 0); refresh_menu(p, 4, 0);
     } else if (row < 6 && (pressed & (button(5) | button(7) | button(13)))) {
         int battle, dv, fixed, direction = pressed & button(7) ? -1 : 1;
         if (row == 4 || row == 5) {

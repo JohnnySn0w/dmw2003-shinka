@@ -4,11 +4,22 @@
 #include "view.h"
 extern int shinka_music_palette_get(void);
 extern int shinka_music_palette_set(int palette);
+extern int shinka_motion_get(int option);
+extern int shinka_motion_set(int option, int value);
 static void handle_shinka_nav(int id,const char* json) {
     char op[32];
     const char* error=NULL;
     int expected=json_get_int(json,"expected_mode",-1);
     if (!json_get_str(json,"op",op,sizeof(op))) { send_err(id,"Missing op");return; }
+    if (!strcmp(op,"motion")) {
+        int option = json_get_int(json,"option",-1), value = json_get_int(json,"value",-1);
+        if ((option != -1 || value != -1) && !shinka_motion_set(option,value)) {
+            send_err(id,"Invalid or unsaved motion setting");return;
+        }
+        send_fmt("{\"id\":%d,\"ok\":true,\"idle\":%d,\"action\":%d}",
+            id,shinka_motion_get(0),shinka_motion_get(1));
+        return;
+    }
     if (!strcmp(op,"view")) {
         int option = json_get_int(json,"option",-1), value = json_get_int(json,"value",-1);
         if ((option != -1 || value != -1) && !shinka_view_set(option,value)) {

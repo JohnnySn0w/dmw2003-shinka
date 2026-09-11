@@ -34,3 +34,9 @@ multiplier = "1"
         original = select_journal('', True) + '[feature.values]\nencounter_rate = "50"\nsoundtrack = "3"\n'
         result = select_journal(select_journal(original, False), True)
         self.assertEqual(tomllib.loads(result)['feature'][0]['values'], {'encounter_rate': '50', 'soundtrack': '3'})
+
+    def test_retains_independent_motion_preferences_when_toggling_menu(self):
+        original = select_journal('', True) + '[feature.values]\nbattle_idle_rate = "1"\nbattle_action_rate = "2"\n'
+        result = select_journal(select_journal(original, False), True)
+        self.assertEqual(tomllib.loads(result)['feature'][0]['values'],
+                         {'battle_idle_rate': '1', 'battle_action_rate': '2'})

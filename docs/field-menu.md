@@ -17,7 +17,7 @@ Select one with the D-pad and press X for training hints; X closes the details.
 Required levels and stat values remain hidden. Unlocked forms keep their original
 descriptions. See the [discovery and hint rules](evolution-journal.md).
 
-SETTINGS has seven rows:
+SETTINGS has eight rows:
 
 - **EXP:** 1x, 2x, 3x, 4x normal battle EXP, before participation splitting.
 - **DV EXP:** 1x, 2x, 3x, 4x final DV EXP, or fixed 10 points per participating form.
@@ -25,6 +25,7 @@ SETTINGS has seven rows:
 - **Soundtrack:** Original, DS, Sampled, Chip; switches live instruments.
 - **Battle view:** 4:3 or 16:9 (experimental).
 - **Battle zoom:** 100%, 90%, 80% (experimental).
+- **Battle motion:** opens separate Idle poses and Action poses speed controls.
 - **BACK:** return to the field menu. Triangle also returns.
 
 Left/right cycle a value; confirm also advances it. Each successful change is
@@ -42,6 +43,15 @@ palettes remain available. This row selects curated palettes, not arbitrary
 `.sf2` files. The [camera options](camera.md) apply independently to 3D battles;
 field expansion still requires changes to tile streaming.
 
+**Battle motion** offers **1x or 2x** for each category, both defaulting to 1x.
+Idle follows each combatant's own default pose. Action includes attacks,
+reactions, entrances and victory poses; the rates replace one another, never
+multiply. Camera speed, sound pitch and explicit script delays are not scaled,
+so a faster casting loop can still occupy the same amount of time. Faster
+animation can change which random roll an attack receives by changing timing.
+See [motion behavior and validation](battle-animation-speed.md). Left/right or
+confirm changes a rate; BACK/Triangle returns to Battle motion in Settings.
+
 ## Implementation
 
 The menu is not one flattened image. Both roots reuse the resident `0x8001270c`
@@ -58,7 +68,9 @@ savestates. The original text setters allocate and copy each encoded label.
 The background renderer receives a small dynamically constructed sprite
 descriptor. It copies six tile definitions from the loaded game resource and
 adds whole 14-pixel rows between the original top and bottom tiles. Borders and
-horizontal separators retain their original pixels. SETTINGS uses seven rows.
+horizontal separators retain their original pixels. SETTINGS uses eight rows;
+its motion subpage uses three. All eight text slots are refreshed before the
+smaller page reduces its navigation count, clearing the previous labels.
 Transient text and sprite descriptors use the runtime's enhancement memory;
 they are rebuilt when a restored state lacks them.
 

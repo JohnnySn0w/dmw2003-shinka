@@ -62,7 +62,7 @@ void shinka_nav_state(ShinkaNavState* s) {
     s->stage=R(RETURN);s->x=R(RETURN+4);s->y=R(RETURN+8);s->facing=R(RETURN+12);
     s->encounters=R(0x80042b1c);s->countdown=R(0x80048d64);s->quick_menu=0;
     s->quick_phase=0;s->quick_row=0;
-    if (field(s->mode)) for (p=0x80090000;p<=0x801eff00;p+=4)
+    if (field(s->mode) || s->mode==0x1000) for (p=0x80090000;p<=0x801eff00;p+=4)
         if (object(p,0x8001270c) && R(p+0xc)==1 && R(p+0x20)==0x2d) {
             s->quick_menu=p;s->quick_phase=R(p+0x10);s->quick_row=R(p+0x58);break;
         }

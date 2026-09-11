@@ -6,6 +6,10 @@
 #define CHECK(x) do { if (!(x)) { fprintf(stderr, "line %d: %s\n", __LINE__, #x); exit(1); } } while (0)
 static unsigned char memory[0x200000], before[0x200000];
 static unsigned reads;
+static int rates[2] = {1, 1};
+int shinka_motion_get(int option) { return rates[option]; }
+int shinka_battle_motion_category(uint32_t);
+uint32_t shinka_battle_motion_load(uint32_t, uint32_t);
 #define MODEL 0x80100000u
 #define GROUP 0x800b0600u
 static void put(uint32_t p, uint32_t value) { memcpy(memory + p - 0x80000000u, &value, 4); }
@@ -80,6 +84,20 @@ int main(void) {
     fresh(); CHECK(step(2, 2) == 4);
     put(0x8005ccbc, 0); CHECK(step(2, 2) == 2);
     fresh(); CHECK(step(2, 2) == 4);
+    /* Independent rates follow each actor's default pose, not clip-ID ranges.
+     * Action clips include reactions and victory; settings never multiply. */
+    fresh(); put(MODEL + 0x78, 1);
+    CHECK(shinka_battle_motion_category(MODEL) == 0);
+    CHECK(shinka_battle_motion_load(MODEL, 2) == 2);
+    rates[0] = 2; CHECK(shinka_battle_motion_load(MODEL, 2) == 4);
+    put(MODEL + 0x78, 39);
+    CHECK(shinka_battle_motion_category(MODEL) == 1);
+    CHECK(shinka_battle_motion_load(MODEL, 2) == 2);
+    rates[1] = 2; CHECK(shinka_battle_motion_load(MODEL, 2) == 4);
+    rates[0] = 1; CHECK(shinka_battle_motion_load(MODEL, 2) == 4);
+    put(GROUP + 0x68, 38); CHECK(shinka_battle_motion_category(MODEL) == 0);
+    CHECK(shinka_battle_motion_load(MODEL, 2) == 2);
+    put(MODEL + 0x64, 0xfffffffc); CHECK(shinka_battle_motion_category(MODEL) == -1);
     puts("battle motion guards and marker handling passed");
     return 0;
 }

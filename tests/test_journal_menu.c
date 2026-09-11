@@ -34,6 +34,9 @@ static int battle_rate = 3, dv_rate = 1, fixed_rate = 10, fail_save;
 static int encounter_rate = 100;
 static int music_palette;
 static int view_options[2];
+static int motion_options[2] = {1, 1};
+int shinka_motion_get(int option) { return motion_options[option]; }
+int shinka_motion_set(int option, int value) { if (fail_save) return 0; motion_options[option]=value; return 1; }
 int shinka_view_get(int option) { return view_options[option]; }
 int shinka_view_set(int option, int value) { if (fail_save) return 0; view_options[option]=value; return 1; }
 int shinka_music_palette_get(void) { return music_palette; }
@@ -111,7 +114,7 @@ int main(void) {
     shinka_journal_quick_menu(&cpu);
     CHECK(encounter_rate == 150 && (R(menu + 0xa4) & 1));
     fail_save = 0;
-    W(menu + 0xa4, 0x401400); W(menu + 0x10, 3); W(menu + 0x58, 6);
+    W(menu + 0xa4, 0x401400); W(menu + 0x10, 3); W(menu + 0x58, 7);
     psx_mod_write_half(0x8004b818, 0x2000); shinka_journal_quick_menu(&cpu);
     CHECK(R(menu + 0xa0) == 0 && R(menu + 0x58) == 7); /* BACK below camera controls */
     /* All three alternates and Original survive cycling in both menu roots.
@@ -138,13 +141,13 @@ int main(void) {
     music_palette = 0; W(menu + 0xa0, 1); W(menu + 0x10, 3);
     W(menu + 0x5c, 4); W(menu + 0x58, 3); W(menu + 0xa4, 0x401400);
     psx_mod_write_half(0x8004b818, 0x2000); shinka_journal_quick_menu(&cpu);
-    CHECK(music_palette == 0 && R(menu + 0x58) == 6 && R(menu + 0x10) == 0);
+    CHECK(music_palette == 0 && R(menu + 0x58) == 7 && R(menu + 0x10) == 0);
     W(menu + 0x5c, 5); W(menu + 0x58, 4); W(menu + 0x10, 3);
     shinka_journal_quick_menu(&cpu);
-    CHECK(!view_options[0] && R(menu + 0x58) == 6 && R(menu + 0x10) == 0);
+    CHECK(!view_options[0] && R(menu + 0x58) == 7 && R(menu + 0x10) == 0);
     for (unsigned mode=0; mode<2; ++mode) for (unsigned option=0;option<2;++option) {
         W(0x8004b3f8,mode ? 0x1000 : 0x21d);
-        W(menu+0xa0,1);W(menu+0x5c,7);W(menu+0x58,4+option);
+        W(menu+0xa0,1);W(menu+0x5c,8);W(menu+0x58,4+option);
         for (unsigned i=0;i<(option ? 3u : 2u);++i) {
             W(menu+0xa4,0x401400 | (view_options[0]<<26) | (view_options[1]<<27));
             W(menu+0x10,3);psx_mod_write_half(0x8004b818,0x20);
@@ -157,7 +160,36 @@ int main(void) {
         shinka_journal_quick_menu(&cpu);
         CHECK(view_options[option]==0 && (R(menu+0xa4)&1));fail_save=0;
     }
-    W(menu + 0xa0, 0); W(0x8004b3f8, 0x21d);
+    /* Motion submenu works in both roots, including with no card-folder row.
+     * Opening, changing rates, returning, and old BACK selection are distinct. */
+    for (unsigned mode = 0; mode < 2; ++mode) for (unsigned cards = 0; cards < 2; ++cards) {
+        W(0x8004b3f8, mode ? 0x1000 : 0x21d); W(menu + 0x60, cards);
+        W(menu + 0xa0, 1); W(menu + 0x5c, 8); W(menu + 0x58, 6);
+        W(menu + 0x10, 3); W(menu + 0xa4, 0x401400);
+        psx_mod_write_half(0x8004b818, 0x2000); shinka_journal_quick_menu(&cpu);
+        CHECK(R(menu + 0xa0) == 4 && R(menu + 0x58) == 0 && R(menu + 0x5c) == 8);
+        for (unsigned option = 0; option < 2; ++option) {
+            W(menu + 0x58, option); W(menu + 0x10, 3); W(menu + 0xa4, 0x401400);
+            psx_mod_write_half(0x8004b818, 0x20); shinka_journal_quick_menu(&cpu);
+            CHECK(motion_options[option] == 2 && motion_options[1-option] == 1);
+            W(menu + 0x10, 3); W(menu + 0xa4, 0x401400 | (1u << (17 + option))); fail_save = 1;
+            psx_mod_write_half(0x8004b818, 0x20); shinka_journal_quick_menu(&cpu);
+            CHECK(motion_options[option] == 2 && (R(menu + 0xa4) & 1)); fail_save = 0;
+            W(menu + 0x10, 3); W(menu + 0xa4, 0x401400); /* stale state cannot overwrite preferences */
+            psx_mod_write_half(0x8004b818, 0x20); shinka_journal_quick_menu(&cpu);
+            CHECK(motion_options[option] == 2 && R(menu + 0x10) == 0);
+            W(menu + 0x10, 3); W(menu + 0xa4, 0x401400 | (1u << (17 + option)));
+            psx_mod_write_half(0x8004b818, 0x80); shinka_journal_quick_menu(&cpu);
+            CHECK(motion_options[option] == 1);
+        }
+        W(menu + 0x58, 2); W(menu + 0x10, 3); W(menu + 0xa4, 0x401400);
+        psx_mod_write_half(0x8004b818, 0x2000); shinka_journal_quick_menu(&cpu);
+        CHECK(R(menu + 0xa0) == 1 && R(menu + 0x58) == 6 && R(menu + 0x5c) == 8);
+        W(menu + 0x5c, 7); W(menu + 0x10, 3);
+        psx_mod_write_half(0x8004b818, 0x2000); shinka_journal_quick_menu(&cpu);
+        CHECK(R(menu + 0xa0) == 1 && R(menu + 0x58) == 7);
+    }
+    W(menu + 0x60, 1); W(menu + 0xa0, 0); W(0x8004b3f8, 0x21d);
     W(menu + 0x58, 6);
     cpu.gpr[4] = 0x1000; cpu.gpr[17] = menu; cpu.gpr[31] = 0x80013334u;
     shinka_journal_transition(&cpu);

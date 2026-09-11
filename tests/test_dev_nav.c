@@ -26,6 +26,20 @@ static void fresh(void) {
 static void unchanged(void) { CHECK(writes==0 && !memcmp(before,ram,sizeof(ram))); }
 int main(void) {
     ShinkaNavPartner p;
+    {
+        ShinkaNavState s;
+        const unsigned modes[] = {0x21d, 0x1000, 0x600};
+        for (unsigned i = 0; i < 3; ++i) {
+            fresh(); W(0x8004b3f8, modes[i]);
+            W(0x800d0028, 0x80014274); W(0x800d0048, 0x8001270c);
+            W(0x800d000c, 1); W(0x800d0020, 0x2d);
+            W(0x800d0010, 3); W(0x800d0058, 6);
+            writes=0; memcpy(before,ram,sizeof(ram)); shinka_nav_state(&s); unchanged();
+            CHECK(s.quick_menu == (i < 2 ? 0x800d0000u : 0));
+            if (i < 2) CHECK(s.quick_phase == 3 && s.quick_row == 6);
+            W(0x800d000c, 2); shinka_nav_state(&s); CHECK(!s.quick_menu);
+        }
+    }
     for(unsigned source=0x23b;source<=0x23e;source+=3) {
         unsigned destination=source==0x23b?0x23e:0x23b;
         fresh();W(0x8004b3f8,source);writes=0;

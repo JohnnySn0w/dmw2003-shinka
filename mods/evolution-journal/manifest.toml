@@ -55,6 +55,26 @@ max = 2
 step = 1
 default = 0
 
+[[option]]
+feature = "menu-chart"
+id = "battle_idle_rate"
+label = "Battle idle pose speed"
+type = "integer"
+min = 1
+max = 2
+step = 1
+default = 1
+
+[[option]]
+feature = "menu-chart"
+id = "battle_action_rate"
+label = "Battle action pose speed (attacks and reactions)"
+type = "integer"
+min = 1
+max = 2
+step = 1
+default = 1
+
 [[plugin]]
 feature = "menu-chart"
 id = "shinka.evolution-journal"

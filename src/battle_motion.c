@@ -6,6 +6,7 @@
 #include "battle_motion_data.h"
 
 #define R psx_mod_read_word
+extern int shinka_motion_get(int option);
 
 /* Diagnostic prototype. No guest writes or host-side animation phase: loading
  * a state, changing clips, or reusing an allocation cannot inherit a remainder. */
@@ -84,18 +85,37 @@ uint32_t shinka_battle_motion_step(uint32_t model, uint32_t delta, unsigned fact
     return destination - position;
 }
 
+/* Use the game's per-actor default pose, rather than assuming that every
+ * species' idle has a fixed clip number. All other poses use the action rate,
+ * including attacks, reactions, entrances and victory motions. */
+int shinka_battle_motion_category(uint32_t model) {
+    uint32_t control, idle;
+    if (!ram(model, 0x2634) || !object(model, 0x80083e0c)) return -1;
+    control = R(model + 0x64);
+    if (!ram(control, 0x4c)) return -1;
+    idle = R(control + 0x18);
+    if (idle == 0xffffffffu) return -1;
+    return R(model + 0x78) == idle + 1 ? 0 : 1;
+}
+
 uint32_t shinka_battle_motion_load(uint32_t model, uint32_t delta) {
-    static int factor = -1, reported;
+    static int override = -1, reported;
+    int factor, category, idle, action;
     uint32_t result;
-    if (factor < 0) {
+    if (override < 0) {
         const char* value = getenv("SHINKA_BATTLE_MOTION");
-        factor = value && !strcmp(value, "2") ? 2 : 1;
+        override = value && !strcmp(value, "2") ? 2 : 0;
     }
-    if (factor == 1) return delta;
+    idle = override ? override : shinka_motion_get(0);
+    action = override ? override : shinka_motion_get(1);
+    if (idle == 1 && action == 1) return delta;
+    category = shinka_battle_motion_category(model);
+    if (category < 0) return delta;
+    factor = category ? action : idle;
     result = shinka_battle_motion_step(model, delta, (unsigned)factor);
     if (!reported && result != delta) {
-        fprintf(stderr, "[shinka] Experimental battle model motion: 2x, model=%08x step=%u->%u\n",
-            model, delta, result);
+        fprintf(stderr, "[shinka] Battle motion: idle=%dx actions=%dx, model=%08x step=%u->%u\n",
+            idle, action, model, delta, result);
         reported = 1;
     }
     return result;

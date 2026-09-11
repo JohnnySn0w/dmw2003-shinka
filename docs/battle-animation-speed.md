@@ -1,18 +1,24 @@
-# Battle animation speed investigation
+# Battle animation speed
 
-Status: default-off 2x model-timeline prototype, 2026-09-11. The two separate
-menu controls are still pending. Work resumed after the user's CPU-heavy task cleared; the
-[battle geometry optimization](performance.md) reduces execution cost without
-changing animation speed. Its rendering routines are not yet an identified
-model-animation clock.
+Status: independent 1x/2x Idle poses and Action poses controls in
+**SETTINGS > Battle motion**, 2026-09-11. Both default to original speed and
+persist separately. The [battle geometry optimization](performance.md) reduces
+execution cost independently of these animation rates.
 
-## Controlled prototype
+## Controls and guarded timeline hook
 
-`SHINKA_BATTLE_MOTION=2` enables the diagnostic prototype for the process. An
-unset variable or any other value keeps original motion. It is not a saved
-preference and is not exposed in Settings yet. The playable installation remains
-unchanged while the prototype is evaluated in a separate build against copied
-saves.
+Idle is the selected clip matching the actor's own default-variant field plus
+one. Every other combatant clip uses Action, including attacks, reactions,
+entrances and victory poses. Rates replace one another rather than multiply.
+The settings are in both the field overlay and full-screen root menu, with
+Left/Right or confirm changing a value. BACK/Triangle returns to Battle motion
+in Settings. Loading a savestate retains the current saved preferences.
+
+For diagnostic comparisons only, `SHINKA_BATTLE_MOTION=2` forces both rates to 2x
+for the process. Unset/other values use the menu preferences. This override is
+not saved. The debug command `shinka_nav` with `op: "motion"` reads the rates;
+optional `option` (0 idle, 1 action) and `value` (1 or 2) use the same validated
+setting/persistence path as the menu.
 
 The owned interpreter copy intercepts only the cycle-aware load of `0x800a4464`
 at `0x80083d30`. It preserves that load's timing/hazard accounting and subsequent
@@ -34,10 +40,10 @@ original routine. Remainders are discarded at boundaries; there is no host-side
 phase state to leak across save loads or allocation reuse. Ordinary interpolation
 entries with the high bit set are not mistaken for exact `0x8000` loop markers.
 
-Scope remains deliberately experimental: all eligible combatant clips receive
-the same rate, including reactions and casting loops. The prototype does not yet
-classify attack versus ordinary motion or validate digivolution, multi-hit,
-counterattack, boss, or multi-enemy sequences. A native overlay that bypasses the
+Scope remains experimental: the idle/action split follows the default-pose
+marker rather than universal attack clip IDs. Digivolution, multi-hit,
+counterattack, boss, and multi-enemy sequences still need broader coverage.
+A native overlay that bypasses the
 interpreter site will retain original speed; the currently generated battle
 geometry overlay does not contain this timeline routine.
 
@@ -46,7 +52,37 @@ pointers, changed overlay bytes, immediate recovery after rejection, and absence
 of guest-memory writes. Local generated guard bytes and game captures remain
 ignored and are not distributed.
 
-### Graphical prototype validation
+### Menu integration validation
+
+Live checks covered the field overlay and full-screen Status root, both rate
+rows, returning to Battle motion, and persistence across process restart and
+state load. Native tests additionally cover no-card-folder layouts, old BACK
+row migration, failed persistence, stale setting tags, invalid model pointers,
+and selecting different default-pose variants.
+
+- With Idle 1x / Action 2x, the captured basic attack used 8/8/14 frames for
+  clips 15/17/19, while idle retained its original loop frequency.
+- With Idle 2x / Action 1x, idle looped about twice as often while those attack
+  clips retained their original 18/18/26-frame spans.
+- Default, action-only and idle-only basic-attack replays returned to the field
+  with all 7,904 saved party bytes matching the original reference.
+- Action-only Air Blast returned to the field with the expected 24 MP cost and
+  all saved party bytes matching the previous technique result. A later field
+  screenshot confirms completed rendering rather than just the loading phase.
+
+The diagnostic `where` command now reports the full-screen root widget as well
+as the field quick menu, avoiding fixture-specific addresses in future tests.
+Local captures are under `output/motion-settings/` and
+`output/battle-events/motion-{actions,idle}-*`. Validation passed 135 Python tests,
+13 native tests, and Ruff. Both rate preferences were returned to 1x before
+installation; original saves and the user's other settings were retained.
+
+Installed executable SHA-256:
+`c432708cef53c7b8bdca330e25173dd88e1bcbc70fa5a1354e43917b1acd4fd7`.
+The previous executable/map/manifest are backed up locally under
+`output/motion-settings/installed-before/`.
+
+### Initial combined-rate prototype validation
 
 The earlier AMD OpenGL startup stall did not recur in this session. Both rates
 ran through the graphical runner using the same copied slot-10 checkpoint.
@@ -78,12 +114,9 @@ The basic attack prepared 815 damage at both rates. Air Blast prepared 969 in
 the fresh 1x trace and 976 in the 2x trace (an earlier headless recording prepared
 440). Repeating the 1x trace again produced 969 and the same 10,462 write count.
 Preparation occurred 198 frames after trace start in both 1x runs, versus 195
-frames at 2x. This timing difference precedes the selected attack clip and needs
-an RNG/control-flow trace; it has not been established as harmless variation or
-a damage-calculation regression. Both defeated the same 120-HP enemy. Matching
-post-battle party bytes therefore cannot establish identical damage rolls or
-nonlethal battle behavior. Do not claim general battle-outcome parity from this
-checkpoint. Resolve this before adding player-facing rate controls.
+frames at 2x. The follow-up RNG trace below resolves this specific discrepancy.
+Both defeated the same 120-HP enemy; matching party bytes alone would not have
+established identical damage rolls or general nonlethal battle behavior.
 
 Local evidence: `output/battle-events/motion-{default,double}-{basic,air}-*`,
 `output/motion-prototype/comparison.json`, and the matching outcome/screenshot
@@ -91,24 +124,54 @@ files. Diagnostic executable SHA-256:
 `d45d300349019cbdc7953f06b853bf8077ea7476b4de22049bb7c95c58cb3dc7`.
 Validation: 134 Python tests, 13 native tests, and Ruff passed.
 
-## Intended controls
+## RNG timing investigation
 
-Add two independent rows to the existing in-game Settings menu:
+The resident RNG at `0x8001933c` advances the index at `0x8004dc04` modulo 4096
+and returns a halfword from the table at `0x8004bc04`. Watching the index exposed
+draws from the regular update caller (`0x80014824`), hit checking (`0x800a09f8`),
+the technique bonus gate (`0x800a0690`), and bonus magnitude (`0x8009fd60`).
+Later bounded captures also watched the RNG table and relevant instruction
+ranges; none changed during those recordings. Runtime hooks did not set the
+seed or replace any random draw.
+
+All traced Air Blast variants entered the bonus calculation with **440** base
+damage and a gate threshold of **30**. The gate compares `(random & 127) < 30`.
+If it passes, the audited technique path adds
+`floor(base * (32 + random % 65) / 64)`, before later caps/status adjustments.
+This is a branch of the game's calculation, not a general formula for all moves.
+
+| Run | Gate draw | Magnitude draw | Observed result |
+| --- | --- | --- | ---: |
+| 1x original input route | index 763: 3083; low 7 bits = 11 | index 764: 1280; remainder 45 | 440 + 529 = 969 |
+| 2x, neutral lead 98 frames | same | same | 969 |
+| 2x, neutral lead 99 frames | index 764: 1280; low 7 bits = 0 | index 765: 1216; remainder 46 | 440 + 536 = 976 |
+| 2x, neutral lead 100 frames | index 765: 1216; low 7 bits = 64 | no magnitude draw | 440 |
+
+Changing only when the diagnostic controller confirms the selection reproduced
+the differing results, including the exact earlier 976. The observed discrepancy
+comes from different RNG entries reaching the unchanged bonus calculation.
+Faster motion can shift timing-dependent rolls; identical seeds do not promise
+identical battle transcripts when inputs or animation timing differ. No balancing
+multiplier or RNG override was added. Evidence is under ignored
+`output/battle-rng/` (`default`, `double-bounded`, `double-lead98`, `double-lead99`).
+
+## Initial control proposal and remaining refinements
+
+The original proposal included finer rates and narrower attack classification:
 
 | Setting | Intended scope | Initial choices |
 | --- | --- | --- |
 | Battle model motion | Idle poses and ordinary model motion outside attacks | 1x, 1.25x, 1.5x, 2x |
 | Attack animation | Attack motions; include related hit/recovery motion only where needed for synchronization | 1x, 1.25x, 1.5x, 2x |
 
-Both default to 1x. The attack rate replaces the ordinary motion rate during an
-attack; the two settings do not multiply. Preserve camera speed, soundtrack and
-sound pitch, menu input, and battle outcomes. These ranges and motion categories
-are a proposed starting point, pending verification of the game's actual clocks.
+The current implementation ships 1x/2x and the broader idle/action distinction
+described above. Fractional rates remain future work: they need phase handling
+that survives loop markers, clip replacement and save loading correctly.
 
 Changing pose playback alone may make a swing finish earlier without shortening
 the turn: the camera or an event script could still be waiting. Determine that
 behavior before promising shorter battles. Spell effects and digivolution
-sequences need their own checks and should not inherit an unverified speed hook.
+sequences need their own checks before considering broader script acceleration.
 
 ## Initial static leads (resolved below)
 
@@ -348,29 +411,26 @@ sound/effect dispatch, explicit waits, and HP/MP updates. It does **not** yet pr
 that accelerating all poses preserves every visual hit or reaction. Keep damage
 calculation/commit callbacks single-execution, retain marker crossings, and test
 the guarded speed prototype against these independently observable boundaries.
-All diagnostic processes were stopped; the installed runtime is unchanged.
+At that earlier audit, the diagnostic processes were stopped and the installed
+runtime was unchanged. The later menu integration is described at the top.
 
-## Next runtime work
+## Further validation and refinements
 
-1. Extend the verified timeline to additional actors, misses, recoil and
-   multi-hit actions at 1x. Classify idle versus attack/recovery motion from
-   controller ownership and action state, rather than hardcoding the observed
-   Patamon clip IDs. Verify clip lengths and marker crossings for each case.
-2. Use the script, damage, HP/MP and camera baselines above to compare a guarded
-   model-only prototype. Extend visible/audible hit alignment and effect-frame
-   checks when the graphical diagnostic launch is working again; do not treat
-   headless event timing as that acceptance test.
-3. Hook only the verified model timeline, with overlay/instruction validation and
-   safe fallback to original playback. Use fractional accumulation for 1.25x and
-   1.5x. Reset per-object state on clip changes, object reuse, load, and battle exit.
-4. Preserve events crossed by an accelerated timeline exactly once. Equality
+1. Extend coverage to additional actors, misses, recoil, multi-hit actions,
+   defeat and digivolution. Check visible/audible hit alignment and effect-frame
+   timing, including cameras that interpolate instead of taking direct sets.
+2. Add fractional accumulation for 1.25x and 1.5x, with per-object reset rules
+   for clip changes, allocation reuse, state load and battle exit.
+3. Preserve events crossed by an accelerated timeline exactly once. Equality
    checks against a skipped frame can drop a hit or effect; repeating whole battle
    callbacks can duplicate damage or consume extra RNG. Neither is acceptable.
-5. Wire validated rates into the existing persisted settings bridge and menu
-   once both action classification and playback are demonstrated to work.
+4. Investigate shortening script-held sections separately from pose speed while
+   retaining camera trajectories and single-execution damage/MP commits.
 
-Verification should compare a fixed-input battle at 1x and each accelerated
-rate: damage, resource use, turn order, hit count, and rewards must match. Check
+Verification should compare damage inputs, resource use, hit count and rewards
+at both rates, recording RNG draws to distinguish timing-dependent rolls from
+calculation changes. Matching damage requires matching random inputs as well as
+the action and actor state; fixed controller input alone is insufficient. Check
 camera trajectory and duration, event alignment, visible pose transitions,
 sound pitch, setting changes between actions, and checkpoint reloads. Include
 basic attacks, techniques, misses, multi-hit attacks, recoil, defeat, and

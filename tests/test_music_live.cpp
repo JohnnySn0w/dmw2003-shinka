@@ -33,6 +33,38 @@ int main() {
     shinka_music_block(2);
     shinka_music_key_on(0,1040,ram.data());
     CHECK(shinka_music_matched_voices()==1);
+    // Simultaneous original stems preserve headroom and alignment; the capture
+    // observes supplied post-envelope/pan values without changing playback.
+    CHECK(!shinka_music_stems_begin(1,2));
+    CHECK(!shinka_music_stems_begin(0,120u*44100u+1));
+    CHECK(shinka_music_stems_begin(0,2));
+    CHECK(!shinka_music_stems_begin(0,2));
+    shinka_music_stems_voice(0,32760,-200,0);
+    shinka_music_stems_voice(0,32760,-200,0);
+    shinka_music_stems_voice(1,1,1,0); // unrelated/unidentified voice
+    shinka_music_stems_voice(0,1,1,1); // noise is not the identified ADPCM
+    shinka_music_stems_frame();shinka_music_stems_frame();
+    CHECK(!shinka_music_stems_active() && shinka_music_stems_frames()==2);
+    CHECK(shinka_music_stems_samples()==1 && shinka_music_stems_unmatched()==2);
+    shinka_music_stems_frame();CHECK(shinka_music_stems_frames()==2);
+    auto stem_dir=path;stem_dir+=".stems";
+    CHECK(std::filesystem::create_directory(stem_dir));
+    CHECK(shinka_music_stems_export(stem_dir.u8string().c_str()));
+    CHECK(!shinka_music_stems_export(stem_dir.u8string().c_str())); // never overwrite
+    auto stem_file=stem_dir/"sample-16.s32le";
+    CHECK(std::filesystem::file_size(stem_file)==16);
+    {
+        std::ifstream f(stem_file,std::ios::binary);
+        unsigned char b[16];f.read(reinterpret_cast<char*>(b),16);
+        CHECK(b[0]==0xf0 && b[1]==0xff && b[2]==0 && b[3]==0); // 65520, unclipped
+        CHECK(b[4]==0x70 && b[5]==0xfe && b[6]==0xff && b[7]==0xff); // -400
+        for(int i=8;i<16;++i) CHECK(b[i]==0); // silent frame remains aligned
+    }
+    std::filesystem::remove(stem_file);std::filesystem::remove(stem_dir);
+    shinka_music_stems_clear();CHECK(shinka_music_stems_samples()==0);
+    CHECK(shinka_music_stems_begin(0,2));shinka_music_reset();
+    CHECK(!shinka_music_stems_active() && shinka_music_stems_samples()==0);
+    shinka_music_key_on(0,1040,ram.data());
     CHECK(shinka_music_meter_begin(1));
     shinka_music_meter_voice(0,500,-500,0); // old pack has no trustworthy role
     shinka_music_meter_voice(-1,1000,1000,0);

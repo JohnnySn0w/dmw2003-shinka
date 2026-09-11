@@ -10,6 +10,7 @@
 #include <filesystem>
 #include <fstream>
 #include <stdexcept>
+#include <string>
 #include <vector>
 
 namespace {
@@ -61,6 +62,7 @@ float next(const Wave& wave, double& phase, double step) {
 }
 
 extern "C" void shinka_music_reset(void) {
+    shinka_music_stems_clear();
     voices = {};
     matched = 0;
     written = false;
@@ -241,3 +243,5 @@ extern "C" double shinka_music_meter_rms(unsigned role) {
     return role < 4 && meter.frames ? std::sqrt(meter.squares[role] / (2.0 * meter.frames)) : 0;
 }
 extern "C" double shinka_music_meter_peak(unsigned role) { return role < 4 ? meter.peak[role] : 0; }
+
+#include "music_stems.inc"

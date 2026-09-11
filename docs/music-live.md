@@ -325,3 +325,55 @@ authoring further replacements.
 The observation supersedes any implication that the two routing corrections
 finish the arrangement. No new timbre or gain changes were made while recording
 this brief, and the player's active listening session was left untouched.
+
+## Original instrument stems
+
+`tools/capture_music_stems.py` records all original ADPCM source voices
+simultaneously from a running copied-profile scene. The capture observes original
+post-envelope samples and native voice panning/volume before the shared reverb,
+main volume, CD input and mix saturation. It does not mute voices, rewrite score
+events, alter the reverb buffer or change normal audio output. Capturing while
+Original is selected also avoids alternate timbres influencing any pitch
+modulation. The tool temporarily selects Original and restores the prior palette.
+
+The native recorder allocates storage before capture, never allocates or writes
+files in the audio path, and stops at an exact requested frame count. It is
+inactive by default, rejects a second capture until cleared, clears on state
+load, and caps storage at 256 MiB and duration at 120 seconds. The effective
+duration limit depends on sample count. Debug export requires a completed capture
+and an existing empty directory; it never overwrites a previous export.
+
+Sources are stored as unclipped signed 32-bit stereo sums. The Python exporter
+joins key zones and programs sharing sample assets into instrument families,
+keeping composed delay/detuning voices together. Full 16-bit WAV stems share a
+single headroom gain, preserving their relative balance and sample alignment.
+Separate eight-second auditions select active passages and normalize each for
+identification; **do not compare mix levels using those short auditions**.
+Shared source assets prevent distinguishing every individual sequencer program
+in these files. The manifest preserves program/sample membership for review.
+
+```powershell
+python tools/capture_music_stems.py --port 4384 --slot 1 --pack output/music-live-07/music-live.bin --export output/music-catalog-export/BGM018 --output output/badlands-stems --seconds 55
+```
+
+Use a checkpoint in the requested scene in a copied profile. The tool verifies
+the pack's routing-report hash, owned export identity and complete source bank
+in live SPU RAM before recording. It writes `stems.json`, a file index, raw
+sources, aligned full stems, and short auditions. The tool accepts other bank
+exports; each scene still needs its own live capture and listening review.
+Source banks and exported music remain local owned-disc artifacts, not public
+repository/release files.
+
+The first Badlands capture produced ten source stems grouped into eight sound
+families, each exactly 2,425,500 frames (55 seconds), with zero unmatched nonzero
+voice samples. All eight full WAVs and eight audition clips were non-silent and
+unclipped. They are under `output/music-stems-01/BGM018/`. Part membership is:
+1: program 0; 2: program 1; 3: program 2; 4: programs 3/4; 5: program 5;
+6: programs 6/9; 7: program 7; 8: program 8. Instrument names await the player's
+ear-based identification. This validates Badlands capture, not every song.
+
+All 16 native suites, 175 Python tests and Ruff passed. Tests cover capture
+duration/reset, source isolation, headroom beyond 16-bit range, silent-frame
+alignment, overwrite refusal, family grouping, shared export gain and active
+audition selection. The diagnostic game was closed and settings restored before
+presenting the solo previews so its full mix would not play over them.

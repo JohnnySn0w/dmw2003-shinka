@@ -57,6 +57,22 @@ static void handle_shinka_nav(int id,const char* json) {
             shinka_music_meter_peak(0),shinka_music_meter_peak(1),shinka_music_meter_peak(2),shinka_music_meter_peak(3));
         return;
     }
+    if (!strcmp(op,"music-stems")) {
+        int frames = json_get_int(json,"frames",-1);
+        int bank = json_get_int(json,"bank",-1);
+        char directory[1024];
+        if (frames == 0) shinka_music_stems_clear();
+        else if (frames != -1 && (frames < 0 || bank < 0 || !shinka_music_stems_begin((unsigned)bank,(unsigned)frames))) {
+            send_err(id,"Invalid bank/duration or stem capture exceeds 256 MiB");return;
+        }
+        if (json_get_str(json,"directory",directory,sizeof(directory)) && !shinka_music_stems_export(directory)) {
+            send_err(id,"Stems must be complete and export directory must exist and be empty");return;
+        }
+        send_fmt("{\"id\":%d,\"ok\":true,\"frames\":%u,\"active\":%s,\"samples\":%u,\"unmatched_voice_samples\":%u}",
+            id,shinka_music_stems_frames(),shinka_music_stems_active() ? "true" : "false",
+            shinka_music_stems_samples(),shinka_music_stems_unmatched());
+        return;
+    }
     if (!strcmp(op,"lab")) {
         ShinkaNavLab s;
         error=shinka_nav_lab(&s);

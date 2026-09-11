@@ -24,17 +24,25 @@ def hooks(code):
             '    if (!out_stereo || frames <= 0) return;\n'
             '    shinka_palette = shinka_music_palette_get();\n    shinka_music_block(shinka_palette);\n'
             '    const int shinka_meter_on = shinka_music_meter_active();\n'
-            '    const uint32_t shinka_meter_noise = shinka_meter_on ? (uint32_t)spu_regs[reg_index(0x1F801D94u)]\n'
+            '    const int shinka_stems_on = shinka_music_stems_active();\n'
+            '    const uint32_t shinka_meter_noise = (shinka_meter_on || shinka_stems_on) ? (uint32_t)spu_regs[reg_index(0x1F801D94u)]\n'
             '        | ((uint32_t)spu_regs[reg_index(0x1F801D96u)] << 16) : 0;')
     # Observe the actual summed dry voice bus without changing voice samples,
     # guest capture RAM, reverb sends, mixer arithmetic or main volume.
     replace('if (enabled && !any_voice && !s_shadow_tap_on) {',
-            'if (enabled && !any_voice && !s_shadow_tap_on && !shinka_meter_on) {')
+            'if (enabled && !any_voice && !s_shadow_tap_on && !shinka_meter_on && !shinka_stems_on) {')
+    replace('                    if (!s) continue;',
+            '                    if (shinka_stems_on) shinka_music_stems_voice(v,\n'
+            '                        ((int32_t)shinka_original[v] * vl) >> 15,\n'
+            '                        ((int32_t)shinka_original[v] * vr) >> 15,\n'
+            '                        (shinka_meter_noise & (1u << v)) != 0);\n'
+            '                    if (!s) continue;')
     replace('                    voice_l += cl;',
             '                    if (shinka_meter_on) shinka_music_meter_voice(v, cl, cr, (shinka_meter_noise & (1u << v)) != 0);\n'
             '                    voice_l += cl;')
     replace('        out_stereo[f * 2 + 0] = clamp16(mix_l);\n        out_stereo[f * 2 + 1] = clamp16(mix_r);',
             '        if (shinka_meter_on) shinka_music_meter_frame();\n'
+            '        if (shinka_stems_on) shinka_music_stems_frame();\n'
             '        out_stereo[f * 2 + 0] = clamp16(mix_l);\n        out_stereo[f * 2 + 1] = clamp16(mix_r);')
     # The optional shadow reconstructs original ADPCM; do not let it overwrite
     # substituted voices. This project does not enable shadow audio by default.

@@ -64,6 +64,7 @@ string(REPLACE "${_view_headless}"
     "    if (g_headless) {\n        if (psx_mod_game_started()) g_ws_engaged = true;\n        refresh_widescreen_projection();\n        ep.skip_pace = 1;\n        return ep;\n    }"
     _frontend_text "${_frontend_text}")
 set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/src/view_frontend.inc")
+include("${CMAKE_CURRENT_SOURCE_DIR}/tools/minimize_pause.cmake")
 file(CONFIGURE OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/shinka-runtime/main.cpp"
     CONTENT "${_frontend_text}" @ONLY)
 get_target_property(_runtime_sources shinka SOURCES)
@@ -81,6 +82,9 @@ if(SHINKA_OVERLAY_SOURCE)
 endif()
 option(SHINKA_BUILD_TESTS "Build Shinka native regression tests" ON)
 if(SHINKA_BUILD_TESTS)
+    add_executable(shinka_minimize_pause_test tests/test_minimize_pause.cpp)
+    target_include_directories(shinka_minimize_pause_test PRIVATE src)
+    add_test(NAME minimize_pause COMMAND shinka_minimize_pause_test)
     enable_testing()
     add_executable(shinka_card_loading_test tests/test_card_loading.c src/card_loading.c)
     add_test(NAME card_loading COMMAND shinka_card_loading_test)

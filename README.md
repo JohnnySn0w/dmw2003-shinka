@@ -51,6 +51,10 @@ queries/sec in a matched movie sample, reducing CPU cost another 2.7%. The
 [runtime timing map](docs/runtime-timing-map.md) records the finding, movie data
 path, acknowledgement rules and tools for future investigations.
 
+Minimizing the window now suspends offline gameplay to reduce CPU/GPU work.
+Restoring it resumes from the paused frame. Switching focus alone keeps playback
+running. See [minimized-window behavior and testing](docs/minimized-pause.md).
+
 The portable evolution chart remembers your last branch separately for each
 partner during the session. Loading a savestate preserves that state's own
 chart selection instead of applying a previous session bookmark.

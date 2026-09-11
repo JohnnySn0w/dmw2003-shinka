@@ -8,6 +8,10 @@ It supports live copied-save instances and offline captures. Use it to separate
 actors, menu controllers and detached headers before selecting memory traces;
 callback addresses alone do not establish object ownership or behavior.
 
+The [battle motion analyzer](battle-motion-traces.md) uses that ownership map
+to turn bounded write captures into ordered clip, completion, loop and camera
+events. It checks trace continuity before reporting timing relationships.
+
 ## Offline field-condition inspection
 
 `tools/field_conditions.py` reads known 24-byte field condition/action records

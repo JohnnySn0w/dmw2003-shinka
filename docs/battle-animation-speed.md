@@ -75,7 +75,7 @@ table has pointers at `0x8004de70` and IDs at `0x8004dee8`. Observed services us
 Service `0x1009` was `0x8013590c`; its `+0x15c` callback resolved to `0x8001e404`,
 which enables/stores a buffered transform. The earlier `+0xe4` countdown in
 `0x80091cf4` is armed with two refreshes. Neither is the combatant's clip clock.
-Camera trajectory ownership still needs a separate behavioral audit.
+The camera audit below separates interpolated trajectories from direct sets.
 
 ### Verified stores and timeline structure
 
@@ -135,15 +135,67 @@ A normal-speed reference replay after tracing matched all 7,904 party-record
 bytes and returned to the field. The diagnostic process was stopped. No runtime
 patch was needed for this audit.
 
+## Camera and action-script boundaries — 2026-09-11
+
+The new [motion trace analyzer](battle-motion-traces.md) reproduces both captured
+clip sequences, validates every supplied sequence number and overlapping byte
+history, and separates loop, request, selection and completion events. The older
+captures checked recorder availability during collection but did not retain those
+counts in JSON; their reports therefore leave recorder-total verification false.
+Future captures should retain those counts alongside the entries.
+
+The reachable controller `0x800daa30`, callback `0x80091df4`, targets service
+`0x1001` in this checkpoint. Its update builds a view transform through resident
+`0x8002a1ac` and submits it through service callback `+0x15c`. The interpolation
+path reads the elapsed-step provider at `0x8004df9c`, advances `+0xf0` toward
+4096 at `0x80091ee0`, and interpolates its source/target vectors. This is separate
+from the model's timeline-position store. It is not evidence that every battle
+camera trajectory uses this interpolation path.
+
+In fact, the supplied traces recorded **zero** updates at `0x80091ee0`. All
+observed camera progress writes came from the direct setter `0x80092244`, whose
+store at `0x80092290` sets progress to 4096:
+
+| Capture | Direct sets | Return addresses at the setter |
+| --- | ---: | --- |
+| Basic attack | 40 | `0x80087adc`: 39; `0x80087b70`: 1 |
+| Air Blast | 69 | `0x80087adc`: 66; `0x80087b70`: 1; `0x8008c204`: 2 |
+
+The action-script camera handler at `0x8008c004` dispatches through the camera
+controller's direct-set or interpolated-set callbacks depending on the command's
+duration operand. The two Air Blast calls returning to `0x8008c204` used the
+direct-set path. A fixed progress value therefore does not mean the camera
+controller is inactive, and accelerating a shared script clock could move camera
+events even if the interpolation routine remains unchanged.
+
+The outer script dispatcher at `0x8008c590` delegates actor commands to
+`0x8008b7f4`. That handler reads the script cursor at controller `+0x8c`; its
+actor-command zero requests a clip, returns to the default clip, or polls the
+control's completion notification depending on its operand. A blocked completion
+poll rewinds the cursor by eight bytes at `0x8008bb14`, allowing the command to
+be retried. This establishes an actual wait on model completion, rather than a
+fixed duration guessed from the move's visible length.
+
+For Patamon's basic attack, clip 15 completed and requested clip 16 in guest
+frame 19,883; clip 17 completed and requested clip 18 in frame 19,953. Clip 19
+completed at 20,093, with the default clip requested at 20,095. Clips 16 and 18
+looped two and three times respectively before being replaced. Air Blast's clip
+39 lasted 208 guest frames between selections, looped three times, and was
+replaced without completion. Even a basic move mixes completion-driven and
+externally released phases; clip IDs alone are insufficient for a speed policy.
+
+No additional game process or always-on tracing was needed to analyze these
+existing captures. The runtime and installed binary remain unchanged.
+
 ## Next runtime work
 
 1. Extend the verified timeline to additional actors, misses, recoil and
    multi-hit actions at 1x. Classify idle versus attack/recovery motion from
    controller ownership and action state, rather than hardcoding the observed
    Patamon clip IDs. Verify clip lengths and marker crossings for each case.
-2. Trace camera motion independently and locate hit, effect, sound, and recovery
-   events. Compare pose progress with action-script progress to identify shared
-   clocks and waits before changing either.
+2. Extend the separate camera/direct-set baseline to script cursor, hit, effect,
+   sound, and recovery events. Compare pose progress with action-script progress
+   to identify which waits may change without moving camera events.
 3. Hook only the verified model timeline, with overlay/instruction validation and
    safe fallback to original playback. Use fractional accumulation for 1.25x and
    1.5x. Reset per-object state on clip changes, object reuse, load, and battle exit.

@@ -24,6 +24,42 @@ string(REPLACE "${_ring_old}"
 string(REPLACE "Keep the forensic ring default-on, but"
     "Shinka makes the forensic ring opt-in (PSX_DISPLAY_RING=1);"
     _debug_code "${_debug_code}")
+# Retrospective RAM history costs 128 MiB plus a record on every traced store.
+# Leave range-filtered traces and write fingerprints independent of this opt-in.
+set(_history_old [=[    /* Always-on catch-all wtrace ring (8 MB). Records EVERY RAM write
+     * with lean fields (no register window). Sized for ~1 second of
+     * coverage at typical Tomba write rates. */
+    if (!s_wtrace_all) {
+        s_wtrace_all = (WriteTraceAllEntry *)calloc(WRITE_TRACE_ALL_CAP,
+                                                    sizeof(WriteTraceAllEntry));
+    }]=])
+set(_history_new [=[    /* Shinka: opt-in retrospective RAM history (128 MiB).
+     * Targeted write traces and fingerprints remain available independently. */
+    const char *write_history = getenv("PSX_WRITE_HISTORY");
+    if (!s_wtrace_all && write_history && *write_history && *write_history != '0') {
+        s_wtrace_all = (WriteTraceAllEntry *)calloc(WRITE_TRACE_ALL_CAP,
+                                                    sizeof(WriteTraceAllEntry));
+    }]=])
+string(FIND "${_debug_code}" "${_history_old}" _history_position)
+if(_history_position EQUAL -1)
+    message(FATAL_ERROR "Review pinned RAM-history allocation before changing its default")
+endif()
+string(REPLACE "${_history_old}" "${_history_new}" _debug_code "${_debug_code}")
+set(_history_stats_old [=[    send_fmt("{\"id\":%d,\"ok\":true,\"total\":%llu,\"capacity\":%d,"
+             "\"oldest_seq\":%llu,\"newest_seq\":%llu}",
+             id, (unsigned long long)total, WRITE_TRACE_ALL_CAP,]=])
+set(_history_stats_new [=[    send_fmt("{\"id\":%d,\"ok\":true,\"total\":%llu,\"capacity\":%d,"
+             "\"enabled\":%s,\"oldest_seq\":%llu,\"newest_seq\":%llu}",
+             id, (unsigned long long)total, WRITE_TRACE_ALL_CAP,
+             s_wtrace_all ? "true" : "false",]=])
+string(FIND "${_debug_code}" "${_history_stats_old}" _history_stats_position)
+if(_history_stats_position EQUAL -1)
+    message(FATAL_ERROR "Review pinned RAM-history stats before adding allocation status")
+endif()
+string(REPLACE "${_history_stats_old}" "${_history_stats_new}" _debug_code "${_debug_code}")
+string(REPLACE "wtrace_all not initialized"
+    "wtrace_all unavailable; launch with PSX_WRITE_HISTORY=1 (requires 128 MiB)"
+    _debug_code "${_debug_code}")
 file(CONFIGURE OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/shinka-runtime/debug_server.c"
     CONTENT "${_debug_code}" @ONLY)
 get_target_property(_debug_sources shinka SOURCES)

@@ -1,5 +1,52 @@
 # Runtime profiling
 
+## Opt-in retrospective RAM history — 2026-09-11
+
+The debug server's catch-all RAM-write ring allocated 4,194,304 entries of
+32 bytes each and continuously filled them during eligible execution. Shinka
+now allocates this 128 MiB buffer only when `PSX_WRITE_HISTORY` is enabled before
+launch. The existing null-buffer path skips recording. Targeted address traces,
+write fingerprints, counters, code invalidation, and device scheduling are
+unchanged. This adjustment lives in Shinka's generated debug-server copy;
+the pinned dependency is untouched. See the
+[recording instructions](host-stack-profiling.md#retrospective-ram-write-history).
+
+Four isolated launches used the same executable/map, copied movie and battle
+checkpoints, seven seconds warmup, and twenty seconds measured per scene.
+Order was on/off, then off/on. No compiler or stack sampler ran during these
+measurements. The profiler verified each loaded image and recorded its hashes.
+
+| Checkpoint / pair | History on CPU ms/update | History off CPU ms/update |
+| --- | ---: | ---: |
+| Movie, first | 17.953 | 17.500 |
+| Movie, reversed | 17.594 | 17.842 |
+| Battle command menu, first | 7.524 | 7.734 |
+| Battle command menu, reversed | 7.531 | 7.469 |
+
+The direction of the small CPU difference changed on repetition in both scenes,
+so **no CPU speedup is established**. The retained benefit is the avoided
+128 MiB allocation and continuous history writes. Process private-memory
+measurements were approximately 125–133 MiB lower with recording off across
+the matched pairs; resident-memory differences varied with paging and other
+allocations. All eight samples held 49.998–50.049 guest updates/sec and recorded
+zero new host audio underrun samples. This is a memory improvement, not a fix
+for all remaining playback cost.
+
+Validation confirmed default-off history at three movie checkpoints, the title
+menu, and the battle command menu. Presented captures showed clean movie borders
+and intact title/battle rendering. Explicit opt-in allocated the ring and
+returned eight recent write records. With the option unset, targeted traces
+still recorded writes, per-frame write fingerprints continued advancing, and
+resetting catch-all history left it unallocated. A battle replay returned to
+the field with all 7,904 party-record bytes matching the earlier reference.
+All 97 Python tests, Ruff, and twelve native suites passed. The runtime build
+had only the existing warning for the intentional debug crash-test routine;
+that command was not invoked.
+
+Local measurements and validation artifacts are retained under ignored
+`output/write-history/`. Runtime candidate SHA-256:
+`7e44fb087919d754fd7db7e217287f97bf48bcc0bdb7bec789b2cc6374a1a502`.
+
 ## MDEC specialization experiment and queue audit — 2026-09-11
 
 The next compiler-only experiment forced the shared MDEC DMA service routine

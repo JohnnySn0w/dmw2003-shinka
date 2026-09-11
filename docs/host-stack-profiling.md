@@ -67,6 +67,29 @@ guest cadence, and audio underruns. Do not compile or run another diagnostic
 sampler during an acceptance measurement. Repeat with reversed order and the
 same checkpoint/settings before calling a small difference an improvement.
 
+## Retrospective RAM-write history
+
+Shinka also leaves the catch-all RAM-write recorder off by default. Its
+4,194,304 entries occupy 128 MiB and otherwise receive a record on every
+eligible traced store. Enable it before launching a forensic session:
+
+```powershell
+$env:PSX_WRITE_HISTORY = '1'
+```
+
+Unset, empty, or values beginning with `0` leave it disabled. This is a
+process-start option; `wtrace_all_stats.enabled` reports whether the buffer
+was allocated. `wtrace_all_dump` explains how to enable an unavailable buffer;
+`wtrace_all_reset` does not allocate one. Allocation failure also reports
+disabled. History cannot be recovered retroactively from a run without it.
+
+Explicitly armed address-range traces (`wtrace_arm` / `wtrace_dump`), write
+fingerprints, guest counters, and code-write invalidation remain independent.
+The existing movie diagnostic quiet policy can suppress writes in either
+mode; use `PSX_DEBUG_FMV_QUIET=0` only in a separate diagnostic session when
+complete movie traces are needed. Do not mix that recording session with
+normal-play performance comparisons.
+
 ## Continuous display history
 
 Shinka defaults the expensive pixel-history recorder off. This avoids two GPU

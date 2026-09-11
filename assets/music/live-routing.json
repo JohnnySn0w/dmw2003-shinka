@@ -1,0 +1,25 @@
+{
+  "schema": 1,
+  "banks": {
+    "BGM018": {
+      "inputs": {
+        "MPBGM018.BIN": "f0048e330c43b7a3239c2b28313eaed970e39138776e52e3747cbe3ae4b02c46",
+        "MVBGM018.BIN": "9a89c5d3665bfec4b30f107a34d00043c90fe57594f64cb165799d4748467cbf"
+      },
+      "samples": {
+        "3": {
+          "programs": [1],
+          "soundfont": "strings",
+          "chip": "pulse",
+          "reason": "Badlands program 1 plays notes 64..77 with two octave-layered tones. Replace the automatic bass assignment with a sustained melodic voice; the exact synth-string/pulse timbre remains a listening choice."
+        },
+        "11": {
+          "programs": [8],
+          "soundfont": "bass",
+          "chip": "triangle",
+          "reason": "Badlands program 8 supplies notes 40..50. Its source sample has a strong low fundamental; use the bass route instead of the program-number fallback to piano."
+        }
+      }
+    }
+  }
+}

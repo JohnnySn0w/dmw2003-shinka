@@ -15,6 +15,7 @@ import numpy as np
 from music_export import require, unpack_pack
 from music_fetch_banks import CATALOG, checked
 from music_chip import blep
+from music_routing import ROUTING, bank_overrides
 
 RATE = 44100
 ROOT = Path(__file__).resolve().parents[1]
@@ -139,6 +140,8 @@ def chip(root, kind, seed):
 def build(exports, inputs, bank_dir, output):
     require(not output.exists(), 'Choose a new output directory')
     profiles = json.loads((ROOT/'assets/music/bgm001-audition.json').read_text())['programs']
+    routing_data = ROUTING.read_bytes()
+    routing_profile = json.loads(routing_data)
     synth = Instruments(bank_dir)
     blobs = []
     report = []
@@ -152,6 +155,7 @@ def build(exports, inputs, bank_dir, output):
         require(len(mp)==len(mv)==1, f'Need unique owned MP/MV inputs for {name}')
         require(hashlib.sha256(mp[0].read_bytes()).hexdigest()==meta['inputs'][mp[0].name], 'MP export mismatch')
         require(hashlib.sha256(mv[0].read_bytes()).hexdigest()==meta['inputs'][mv[0].name], 'MV export mismatch')
+        overrides = bank_overrides(name, meta, routing_profile)
         body, = unpack_pack(mv[0].read_bytes())
         samples = []
         routes = []
@@ -163,7 +167,10 @@ def build(exports, inputs, bank_dir, output):
             root = tone['root_key'] + tone['fine_tuning']/128
             percussion = tone['key_min']==tone['key_max']
             original_route = profiles.get(str(program)) if name=='BGM001' else None
-            if original_route:
+            override = overrides.get(str(sample['id']))
+            if override:
+                instrument, oscillator = override['soundfont'], override['chip']
+            elif original_route:
                 instrument, oscillator = original_route['soundfont'], original_route['chip']
             elif percussion:
                 instrument, oscillator = 'drums', 'drums'
@@ -215,7 +222,9 @@ def build(exports, inputs, bank_dir, output):
                                original_rms=rms(original), target_rms=target,
                                palette_rms={key:rms(pcm.astype(np.float64)/32767)
                                             for key,pcm in [('ds',ds),('sampled',sampled),('chip',generated)]},
-                               routing='Asuka profile by sample' if original_route else 'provisional automatic'))
+                               routing='guarded sample override' if override else 'Asuka profile by sample' if original_route else 'provisional automatic'))
+            if override:
+                routes[-1]['routing_reason'] = override['reason']
         blobs.append(struct.pack('<II',len(body),len(samples))+body+b''.join(samples))
         report.append(dict(bank=name, source_sha256=meta['inputs'], samples=routes))
         print(f'{name}: {len(samples)} live instruments',flush=True)
@@ -225,6 +234,7 @@ def build(exports, inputs, bank_dir, output):
     (output/'music-live.bin').write_bytes(data)
     (output/'music-live.json').write_text(json.dumps(dict(schema=1,sha256=hashlib.sha256(data).hexdigest(),
         sample_rate=RATE,pack_format='SHKMUS03',mix=MIX,banks=report,cc0_banks=json.loads(CATALOG.read_text()),
+        live_routing_sha256=hashlib.sha256(routing_data).hexdigest(),
         limitations=['Provisional sample-level routing; not the same arrangement as offline previews.',
                      'Shared samples use their first tone route; original SPU timing/envelopes/pan remain.',
                      'Unknown banks, ambience and streamed audio retain original instruments.']),indent=2)+'\n')

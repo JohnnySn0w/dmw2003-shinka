@@ -44,7 +44,8 @@ can still misclassify an instrument.
 
 These are provisional **sample-level palettes**, not the exact arrangements in
 the earlier offline previews. Asuka's sampled/chip choices start from its profile;
-other banks use recorded automatic choices that need listening review. A sample
+Badlands has two guarded sample overrides; remaining routes outside Asuka use
+recorded automatic choices that need listening review. A sample
 shared by multiple original tones uses the first tone's route. The live DS mix
 is a sample/chip blend, whereas the offline DS preview routes whole MIDI parts
 between synths. Neither Chip nor DS claims to emulate another sound chip.
@@ -243,3 +244,52 @@ All 16 native suites, 169 Python tests and Ruff passed. New tests cover role
 grouping, stereo RMS, cancellation, silent frames, bounds, legacy/noise
 classification, state reset, unchanged sample output and settings restoration
 after a successful or interrupted measurement.
+
+## Badlands instrument routing correction
+
+The routing audit found that assigning instruments from program numbers alone
+misclassified two `BGM018` parts. Program numbers are bank-local identifiers;
+program 1 does not necessarily mean bass.
+
+| Original route | Score evidence | Previous replacement | Current replacement |
+| --- | --- | --- | --- |
+| Program 1, sample 3 | 74 notes, MIDI 64–77; two tones an octave apart share the sample | Finger bass / triangle wave, bass gain | Synth strings / pulse wave, melodic gain and presence |
+| Program 8, sample 11 | 48 notes, MIDI 40–50; strong low source fundamental | Piano / waveform table, melodic gain | Finger bass / triangle wave, bass gain |
+
+DS blends the revised sampled and generated voices as before. The corrected
+classification applies the existing -2 dB bass treatment to the low part and
+removes it from the high part. No global EQ or mix-gain constants changed.
+The strings/pulse choice is provisional; a correct musical role does not prove
+that a particular replacement timbre suits the scene.
+
+`assets/music/live-routing.json` records each override's rationale, expected
+owner programs and exact MP/MV source hashes. The builder verifies those hashes
+against the owned inputs and refuses changed sources, missing samples, different
+owners, unsupported instruments or missing rationale. The resulting pack report
+records the profile hash and each overridden route's rationale. Rebuild with the
+normal command above; no external assets or additional SoundFonts are needed.
+
+The local `output/music-live-07/` pack contains the same 42 banks and 669 routes.
+Its binary differs from `music-live-06` in **only BGM018 samples 3 and 11**;
+all other route records, including their PCM, remain byte-for-byte identical.
+The installed pack SHA-256 is
+`ac54d27caa43791f17dbd16caaf64a923ac3b3f177edb06ac09f273b976d52a1`.
+
+With the player's navigation help, the live check reached North Badland W,
+mode `0x24a`, from Pelche Oasis. An entire 56,000-byte BGM018 source bank matched
+SPU RAM at `0x49c10`, confirming the actual loaded music independently of the
+scene label. A new isolated checkpoint captured the stationary scene. Six-second
+before/after recordings cover all four palettes at that checkpoint under
+`output/music-routing-01/audio-before/` and `audio-after-final/`. Original sound
+still bypasses replacement; the rebuilt pack preserves every original bank byte.
+The live check establishes playback and switching; final timbre approval still
+requires listening. All 16 native suites, 172 Python tests and Ruff passed.
+
+The audit also identified percussion candidates for a later pass. BGM018 samples
+9/10 are short/long high-frequency hits at score keys 80/81; the generic drum
+fallback currently chooses the same snare sample for both. BATL00 sample 10 is a
+non-looping, mostly high-frequency sample in the drum program with a *range* of
+keys, so the single-key heuristic currently labels it clarinet. These remain
+unchanged pending isolated listening and a percussion-specific profile. Their
+current role tags must not be treated as verified instrument identities when
+interpreting meter results.

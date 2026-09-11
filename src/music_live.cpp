@@ -16,7 +16,7 @@ namespace {
 constexpr uint32_t RAM = 512 * 1024;
 constexpr float FADE = 1.0f / 2205.0f; // 50 ms at the SPU's 44100 Hz.
 struct Wave { std::vector<int16_t> pcm; uint32_t loop = 0; bool looping = false; };
-struct Sample { uint32_t offset = 0; std::array<Wave, 3> waves; };
+struct Sample { uint32_t offset = 0; float gain = 1; std::array<Wave, 3> waves; };
 struct Bank { std::vector<uint8_t> original; std::vector<Sample> samples; };
 struct Voice {
     const Sample* sample = nullptr;
@@ -70,7 +70,9 @@ extern "C" int shinka_music_load(const char* path) {
         std::ifstream file(std::filesystem::u8path(path), std::ios::binary);
         check(bool(file), "music pack missing");
         char magic[8];
-        check(bool(file.read(magic, 8)) && !std::memcmp(magic, "SHKMUS01", 8), "unsupported music pack");
+        check(bool(file.read(magic, 8)), "truncated music pack");
+        const bool tagged = !std::memcmp(magic, "SHKMUS02", 8);
+        check(tagged || !std::memcmp(magic, "SHKMUS01", 8), "unsupported music pack");
         check(u32(file) == 44100, "unsupported music rate");
         const auto count = u32(file);
         check(count > 0 && count <= 64, "invalid music bank count");
@@ -86,6 +88,12 @@ extern "C" int shinka_music_load(const char* path) {
                 Sample sample;
                 sample.offset = u32(file);
                 check(sample.offset % 16 == 0 && sample.offset <= bytes - 16, "invalid sample offset");
+                const auto role = tagged ? u32(file) : 0;
+                check(role <= 2, "invalid music instrument role");
+                // Apply to alternate timbres only, before the original SPU's
+                // envelope/volume/reverb. Keep melody level and headroom intact.
+                // Legacy packs carry no role information: never guess from pitch.
+                sample.gain = role == 2 ? 0.707945784f : role == 1 ? 0.794328235f : 1.f;
                 for (auto& wave : sample.waves) {
                     auto frames = u32(file), loop = u32(file);
                     check(frames > 0 && frames <= 132300 && (loop == 0xffffffff || loop < frames), "invalid replacement wave");
@@ -173,9 +181,9 @@ extern "C" int16_t shinka_music_sample(int index, uint32_t address, uint32_t pit
     if (!voice.sample) return original;
     float value = 0;
     const std::array<float, 4> samples{float(original),
-        next(voice.sample->waves[0], voice.phase[0], pitch),
-        next(voice.sample->waves[1], voice.phase[1], pitch),
-        next(voice.sample->waves[2], voice.phase[2], pitch)};
+        next(voice.sample->waves[0], voice.phase[0], pitch) * voice.sample->gain,
+        next(voice.sample->waves[1], voice.phase[1], pitch) * voice.sample->gain,
+        next(voice.sample->waves[2], voice.phase[2], pitch) * voice.sample->gain};
     for (int i = 0; i < 4; ++i) {
         const float target = i == requested ? 1.f : 0.f;
         // Equal progress of all weights keeps their sum at one, including

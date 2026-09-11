@@ -10,11 +10,12 @@ static void u32(std::ofstream& f, unsigned value) {
     char b[4] = {char(value),char(value>>8),char(value>>16),char(value>>24)};
     f.write(b,4);
 }
-static void fixture(const std::filesystem::path& path) {
+static void fixture(const std::filesystem::path& path, int role = -1) {
     std::ofstream f(path,std::ios::binary);
-    f.write("SHKMUS01",8); u32(f,44100); u32(f,1); u32(f,32); u32(f,1);
+    f.write(role < 0 ? "SHKMUS01" : "SHKMUS02",8); u32(f,44100); u32(f,1); u32(f,32); u32(f,1);
     for(int i=0;i<32;i++) f.put(char(i+1));
     u32(f,16);
+    if(role >= 0) u32(f,unsigned(role));
     for(int p=1;p<=3;p++) {
         u32(f,4); u32(f,0);
         for(int i=0;i<4;i++) { int v=p*1000+i*100; f.put(char(v)); f.put(char(v>>8)); }
@@ -62,6 +63,30 @@ int main() {
     CHECK(shinka_music_matched_voices()==0);
     CHECK(shinka_music_sample(0,1040,4096,0,ram.data(),0)==3000);
     CHECK(shinka_music_matched_voices()==1);
+    // Tagged roles change only alternate output gain, never the original,
+    // cursor progression, or unrelated/noise voices. Legacy packs above retain
+    // their old levels because they contain no reliable instrument roles.
+    for(int role=0;role<=2;role++) {
+        fixture(path,role);
+        CHECK(shinka_music_load(path.u8string().c_str()));
+        const float gain=role==2 ? 0.707945784f : role==1 ? 0.794328235f : 1.f;
+        for(int palette=0;palette<=3;palette++) {
+            shinka_music_block(palette);
+            shinka_music_key_on(0,1040,ram.data());
+            for(int i=0;i<6;i++) {
+                int expected=palette ? int((palette*1000+(i%4)*100)*gain+0.5f) : 700;
+                CHECK(shinka_music_sample(0,1040,4096,700,ram.data(),0)==expected);
+            }
+        }
+        shinka_music_block(0);
+        for(int i=0;i<10000;i++) shinka_music_sample(0,1040,4096,700,ram.data(),0);
+        CHECK(shinka_music_sample(0,1040,4096,700,ram.data(),0)==700);
+        CHECK(shinka_music_sample(0,1040,4096,-1234,ram.data(),1)==-1234);
+        CHECK(ram==before);
+    }
+    fixture(path,3);
+    CHECK(!shinka_music_load(path.u8string().c_str()));
+    CHECK(!shinka_music_available());
     // Invalid assets fail back to original without leaving dangling voices.
     std::ofstream(path,std::ios::binary).write("SHKMUS01",8);
     CHECK(!shinka_music_load(path.u8string().c_str()));

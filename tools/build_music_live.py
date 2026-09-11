@@ -189,7 +189,8 @@ def build(exports, inputs, bank_dir, output):
             # its component palettes. Restore the intended level after the blend.
             ds = (np.rint(np.clip(ds, -1, 1)*32767).astype('<i2')
                   if instrument=='drums' else normalized(ds, target))
-            row = struct.pack('<I', sample['body_offset'])
+            role = 2 if instrument == 'drums' else 1 if instrument == 'bass' else 0
+            row = struct.pack('<II', sample['body_offset'], role)
             for pcm, start in ((ds,loop),(sampled,loop),(generated,chip_loop)):
                 row += struct.pack('<II',len(pcm),start)+pcm.tobytes()
             samples.append(row)
@@ -204,10 +205,10 @@ def build(exports, inputs, bank_dir, output):
         print(f'{name}: {len(samples)} live instruments',flush=True)
     require(blobs, 'No exported banks found')
     output.mkdir(parents=True)
-    data = b'SHKMUS01'+struct.pack('<II',RATE,len(blobs))+b''.join(blobs)
+    data = b'SHKMUS02'+struct.pack('<II',RATE,len(blobs))+b''.join(blobs)
     (output/'music-live.bin').write_bytes(data)
     (output/'music-live.json').write_text(json.dumps(dict(schema=1,sha256=hashlib.sha256(data).hexdigest(),
-        sample_rate=RATE,mix=MIX,banks=report,cc0_banks=json.loads(CATALOG.read_text()),
+        sample_rate=RATE,pack_format='SHKMUS02',mix=MIX,banks=report,cc0_banks=json.loads(CATALOG.read_text()),
         limitations=['Provisional sample-level routing; not the same arrangement as offline previews.',
                      'Shared samples use their first tone route; original SPU timing/envelopes/pan remain.',
                      'Unknown banks, ambience and streamed audio retain original instruments.']),indent=2)+'\n')

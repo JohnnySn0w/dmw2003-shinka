@@ -30,10 +30,17 @@ The second balance pass raises the melodic source-level ceiling from .22 to
 reduced strong melodic samples much more than quieter percussion. Non-bass
 melodic instruments also receive a modest +3 dB presence lift around 2.2 kHz
 in the sample domain, before native SPU pitch scaling. DS melodic samples regain
-their target level after blending/filtering. Drums retain their previous balance
-in all three alternatives; Original and sound effects are unchanged. This is a
-shared first-pass correction, not a finished mix for every track. Source/target
+their target level after blending/filtering. Source/target
 RMS and achieved palette levels are recorded per route in `music-live.json`.
+
+The next balance pass lowers **percussion by 3 dB and bass by 2 dB** during
+playback in DS, Sampled and Chip. Melody levels are unchanged. This uses the
+pack's instrument routing rather than note pitch or a filter on the entire
+output, so low melody notes and sound effects are not reduced. Gain is applied
+before the original SPU envelope, volume and reverb, and before the palette
+crossfade. Original audio remains unchanged. This is a shared starting point
+for listening review, not a finished mix for every track; provisional routing
+can still misclassify an instrument.
 
 These are provisional **sample-level palettes**, not the exact arrangements in
 the earlier offline previews. Asuka's sampled/chip choices start from its profile;
@@ -71,6 +78,19 @@ JSON record of source hashes, routes, and CC0 bank provenance. CMake stages the
 pack at `assets/music-live.bin` beside the executable. The current full pack is
 about 180 MB; a missing pack does not prevent the game from launching.
 
+New builds use `SHKMUS02`, adding an instrument role to each sample route.
+Legacy `SHKMUS01` packs still load at their previous levels. To add the role
+tags without re-rendering an existing pack, use its matching routing report:
+
+```powershell
+python tools/upgrade_music_mix.py output/music-live-old/music-live.bin output/music-live-old/music-live.json output/music-live-balanced
+```
+
+Then select that new pack with `SHINKA_MUSIC_PACK` and rebuild. The upgrader
+checks the source pack hash and binary bounds, preserves PCM, loops and original
+bank bytes, and refuses to overwrite an existing output directory. The runtime
+applies the role gains; the stored sample RMS measurements remain source levels.
+
 The binary includes owned original bank bytes used for exact identification.
 Like the extracted music and generated game code, it is a local build artifact
 and must not go in Git or a public release. Source tooling and CC0-bank metadata
@@ -103,7 +123,10 @@ shadow renderer is bypassed while alternate palettes are selected.
 The native regression covers all palette choices, repeated switching, sustained
 sample position, loop wrapping, pitch-zero holds, double-rate playback, noise
 passthrough, full-bank isolation, upload invalidation, savestate-style mapping
-reset, and malformed-pack fallback. It uses synthetic data rather than game
+reset, and malformed-pack fallback. Tagged-pack checks cover each role in each
+palette, unchanged Original/noise output, loop progression, legacy compatibility
+and invalid-role rejection. The Python upgrader tests also check byte-for-byte
+preservation of the original banks and replacement waves. It uses synthetic data rather than game
 assets. Run `ctest --test-dir build-windows -C Release -R music_live`.
 
 The local headless game check used a copied save profile, the in-game SETTINGS
@@ -113,6 +136,14 @@ audio, and real attack inputs completed the encounter and returned to the field.
 of all four palettes had nonzero audio and no clipped samples in the short
 comparison windows. This establishes switching, not the musical tastefulness
 of all 42 banks or end-to-end listening coverage of the campaign.
+
+The tagged-pack balance pass was also checked live in Central Park and an idle
+battle using copied checkpoints: four seconds per palette per scene, all with
+matched music notes, nonzero output and no clipped PCM samples. Captures and
+levels are local under `output/npc-wide-01/audio-balanced/`. The full upgraded
+pack tags 329 melodic, 37 bass and 303 percussion sample routes. These captures
+verify playback and switching; they do not establish that every track's mix is
+finished. North Badland W and longer battle listening remain useful taste checks.
 
 Developer diagnostics: `{"cmd":"shinka_nav","op":"music"}` returns the saved
 palette, pack status and count of matched note starts. Adding `"palette":0..3`

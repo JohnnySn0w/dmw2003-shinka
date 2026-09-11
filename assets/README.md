@@ -11,3 +11,15 @@ CMake embeds the ICO into the executable and stages the PNG as `assets/psxrecomp
 ## Pixel-art blue variant
 
 `shinka-pixel-blue.png` isolates the cyan outline and dark blue orbit from the user-supplied purple-background screenshot at its original 386 x 351 resolution. The scene, head interior, eye, and mouth are transparent. Color separation removes the purple fringe; the source pixel shapes and small orbit fragments beside the jaw are retained. This is an optional reference-derived variant; the application continues to use `shinka.png` and `shinka.ico`.
+
+## Title and website branding
+
+`branding/shinka-title.png` is the user's stacked emblem/SHINKA/進化 artwork,
+cropped to its alpha bounds and resized to 1536 x 975 RGBA from the local
+`shinka_test.png` source. The game uses it on the [title screen](../docs/title-screen.md),
+retaining its transparency and shadow.
+
+`branding/shinka-banner.png` preserves the approved 3000 x 1000 transparent
+horizontal banner for the website, with the emblem beside outlined block
+lettering and smaller Japanese text. Both are reference-derived branding;
+neither replaces the authoritative app icon above.

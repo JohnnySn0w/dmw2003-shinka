@@ -28,6 +28,22 @@ their original view while their tile-streaming requirements are investigated.
 
 See [Windows build, launch, and overlay-capture instructions](docs/windows-baseline.md) for the runnable baseline and current validation limits.
 
+See [runtime profiling](docs/performance.md) for GPU selection, CPU measurement
+tooling, initial field/battle observations, and the next optimization targets.
+An optional guarded native battle-geometry unit reduced process CPU cost by
+31% in the tested battle; `-BattleNative` enables it during scripted builds.
+`-MovieNative` adds the audited opening-movie decoder/transfer routines. Together
+with cheaper audio scheduling and exact live-byte comparisons, movie samples
+improved from roughly 33 to 50 guest updates per second; longer playback still
+has occasional dips. See the profiling report for measurements and limits.
+Windows Release builds also optimize across the device implementations and use
+short high-resolution sleeps to reduce frame-limiter busy-waiting. The latest
+movie sample used about 3.5% less CPU per update; this remains incremental work.
+A subsequent CD deadline correction removed roughly 460,000 redundant scheduler
+queries/sec in a matched movie sample, reducing CPU cost another 2.7%. The
+[runtime timing map](docs/runtime-timing-map.md) records the finding, movie data
+path, acknowledgement rules and tools for future investigations.
+
 The portable evolution chart remembers your last branch separately for each
 partner during the session. Loading a savestate preserves that state's own
 chart selection instead of applying a previous session bookmark.

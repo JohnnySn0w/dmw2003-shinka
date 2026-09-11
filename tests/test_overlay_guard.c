@@ -17,6 +17,27 @@ int main(void)
     memcpy(ram + 0x1000, "123456789", 9);
     CHECK(shinka_overlay_code_matches(whole, 1, 0xCBF43926u));
     CHECK(shinka_overlay_code_matches(split, 2, 0xCBF43926u));
+    /* Every byte, including first/last and each split boundary, must remain
+     * checked after a reference is retained. No write notification is sent. */
+    for (unsigned i = 0; i < 9; ++i) {
+        ram[0x1000+i] ^= 0x80;
+        CHECK(!shinka_overlay_code_matches(whole, 1, 0xCBF43926u));
+        CHECK(!shinka_overlay_code_matches(split, 2, 0xCBF43926u));
+        ram[0x1000+i] ^= 0x80;
+        CHECK(shinka_overlay_code_matches(whole, 1, 0xCBF43926u));
+        CHECK(shinka_overlay_code_matches(split, 2, 0xCBF43926u));
+    }
+    /* Equal checksums at different addresses and changed range descriptors
+     * must not inherit an unrelated reference or a previous success. */
+    uint32_t moving[] = {0x2000u, 9u};
+    memcpy(ram+0x2000, "123456789", 9);
+    CHECK(shinka_overlay_code_matches(moving, 1, 0xCBF43926u));
+    moving[0] = 0x3000u;
+    CHECK(!shinka_overlay_code_matches(moving, 1, 0xCBF43926u));
+    memcpy(ram+0x3000, "123456789", 9);
+    CHECK(shinka_overlay_code_matches(moving, 1, 0xCBF43926u));
+    moving[1] = 8;
+    CHECK(!shinka_overlay_code_matches(moving, 1, 0xCBF43926u));
     /* Simulate replacement without notifying any generation counter. */
     ram[0x1004] ^= 1;
     CHECK(!shinka_overlay_code_matches(whole, 1, 0xCBF43926u));

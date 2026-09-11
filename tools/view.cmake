@@ -51,6 +51,16 @@ list(APPEND _hud_sources "${_generated}/gpu.c")
 set_property(TARGET shinka PROPERTY SOURCES "${_hud_sources}")
 set(_hud_gl "${PSXRECOMP_ROOT}/runtime/src/gpu_gl_renderer.c")
 file(READ "${_hud_gl}" _hud_gl_code)
+# Record the actual GL device, not merely the configured backend. Hybrid laptops
+# can select either adapter even when both advertise the same driver version.
+set(_gl_identity "    const char *ver = (const char *)glGetString(GL_VERSION);")
+string(FIND "${_hud_gl_code}" "${_gl_identity}" _gl_identity_pos)
+if(_gl_identity_pos EQUAL -1)
+    message(FATAL_ERROR "Review pinned GL context device diagnostics")
+endif()
+string(REPLACE "${_gl_identity}"
+    "${_gl_identity}\n    const char *vendor = (const char *)glGetString(GL_VENDOR);\n    const char *device = (const char *)glGetString(GL_RENDERER);\n    fprintf(stdout, \"Shinka graphics: vendor=%s; device=%s\\n\", vendor ? vendor : \"?\", device ? device : \"?\");"
+    _hud_gl_code "${_hud_gl_code}")
 set(_hud_scissor "        glScissor(0, sy * s_scale, g_wide_w * s_scale, sh * s_scale);")
 string(FIND "${_hud_gl_code}" "${_hud_scissor}" _hud_scissor_pos)
 if(_hud_scissor_pos EQUAL -1)

@@ -4,9 +4,14 @@ param(
     [string]$Python = 'python',
     [string]$RetailBios = '',
     [string]$OverlayCaptures = '',
+    [switch]$BattleNative,
+    [switch]$MovieNative,
     [int]$Jobs = 4
 )
 $ErrorActionPreference = 'Stop'
+if (($BattleNative -or $MovieNative) -and -not $OverlayCaptures) {
+    throw '-BattleNative and -MovieNative require the baseline -OverlayCaptures input.'
+}
 $projectRoot = Split-Path $PSScriptRoot -Parent
 $candidate = (Resolve-Path -LiteralPath $CandidateRoot).Path
 $framework = Join-Path $candidate 'psxrecomp'
@@ -32,7 +37,7 @@ function Invoke-Checked([string]$Program, [string[]]$Arguments) {
 }
 Push-Location $projectRoot
 try {
-    Invoke-Checked $Python @('tools/audit_disc.py', $disc, '--output', 'extracted/audit', '--extract-exe', '--extract-file', 'STFGTREP.PRO', '--extract-file', 'STGDGLAB.PRO', '--extract-file', 'FIELDSTG.PRO', '--extract-file', 'STSTATUS.PRO')
+    Invoke-Checked $Python @('tools/audit_disc.py', $disc, '--output', 'extracted/audit', '--extract-exe', '--extract-file', 'STFGTREP.PRO', '--extract-file', 'STGDGLAB.PRO', '--extract-file', 'FIELDSTG.PRO', '--extract-file', 'STSTATUS.PRO', '--extract-file', 'FIGHTSTG.PRO', '--extract-file', 'STDWTITL.PRO')
     $emitterBuild = Join-Path $candidate 'build-recompiler'
     Invoke-Checked 'cmake' @('-S', "$framework/recompiler", '-B', $emitterBuild, '-G', 'Visual Studio 17 2022', '-A', 'x64', '-DPSXRECOMP_ENABLE_CHD=OFF', '-DBUILD_TESTING=OFF')
     Invoke-Checked 'cmake' @('--build', $emitterBuild, '--config', 'Release', '--target', 'psxrecomp-game', 'psxrecomp-bios', '--parallel', "$Jobs")
@@ -50,10 +55,22 @@ try {
         Invoke-Checked $Python @("$framework/tools/compile_overlays.py", '--static', '--force', '--captures', $captures, '--game-toml', 'game.toml', '--recompiler', "$emitterBuild/Release/psxrecomp-game.exe", '--runtime-include', "$framework/runtime/include", '--out-dir', 'output/overlays', '--cps')
         $overlaySource = (Resolve-Path -LiteralPath 'output/overlays/overlays_static.c').Path
     }
-    Invoke-Checked 'cmake' @('-S', '.', '-B', 'build-windows', '-G', 'Visual Studio 17 2022', '-A', 'x64', "-DPSXRECOMP_ROOT=$framework", "-DSHINKA_OVERLAY_SOURCE=$overlaySource", '-DPSX_RECOMP_UI=OFF', '-DPSX_REWIND=OFF', '-DPSX_DEBUG_TOOLS=ON', '-DPSX_PGXP_VARIANT=OFF', '-DCMAKE_BUILD_TYPE=Release')
+    $battleSource = ''
+    if ($BattleNative) {
+        $battleOutput = 'output/battle-native/' + [Guid]::NewGuid().ToString('N')
+        Invoke-Checked $Python @('tools/build_battle_native.py', '--module', 'extracted/audit/FIGHTSTG.PRO', '--framework', $framework, '--recompiler', "$emitterBuild/Release/psxrecomp-game.exe", '--output', $battleOutput)
+        $battleSource = (Resolve-Path -LiteralPath "$battleOutput/overlays_static.c").Path
+    }
+    $movieSource = ''
+    if ($MovieNative) {
+        $movieOutput = 'output/movie-native/' + [Guid]::NewGuid().ToString('N')
+        Invoke-Checked $Python @('tools/build_movie_native.py', '--module', 'extracted/audit/STDWTITL.PRO', '--framework', $framework, '--recompiler', "$emitterBuild/Release/psxrecomp-game.exe", '--output', $movieOutput)
+        $movieSource = (Resolve-Path -LiteralPath "$movieOutput/overlays_static.c").Path
+    }
+    Invoke-Checked 'cmake' @('-S', '.', '-B', 'build-windows', '-G', 'Visual Studio 17 2022', '-A', 'x64', "-DPSXRECOMP_ROOT=$framework", "-DSHINKA_OVERLAY_SOURCE=$overlaySource", "-DSHINKA_BATTLE_OVERLAY_SOURCE=$battleSource", "-DSHINKA_MOVIE_OVERLAY_SOURCE=$movieSource", '-DPSX_RECOMP_UI=OFF', '-DPSX_REWIND=OFF', '-DPSX_DEBUG_TOOLS=ON', '-DPSX_PGXP_VARIANT=OFF', '-DCMAKE_BUILD_TYPE=Release')
     Invoke-Checked 'cmake' @('-S', '.', '-B', 'build-windows', '-DSHINKA_BUILD_TESTS=ON')
-    Invoke-Checked 'cmake' @('--build', 'build-windows', '--config', 'Release', '--target', 'shinka', 'shinka_overlay_guard_test', 'shinka_journal_menu_test', 'shinka_menu_exp_test', 'shinka_evolution_chart_test', 'shinka_encounters_test', 'shinka_map_travel_test', 'shinka_dev_nav_test', 'shinka_music_live_test', 'shinka_view_test', '--parallel', "$Jobs")
-    Invoke-Checked 'ctest' @('--test-dir', 'build-windows', '-C', 'Release', '--output-on-failure', '-R', '^(overlay_guard|journal_menu|menu_exp|evolution_chart|encounters|map_travel|dev_nav|music_live|view)$')
+    Invoke-Checked 'cmake' @('--build', 'build-windows', '--config', 'Release', '--target', 'shinka', 'shinka_overlay_guard_test', 'shinka_journal_menu_test', 'shinka_menu_exp_test', 'shinka_evolution_chart_test', 'shinka_encounters_test', 'shinka_map_travel_test', 'shinka_dev_nav_test', 'shinka_music_live_test', 'shinka_view_test', 'shinka_title_logo_test', 'shinka_cd_deadline_test', 'shinka_pacing_test', '--parallel', "$Jobs")
+    Invoke-Checked 'ctest' @('--test-dir', 'build-windows', '-C', 'Release', '--output-on-failure', '-R', '^(overlay_guard|journal_menu|menu_exp|evolution_chart|encounters|map_travel|dev_nav|music_live|view|title_logo|cd_deadline|pacing)$')
 } finally {
     Pop-Location
 }

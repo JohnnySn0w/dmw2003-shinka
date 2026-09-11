@@ -2,6 +2,12 @@
 
 Shinka now has a Windows x64 build that runs locally translated game code through the pinned PSXRecomp runtime. It is an early hybrid native/interpreter build, not a completed source reconstruction. Optional EXP modifications and an expanded field menu are available.
 
+The historical movie probes below are superseded by the
+[2026-09-10 movie and scheduler measurements](performance.md). The opening now
+reaches full cadence in short samples, completes to the title screen, and skips
+with Start. Longer-run stutter is improved but not fully resolved. Add
+`-MovieNative` alongside `-OverlayCaptures` to reproduce the optional movie unit.
+
 ## Build from your own data
 
 Requirements: Windows x64, Visual Studio 2022 with Desktop development with C++ and a Windows SDK, CMake 3.20+, Git, and Python 3.11+. The first configure downloads pinned SDL3, zlib, and libchdr dependencies. Use a normal developer terminal with access to the installed SDK.

@@ -1,0 +1,62 @@
+function(shinka_configure_cd_deadline)
+    set(_source "${PSXRECOMP_ROOT}/runtime/src/cdrom.c")
+    file(READ "${_source}" _text)
+    set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS "${_source}")
+    set(_old "    if (cdrom_irq_mask_matches_reason(irq_enable, irq_flag)) {\n        int rem = irq_present_rem_cycles();\n        uint32_t d = rem > 0 ? (uint32_t)rem : 0u;\n        if (d < best) best = d;\n    }")
+    string(FIND "${_text}" "${_old}" _position)
+    if(_position EQUAL -1)
+        message(FATAL_ERROR "Review pinned CD interrupt deadline calculation")
+    endif()
+    set(_new "    if (cdrom_irq_mask_matches_reason(irq_enable, irq_flag)) {\n        if (cdrom_intc_request_latched) shinka_cd_latched_queries++;\n        /* The delivery latch already prevents this generation firing again.\n         * Keep its I_STAT bit, but stop advertising a nonexistent next edge. */\n        if (!shinka_cd_deadline_enabled || !cdrom_intc_request_latched) {\n            int rem = irq_present_rem_cycles();\n            uint32_t d = rem > 0 ? (uint32_t)rem : 0u;\n            if (d < best) best = d;\n        }\n    }")
+    string(REPLACE "${_old}" "${_new}" _text "${_text}")
+    set(_decls "/* Process-local A/B switch and debugger-readable scheduling counters. */\nint shinka_cd_deadline_enabled = 1;\nvolatile uint64_t shinka_cd_deadline_queries;\nvolatile uint64_t shinka_cd_latched_queries;\n")
+    string(REPLACE "uint32_t cdrom_cycles_to_irq(uint32_t i_mask) {"
+        "${_decls}\nuint32_t cdrom_cycles_to_irq(uint32_t i_mask) {\n    shinka_cd_deadline_queries++;" _text "${_text}")
+    # cdrom_init precedes these definitions. Keep the setting process-local:
+    # save restores preserve hardware state, not the diagnostic opt-out.
+    string(REPLACE "void cdrom_init(const char* cue_path) {"
+        "void cdrom_init(const char* cue_path) {\n    extern int shinka_cd_deadline_enabled;\n    const char *deadline_opt = getenv(\"SHINKA_CD_DEADLINE\");\n    shinka_cd_deadline_enabled = !deadline_opt || strcmp(deadline_opt, \"0\") != 0;"
+        _text "${_text}")
+    set(_generated "${CMAKE_CURRENT_BINARY_DIR}/shinka-runtime")
+    file(CONFIGURE OUTPUT "${_generated}/cdrom.c" CONTENT "${_text}" @ONLY)
+    get_target_property(_sources shinka SOURCES)
+    if(NOT "${_source}" IN_LIST _sources)
+        message(FATAL_ERROR "Review CD source target")
+    endif()
+    list(REMOVE_ITEM _sources "${_source}")
+    list(APPEND _sources "${_generated}/cdrom.c")
+    set_property(TARGET shinka PROPERTY SOURCES "${_sources}")
+
+    if(SHINKA_BUILD_TESTS)
+        # Test the real delivery, re-arm, and deadline functions, not a rewritten
+        # model of them. Other CD components supply fixture state and trace stubs.
+        set(_fixture "${_decls}\n")
+        string(REGEX MATCH "#define CDROM_IRQ_PRESENT_DELAY[^\n]+" _delay "${_text}")
+        if(NOT _delay)
+            message(FATAL_ERROR "Review CD presentation latency definition")
+        endif()
+        string(APPEND _fixture "${_delay}\n")
+        foreach(_signature "static int cycles_until_due(uint64_t due_cyc) {"
+            "static int irq_present_rem_cycles(void) {" "static void set_irq(int type) {"
+            "static void present_cdrom_irq(void) {" "uint32_t cdrom_cycles_to_irq(uint32_t i_mask) {")
+            string(FIND "${_text}" "${_signature}" _start)
+            if(_start EQUAL -1)
+                message(FATAL_ERROR "Review CD test extraction: ${_signature}")
+            endif()
+            string(SUBSTRING "${_text}" ${_start} -1 _tail)
+            string(FIND "${_tail}" "\n}\n" _end)
+            if(_end EQUAL -1)
+                message(FATAL_ERROR "Unterminated CD test function: ${_signature}")
+            endif()
+            math(EXPR _length "${_end} + 3")
+            string(SUBSTRING "${_tail}" 0 ${_length} _function)
+            string(APPEND _fixture "${_function}\n")
+        endforeach()
+        file(CONFIGURE OUTPUT "${_generated}/cd_deadline_fixture.inc" CONTENT "${_fixture}" @ONLY)
+        add_executable(shinka_cd_deadline_test tests/test_cd_deadline.c)
+        target_include_directories(shinka_cd_deadline_test PRIVATE "${_generated}"
+            "${PSXRECOMP_ROOT}/runtime/src" "${PSXRECOMP_ROOT}/runtime/include")
+        add_test(NAME cd_deadline COMMAND shinka_cd_deadline_test)
+    endif()
+endfunction()
+shinka_configure_cd_deadline()

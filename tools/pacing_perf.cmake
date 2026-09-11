@@ -1,0 +1,32 @@
+option(SHINKA_PRECISE_PACING "Use short high-resolution sleeps instead of the final 1-2ms busy wait" ON)
+if(WIN32 AND SHINKA_PRECISE_PACING)
+    set(_source "${PSXRECOMP_ROOT}/runtime/src/frame_pacing.c")
+    file(READ "${_source}" _text)
+    set(_old "        uint32_t ms = frame_pacing_sleep_ms(now, p->next_deadline, freq, period);\n        if (ms == 0) break;\n        /* Waitable timer on Win32; usleep on Unix — not coarse Sleep/SDL_Delay. */\n        psx_host_sleep_ms(ms);")
+    string(FIND "${_text}" "${_old}" _position)
+    if(_position EQUAL -1)
+        message(FATAL_ERROR "Review pinned frame pacing sleep loop")
+    endif()
+    string(REPLACE "${_old}"
+        "        uint32_t us = shinka_pacing_sleep_us(now, p->next_deadline, freq, period);\n        if (us == 0) break;\n        psx_host_sleep_micros(us);"
+        _text "${_text}")
+    string(PREPEND _text "#include \"${CMAKE_CURRENT_SOURCE_DIR}/src/pacing_sleep.h\"\n")
+    file(CONFIGURE OUTPUT "${_generated}/frame_pacing.c" CONTENT "${_text}" @ONLY)
+    get_target_property(_sources shinka SOURCES)
+    if(NOT "${_source}" IN_LIST _sources)
+        message(FATAL_ERROR "Review frame pacing source target")
+    endif()
+    list(REMOVE_ITEM _sources "${_source}")
+    list(APPEND _sources "${_generated}/frame_pacing.c")
+    set_property(TARGET shinka PROPERTY SOURCES "${_sources}")
+    if(SHINKA_BUILD_TESTS)
+        # Compile the actual patched pacer with a deterministic host clock.
+        string(REPLACE "#include \"psx_sdl.h\""
+            "extern uint64_t SDL_GetPerformanceCounter(void);\nextern uint64_t SDL_GetPerformanceFrequency(void);"
+            _test_text "${_text}")
+        file(CONFIGURE OUTPUT "${_generated}/frame_pacing_test.c" CONTENT "${_test_text}" @ONLY)
+        add_executable(shinka_pacing_test tests/test_pacing.c "${_generated}/frame_pacing_test.c")
+        target_include_directories(shinka_pacing_test PRIVATE src "${PSXRECOMP_ROOT}/runtime/include")
+        add_test(NAME pacing COMMAND shinka_pacing_test)
+    endif()
+endif()

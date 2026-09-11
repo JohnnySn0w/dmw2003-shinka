@@ -1,5 +1,13 @@
 # Developer navigation and test fixtures
 
+## Runtime controller inspection
+
+The [object-map tool](runtime-objects.md) reads one RAM snapshot and reports
+controller headers, child slots and reachability from the current mode owner.
+It supports live copied-save instances and offline captures. Use it to separate
+actors, menu controllers and detached headers before selecting memory traces;
+callback addresses alone do not establish object ownership or behavior.
+
 ## Offline field-condition inspection
 
 `tools/field_conditions.py` reads known 24-byte field condition/action records

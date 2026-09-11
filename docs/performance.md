@@ -1,5 +1,46 @@
 # Runtime profiling
 
+## MDEC specialization experiment and queue audit — 2026-09-11
+
+The next compiler-only experiment forced the shared MDEC DMA service routine
+to inline into its two constant-channel callers. Disassembly confirmed that
+the shared variable-divide routine disappeared and the output path used
+constant-divisor arithmetic. Its transfer body, readiness checks, cycle
+accumulators, writes, and completion behavior were unchanged.
+
+It did not improve playback CPU cost. Two matched movie comparisons, in
+baseline/candidate then candidate/baseline order, used seven seconds warmup
+and twenty seconds measured:
+
+| Pair | Baseline CPU ms/update | Specialized CPU ms/update |
+| --- | ---: | ---: |
+| First | 17.422 | 17.484 |
+| Reversed | 17.766 | 17.781 |
+
+Both paths held about 50 updates/sec. The specialization was removed and the
+proven build configuration restored. Local source/build/measurement evidence
+is retained in `output/mdec-inline/`; no new runtime optimization is claimed.
+
+A separate [movie queue audit](movie-queue-audit.md) recorded the consumer,
+timeout loop and all 8,414 writes in a bounded header-table trace. CD DMA writes
+the same memory later used for readiness flags. This rules out treating that
+flag as CPU-only and reinforces the need to preserve intermediate observations
+in any future wait-loop optimization. Existing idle skipping remains disabled;
+earlier unsuccessful generic and movie-specific experiments were not re-enabled.
+
+One comparison attempt encountered an executable still locked during shutdown;
+the replacement failed and the existing counter-consistency check rejected its
+measurement. No profile from that attempt was accepted. The profiler now checks
+live/on-disk PE identity against the supplied map **before loading a save or
+reading counters**, and records executable/map hashes. The live validation
+rejected a stale map without performing its requested battle-state load, then
+accepted the correct map and recorded schema-2 provenance. The new checks also
+cover Windows rewriting the mapped ImageBase during ASLR. A timestamp alone
+is not a cryptographic pairing guarantee; keep each map with its executable.
+
+All 97 Python tests, Ruff, and twelve Shinka native suites passed. The restored
+runtime built without warnings. The previously installed build remains in use.
+
 ## Caller stacks and opt-in pixel history — 2026-09-11
 
 A new [Windows caller-stack sampler](host-stack-profiling.md) captured 1,631

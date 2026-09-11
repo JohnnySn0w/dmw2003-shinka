@@ -41,6 +41,10 @@ The earlier observed `StGetNext` wait was at `0x8002BF5C`, returning toward
 `0x800835F8`. These are identified observation points, not evidence that every
 movie or loading screen uses the same code.
 
+The [movie queue audit](movie-queue-audit.md) maps its consumer, timeout loop,
+header layout and observed state writers. Incoming CD DMA and readiness states
+share header memory; a future polling shortcut cannot simply ignore DMA writes.
+
 The runtime's `dma_cycles_to_internal_event` advertises incremental transfer
 deadlines: MDEC input is configured at one guest cycle per word, output at
 14. A word is four data bytes. A typical observed output buffer was 399,360
@@ -108,6 +112,13 @@ CPU time, guest cadence, audio underrun deltas, and counts of relevant events
 or queries. Inspect the source condition that predicts each event alongside
 the condition that actually performs it. A high query count is not itself a
 count of useful events.
+
+Scheduler profiles now validate the loaded executable's PE timestamp and the
+on-disk preferred base against the map before loading a checkpoint or reading
+counters. Windows can rewrite the mapped header's base during ASLR, so that
+case is checked separately. Schema 2 records executable and map SHA-256 hashes,
+module identity, and the executable path. A timestamp is not a cryptographic
+proof that a map belongs to an executable; retain the matching build artifacts.
 
 `tools/profile_scheduler.py` reads existing and added host counters without
 suspending the process. Supply the matching `/MAP` file, process ID and loaded

@@ -7,9 +7,11 @@ the current scene is observed. No process memory is written.
 import argparse
 import ctypes
 from ctypes import wintypes as w
+import hashlib
 import json
 from pathlib import Path
 import re
+import struct
 import time
 
 from dev_nav import Navigator
@@ -18,6 +20,40 @@ from profile_runtime import ProcessClock
 COUNTERS = ('psx_cycle_count', 's_frame_count', 'g_spu_sample_deadline_queries',
             'g_spu_sample_service_checks', 'g_guest_store_count', 'g_mmio_access_count',
             'shinka_cd_deadline_queries', 'shinka_cd_latched_queries')
+
+
+def validate_loaded_image(map_text, base, read_bytes, allow_relocated_header=True):
+    """Check the live PE identity before interpreting map offsets as counters."""
+    stamp = re.search(r'Timestamp is\s+([0-9a-fA-F]+)', map_text)
+    preferred = re.search(r'Preferred load address is\s+([0-9a-fA-F]+)', map_text)
+    if not stamp or not preferred:
+        raise ValueError('Map is missing its image identity')
+    dos = read_bytes(base, 64)
+    if len(dos) != 64 or dos[:2] != b'MZ':
+        raise ValueError('Module base does not point to a PE image')
+    offset = struct.unpack_from('<I', dos, 60)[0]
+    if not 64 <= offset <= 0x100000:
+        raise ValueError('Invalid PE header offset')
+    nt = read_bytes(base + offset, 84)
+    if len(nt) != 84 or nt[:4] != b'PE\0\0' or struct.unpack_from('<H', nt, 4)[0] != 0x8664:
+        raise ValueError('Target must be an AMD64 PE executable')
+    if struct.unpack_from('<H', nt, 24)[0] != 0x20b:
+        raise ValueError('Target must use PE32+ headers')
+    timestamp = struct.unpack_from('<I', nt, 8)[0]
+    image_base = struct.unpack_from('<Q', nt, 48)[0]
+    image_size = struct.unpack_from('<I', nt, 80)[0]
+    preferred_base = int(preferred[1], 16)
+    # Windows may rewrite the mapped ImageBase to its ASLR address. Validate
+    # the original preferred address against the on-disk header separately.
+    base_matches = image_base == preferred_base or (allow_relocated_header and image_base == base)
+    if timestamp != int(stamp[1], 16) or not base_matches:
+        raise ValueError(f'Map does not match the loaded executable: timestamp {timestamp:08x} '
+                         f'(map {stamp[1]}), header base {image_base:#x} (map {preferred[1]}). '
+                         'Aborting before save load or measurement')
+    if image_size < offset + len(nt):
+        raise ValueError('Invalid loaded image size')
+    return dict(timestamp=timestamp, preferred_base=preferred_base, header_base=image_base,
+                loaded_base=base, size=image_size)
 
 
 def symbol_addresses(text, base):
@@ -58,7 +94,9 @@ def collect(args):
         raise ValueError('Use 5..60 seconds and at least 6 seconds warmup')
     if args.output.exists():
         raise FileExistsError(args.output)
-    addresses = symbol_addresses(args.map.read_text(errors='replace'), args.base)
+    map_bytes = args.map.read_bytes()
+    map_text = map_bytes.decode(errors='replace')
+    addresses = symbol_addresses(map_text, args.base)
     api = ctypes.WinDLL('kernel32', use_last_error=True)
     api.OpenProcess.argtypes = (w.DWORD, w.BOOL, w.DWORD)
     api.OpenProcess.restype = w.HANDLE
@@ -67,11 +105,40 @@ def collect(args):
     api.ReadProcessMemory.restype = w.BOOL
     api.CloseHandle.argtypes = (w.HANDLE,)
     api.CloseHandle.restype = w.BOOL
+    api.QueryFullProcessImageNameW.argtypes = (w.HANDLE, w.DWORD, w.LPWSTR, ctypes.POINTER(w.DWORD))
+    api.QueryFullProcessImageNameW.restype = w.BOOL
     handle = api.OpenProcess(0x410, False, args.pid)
     if not handle:
         raise ctypes.WinError(ctypes.get_last_error())
     clock = None
     try:
+        def read_bytes(address, size):
+            buffer = ctypes.create_string_buffer(size)
+            got = ctypes.c_size_t()
+            if not api.ReadProcessMemory(handle, address, buffer, size, ctypes.byref(got)) or got.value != size:
+                raise ctypes.WinError(ctypes.get_last_error())
+            return buffer.raw
+
+        identity = validate_loaded_image(map_text, args.base, read_bytes)
+        for address in addresses.values():
+            if not args.base <= address <= args.base + identity['size'] - 8:
+                raise ValueError('Map counter lies outside the loaded image')
+        path_buffer = ctypes.create_unicode_buffer(32768)
+        path_size = w.DWORD(len(path_buffer))
+        if not api.QueryFullProcessImageNameW(handle, 0, path_buffer, ctypes.byref(path_size)):
+            raise ctypes.WinError(ctypes.get_last_error())
+        executable = Path(path_buffer.value)
+        with executable.open('rb') as stream:
+            def read_file(offset, size):
+                stream.seek(offset)
+                return stream.read(size)
+            disk_identity = validate_loaded_image(map_text, 0, read_file, allow_relocated_header=False)
+            if disk_identity['size'] != identity['size']:
+                raise ValueError('Loaded image size differs from executable on disk')
+            stream.seek(0)
+            identity['sha256'] = hashlib.file_digest(stream, 'sha256').hexdigest()
+        identity['path'] = str(executable)
+        identity['map_sha256'] = hashlib.sha256(map_bytes).hexdigest()
         clock = ProcessClock(args.pid)
         nav = Navigator(args.port)
         if args.slot is not None:
@@ -97,7 +164,7 @@ def collect(args):
         before = snapshot()
         time.sleep(args.seconds)
         after = snapshot()
-        result = dict(schema=1, pid=args.pid, scene=args.scene, slot=args.slot,
+        result = dict(schema=2, pid=args.pid, scene=args.scene, slot=args.slot, image=identity,
                       map=str(args.map.resolve()), module_base=args.base,
                       summary=summarize(before, after), before=before, after=after,
                       state_before=state_before, state_after=nav.where(),

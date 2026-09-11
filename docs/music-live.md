@@ -49,8 +49,18 @@ shared by multiple original tones uses the first tone's route. The live DS mix
 is a sample/chip blend, whereas the offline DS preview routes whole MIDI parts
 between synths. Neither Chip nor DS claims to emulate another sound chip.
 
-The VAB root key and fractional tuning set each replacement sample's reference
-pitch; the original SPU pitch register then drives its playback rate. Original
+Melodic replacements are now rendered around MIDI 60 (bass around MIDI 48),
+with a per-route playback ratio compensating the VAB root key and fractional
+tuning. Unusually high automatic bass routes use a higher reference to bound
+the ratio. The original SPU pitch register still drives the score's note pitch.
+Previously, generating a high VAB root and then slowing it down again discarded
+upper harmonics. DS's 8 kHz sample filter could also become a 2 kHz cutoff when
+a root-84 sample played at note 60. DS now uses a gentler 12 kHz cutoff for
+pitched instruments at their reference note; percussion retains its 8 kHz
+filter. DS retains its filtered character; Sampled and Chip have no shared
+output low-pass filter. Their interpolation remains linear, and individual
+instrument routes still need listening review. The existing -3 dB percussion
+and -2 dB bass gains are retained. Original
 sample stop behavior and ADSR still determine note duration. The generated
 sustain loops and source choices are arrangement decisions to refine by ear.
 Original panning and mono voice paths are retained; the sampled bank's own
@@ -78,8 +88,9 @@ JSON record of source hashes, routes, and CC0 bank provenance. CMake stages the
 pack at `assets/music-live.bin` beside the executable. The current full pack is
 about 180 MB; a missing pack does not prevent the game from launching.
 
-New builds use `SHKMUS02`, adding an instrument role to each sample route.
-Legacy `SHKMUS01` packs still load at their previous levels. To add the role
+New builds use `SHKMUS03`, adding a bounded Q16 playback ratio after each sample's
+instrument role. `SHKMUS02` retains role-based gains with its old pitch references;
+legacy `SHKMUS01` packs still load at their previous levels. To add only the role
 tags without re-rendering an existing pack, use its matching routing report:
 
 ```powershell
@@ -90,6 +101,8 @@ Then select that new pack with `SHINKA_MUSIC_PACK` and rebuild. The upgrader
 checks the source pack hash and binary bounds, preserves PCM, loops and original
 bank bytes, and refuses to overwrite an existing output directory. The runtime
 applies the role gains; the stored sample RMS measurements remain source levels.
+That upgrade produces `SHKMUS02` and cannot recover discarded harmonics. Run
+the full builder to regenerate `SHKMUS03` instruments with the new references.
 
 The binary includes owned original bank bytes used for exact identification.
 Like the extracted music and generated game code, it is a local build artifact
@@ -129,6 +142,11 @@ and invalid-role rejection. The Python upgrader tests also check byte-for-byte
 preservation of the original banks and replacement waves. It uses synthetic data rather than game
 assets. Run `ctest --test-dir build-windows -C Release -R music_live`.
 
+Reference-pitch tests check fractional VAB roots, low/high notes, bounded outliers,
+native quarter-rate notes with a fourfold compensation, loop progression,
+Original passthrough and malformed-ratio fallback. Existing version-1 and
+version-2 fixtures remain covered.
+
 The local headless game check used a copied save profile, the in-game SETTINGS
 row, an Asuka-area → Central Park transition, and a random encounter. A battle
 checkpoint was then loaded in the final build, all four palettes produced live
@@ -144,6 +162,14 @@ levels are local under `output/npc-wide-01/audio-balanced/`. The full upgraded
 pack tags 329 melodic, 37 bass and 303 percussion sample routes. These captures
 verify playback and switching; they do not establish that every track's mix is
 finished. North Badland W and longer battle listening remain useful taste checks.
+
+The reference-pitch revision regenerated all 42 banks / 669 routes from the
+verified local exports. Original bank identities and routing assignments were
+retained. Four-second field and battle captures in all four palettes had matched
+music notes, nonzero output and no clipped samples; these and their peak levels
+are in `output/npc-wide-01/audio-reference-final/`. Pitch/filter tests establish
+the correction, but whole-track recordings do not isolate melody from drums and
+cannot establish subjective tonal balance across the soundtrack.
 
 Developer diagnostics: `{"cmd":"shinka_nav","op":"music"}` returns the saved
 palette, pack status and count of matched note starts. Adding `"palette":0..3`

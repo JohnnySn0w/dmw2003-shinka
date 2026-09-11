@@ -18,9 +18,20 @@ from music_chip import blep
 
 RATE = 44100
 ROOT = Path(__file__).resolve().parents[1]
-MIX = dict(revision=2, melodic_rms_ceiling=.50, percussion_rms_ceiling=.22,
+MIX = dict(revision=3, melodic_rms_ceiling=.50, percussion_rms_ceiling=.22,
            minimum_rms=.025, peak_ceiling=.80, presence_db=3., presence_hz=2200,
-           ds_cutoff_hz=8000)
+           ds_cutoff_hz=12000, ds_percussion_cutoff_hz=8000)
+
+
+def reference_pitch(root, instrument):
+    # Avoid rendering a high VAB root and then slowing it down again in the
+    # SPU: that discards harmonics and lowers every sample-domain filter cutoff.
+    # Unpitched drums retain their existing key-map compensation.
+    reference = 48. if instrument == 'bass' else 60.
+    reference = max(reference, root - 48.) # bound unusually high automatic bass routes
+    ratio = round(65536 * 2 ** ((root - reference) / 12))
+    require(2048 <= ratio <= 2097152, 'Replacement pitch ratio outside supported range')
+    return reference, ratio
 
 
 def rms(pcm):
@@ -161,6 +172,7 @@ def build(exports, inputs, bank_dir, output):
                 oscillator = 'triangle' if instrument=='bass' else 'pulse' if instrument=='clarinet' else 'wave'
             drum_key = None
             render_root = root
+            playback_ratio = 65536
             if instrument=='drums':
                 note = tone['key_min']
                 gm = int(original_route.get('key_map', {}).get(str(note), note)) if original_route else note
@@ -169,11 +181,14 @@ def build(exports, inputs, bank_dir, output):
                 # the VAB note-to-root offset so the triggered drum stays tuned.
                 render_root = drum_key + root - note
                 oscillator = 'kick' if gm in (35,36) else 'tom' if gm in (41,43,45,47,48,50) else 'noise'
+            else:
+                render_root, playback_ratio = reference_pitch(root, instrument)
             sampled = synth.sampled(instrument, render_root, drum_key)
-            chip_root = root if not percussion else (33 if oscillator=='kick' else 48) + root-tone['key_min']
+            chip_root = ((root if not percussion else (33 if oscillator=='kick' else 48) + root-tone['key_min'])
+                         if instrument == 'drums' else render_root)
             generated = chip(chip_root, oscillator, sample['id'])
             looping = sample['loop_frames'] is not None
-            sampled, loop = loop_wave(presence(sampled, instrument), root, looping)
+            sampled, loop = loop_wave(presence(sampled, instrument), root if instrument == 'drums' else render_root, looping)
             generated, chip_loop = loop_wave(presence(generated, instrument), chip_root, looping)
             with wave.open(str(folder/sample['wav'])) as f:
                 original = np.frombuffer(f.readframes(f.getnframes()), dtype='<i2').astype(np.float64)/32768
@@ -184,17 +199,18 @@ def build(exports, inputs, bank_dir, output):
             # offline Asuka profile, this runs per sample, not per MIDI part.
             ds = (.7*sampled.astype(np.float64) + .3*generated.astype(np.float64))/32767
             # Finite low-pass, preserving the shared loop and source pitch.
-            ds = lowpass(ds, MIX['ds_cutoff_hz'])
+            ds = lowpass(ds, MIX['ds_percussion_cutoff_hz'] if instrument == 'drums' else MIX['ds_cutoff_hz'])
             # Filtering and phase cancellation previously made DS quieter than
             # its component palettes. Restore the intended level after the blend.
             ds = (np.rint(np.clip(ds, -1, 1)*32767).astype('<i2')
                   if instrument=='drums' else normalized(ds, target))
             role = 2 if instrument == 'drums' else 1 if instrument == 'bass' else 0
-            row = struct.pack('<II', sample['body_offset'], role)
+            row = struct.pack('<III', sample['body_offset'], role, playback_ratio)
             for pcm, start in ((ds,loop),(sampled,loop),(generated,chip_loop)):
                 row += struct.pack('<II',len(pcm),start)+pcm.tobytes()
             samples.append(row)
-            routes.append(dict(sample=sample['id'], program=program, root=root, soundfont=instrument,
+            routes.append(dict(sample=sample['id'], program=program, root=root, render_root=render_root,
+                               playback_ratio_q16=playback_ratio, soundfont=instrument,
                                chip=oscillator, source_loop=looping, shared_tone_count=len(owners),
                                original_rms=rms(original), target_rms=target,
                                palette_rms={key:rms(pcm.astype(np.float64)/32767)
@@ -205,10 +221,10 @@ def build(exports, inputs, bank_dir, output):
         print(f'{name}: {len(samples)} live instruments',flush=True)
     require(blobs, 'No exported banks found')
     output.mkdir(parents=True)
-    data = b'SHKMUS02'+struct.pack('<II',RATE,len(blobs))+b''.join(blobs)
+    data = b'SHKMUS03'+struct.pack('<II',RATE,len(blobs))+b''.join(blobs)
     (output/'music-live.bin').write_bytes(data)
     (output/'music-live.json').write_text(json.dumps(dict(schema=1,sha256=hashlib.sha256(data).hexdigest(),
-        sample_rate=RATE,pack_format='SHKMUS02',mix=MIX,banks=report,cc0_banks=json.loads(CATALOG.read_text()),
+        sample_rate=RATE,pack_format='SHKMUS03',mix=MIX,banks=report,cc0_banks=json.loads(CATALOG.read_text()),
         limitations=['Provisional sample-level routing; not the same arrangement as offline previews.',
                      'Shared samples use their first tone route; original SPU timing/envelopes/pan remain.',
                      'Unknown banks, ambience and streamed audio retain original instruments.']),indent=2)+'\n')

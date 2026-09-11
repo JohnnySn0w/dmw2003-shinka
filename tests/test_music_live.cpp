@@ -10,12 +10,13 @@ static void u32(std::ofstream& f, unsigned value) {
     char b[4] = {char(value),char(value>>8),char(value>>16),char(value>>24)};
     f.write(b,4);
 }
-static void fixture(const std::filesystem::path& path, int role = -1) {
+static void fixture(const std::filesystem::path& path, int role = -1, int ratio = -1) {
     std::ofstream f(path,std::ios::binary);
-    f.write(role < 0 ? "SHKMUS01" : "SHKMUS02",8); u32(f,44100); u32(f,1); u32(f,32); u32(f,1);
+    f.write(ratio >= 0 ? "SHKMUS03" : role < 0 ? "SHKMUS01" : "SHKMUS02",8); u32(f,44100); u32(f,1); u32(f,32); u32(f,1);
     for(int i=0;i<32;i++) f.put(char(i+1));
     u32(f,16);
     if(role >= 0) u32(f,unsigned(role));
+    if(ratio >= 0) u32(f,unsigned(ratio));
     for(int p=1;p<=3;p++) {
         u32(f,4); u32(f,0);
         for(int i=0;i<4;i++) { int v=p*1000+i*100; f.put(char(v)); f.put(char(v>>8)); }
@@ -83,6 +84,20 @@ int main() {
         CHECK(shinka_music_sample(0,1040,4096,700,ram.data(),0)==700);
         CHECK(shinka_music_sample(0,1040,4096,-1234,ram.data(),1)==-1234);
         CHECK(ram==before);
+    }
+    // A root two octaves above the rendered reference compensates a quarter-
+    // rate guest note. Preserve pitch, loop progression and Original output.
+    fixture(path,0,4*65536);
+    CHECK(shinka_music_load(path.u8string().c_str()));
+    for(int p=0;p<=3;++p) {
+        shinka_music_block(p);shinka_music_key_on(0,1040,ram.data());
+        for(int i=0;i<12;++i)
+            CHECK(shinka_music_sample(0,1040,1024,700,ram.data(),0)==(p ? p*1000+(i%4)*100 : 700));
+    }
+    for(int ratio : {0,2047,2097153}) {
+        fixture(path,0,ratio);
+        CHECK(!shinka_music_load(path.u8string().c_str()));
+        CHECK(shinka_music_sample(0,1040,1024,555,ram.data(),0)==555);
     }
     fixture(path,3);
     CHECK(!shinka_music_load(path.u8string().c_str()));

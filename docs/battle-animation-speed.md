@@ -220,8 +220,8 @@ The original proposal included finer rates and narrower attack classification:
 | Attack animation | Attack motions; include related hit/recovery motion only where needed for synchronization | 1x, 1.25x, 1.5x, 2x |
 
 The current implementation ships all four rates and the broader idle/action distinction
-described above. Fractional rates remain future work: they need phase handling
-that survives loop markers, clip replacement and save loading correctly.
+described above. Fractional phase handling now covers loop markers, clip
+replacement and save loading, as detailed in the current implementation above.
 
 Changing pose playback alone may make a swing finish earlier without shortening
 the turn: the camera or an event script could still be waiting. Determine that

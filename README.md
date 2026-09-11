@@ -109,3 +109,6 @@ Use a local disc dump as input. Keep the original unchanged; the EXP feature pat
 The current disc dump lives outside this repository, in a sibling directory. Future tooling should accept an explicit input path rather than depend on a machine-specific location.
 
 See [investigation notes](docs/investigation.md) for findings and open questions.
+
+The [combat model audit](docs/combat-models.md) documents the native mesh format,
+local OBJ/texture export tooling, and an offline smoothing prototype.

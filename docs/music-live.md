@@ -293,3 +293,35 @@ keys, so the single-key heuristic currently labels it clarinet. These remain
 unchanged pending isolated listening and a percussion-specific profile. Their
 current role tags must not be treated as verified instrument identities when
 interpreting meter results.
+
+### Listening brief: preserve the changing orchestration
+
+The player's Original-track listening notes describe a frequent metallic triangle,
+occasional timpani, an accordion-like repeated double-note figure, an occasional
+bell/music-box passage, a harp-like passage, and a flute-like lead. These are
+listening descriptions, not confirmed General MIDI instrument labels. Improving
+this track requires distinguishing its parts rather than assigning every high
+part a generic melodic voice and every low part bass guitar. In particular,
+the new strings and finger-bass choices remain provisional: the low-register
+part may be the struck/timpani-like sound the player describes.
+
+The exported score provides an audition plan. Times below are seconds from the
+start of `BGM018/sequence-000.mid` (about 48.18 seconds), not the running game's
+playback clock. Sample IDs refer to the owned bank. Instrument hypotheses should
+be confirmed by soloing original voices with their native envelopes before
+authoring further replacements.
+
+| Program / source samples | Independently observed score behavior | Listening question |
+| --- | --- | --- |
+| 7 / 9, 10 | 120 hits every 0.4 seconds; keys 80, 80, 81 repeat from 0.175 s. Two distinct short/long, high-frequency source samples. | Strong candidate for the metallic triangle pattern. Preserve both hit lengths; the current common snare/noise fallback loses that distinction. |
+| 8 / 11 | Low notes 40–50, mostly every 1.2 seconds, beginning at 0.175 s. | Is this the timpani-like accompaniment? Register alone cannot justify finger bass. |
+| 5 / 7 | A low note followed by two repeated two-note chords, at 0.4-second spacing from 0.175 s; continues across the track. | Strong rhythmic candidate for the accordion-like figure; timbre still needs isolated confirmation. |
+| 2 / 4 | Repeating three-note figures, 0.2/0.2/0.8-second onset gaps; begins at 0.575 s and ends around 28.775 s. | Identify this ornament separately from the chordal accompaniment. |
+| 6, 9 / 8 | Same 105-note part, with program 9 delayed by 0.4 seconds and slightly detuned. | Identify the lead/ornament and preserve its composed echo. |
+| 3, 4 / 6 | Same 45-note part, beginning at 9.375/9.575 s; 0.2-second delay and slight detuning. | Candidate for one of the contrasting flute-like or bell-like passages; do not merge the two voices. |
+| 1 / 3 | Sparse early notes, then a busy passage from 28.575 s; two tones an octave apart share the sample. | Identify the late lead/harp-like passage before settling on synth strings. |
+| 0 / 1, 2 | Mostly three-note chords every 1.2 seconds from 0.175 s; two source key zones. | Identify the harmonic bed and retain both source zones. |
+
+The observation supersedes any implication that the two routing corrections
+finish the arrangement. No new timbre or gain changes were made while recording
+this brief, and the player's active listening session was left untouched.

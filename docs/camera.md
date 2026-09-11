@@ -268,7 +268,15 @@ text anchors in both framebuffer bands. Captures remain local under
 The first pass recognized only one of the three 48×48 scrolling background
 layers. The other two incorrectly followed the UI-column translation rule,
 causing discontinuities as their tiles crossed the column boundary. All three
-captured texture/palette pairs now use the same continuous horizontal mapping.
+captured texture/palette pairs now use the same continuous horizontal mapping
+in gym, shop, Items and both Start roots. The root backdrop previously exposed
+the error as a repeating center wiggle and left/right tile desynchronization.
+
+The field-to-Status handoff also has a short aspect latch. Status mode is shared
+by the root, Items, map and other pages, and its task tree takes several frames
+to identify the destination. During that interval the previous widescreen state
+is held so the window does not flash to 4:3; unresolved pages then settle to
+their stock 4:3 layout.
 The fix leaves the panel and text layout unchanged. The native regression moves
 every layer through the full scrolling range in both framebuffer bands and both
 overlays, checking equal transforms and one/two-pixel steps without a boundary

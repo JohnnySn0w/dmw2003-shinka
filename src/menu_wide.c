@@ -37,6 +37,14 @@ int shinka_menu_wide_rect(uint32_t* words, int count, int offset_x, int offset_y
     w = words[3] & 65535; h = words[3] >> 16; clut = words[2] >> 16;
     if (x < -128 || x > 448 || y < -128 || y > 368 || w < 1 || w > 320 || h < 1 || h > 240) return 0;
     if (root) {
+        if (words[3] == 0x00300030 && (words[2] == 0x7da81060
+                || words[2] == 0x7deb1090 || words[2] == 0x7da93000)) {
+            /* The root's scrolling field backdrop shares mode 0x1000 with
+             * its UI. Column translation left the two halves on different
+             * source boundaries, producing a moving seam in the center. */
+            dest_x = stretch_x(x, margin);
+            dest_w = stretch_x(x + w, margin) - dest_x;
+        } else {
         /* The root UI has its own panel palette and resident white/yellow font
          * palettes. Field tiles, NPCs, shadows and dialogue use other palettes. */
         if (clut != 0x2697 && clut != 0x3a17 && clut != 0x3417
@@ -45,6 +53,7 @@ int shinka_menu_wide_rect(uint32_t* words, int count, int offset_x, int offset_y
             dest_x = ribbon_x(x, 116) + margin;
             dest_w = ribbon_x(x + w, 116) + margin - dest_x;
         } else dest_x = x + (x >= 140 ? margin : -margin);
+        }
     } else if (mode == 0x1000) {
         if ((words[3] == 0x00300030 && (words[2] == 0x7da81060
                 || words[2] == 0x7deb1090 || words[2] == 0x7da93000))

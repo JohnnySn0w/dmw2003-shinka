@@ -10,7 +10,7 @@ SETTINGS provides independent view and battle zoom controls:
   submission. Unready or unsupported tiles can still leave incomplete edges.
   Small interiors can have authored black space outside their artwork. This is
   a preview, not a complete field widescreen conversion. It also widens the
-  shared gym/shop interfaces and Items, and anchors both expanded Start-menu
+  shared gym/shop interfaces, Items, Sort and Techniques, and anchors both expanded Start-menu
   roots to the edges of the wider canvas.
 - **Battle zoom:** 100%, 90%, or 80% projected size. At 80%, the same viewport
   covers approximately 25% more world span along each axis. This changes the
@@ -19,7 +19,7 @@ SETTINGS provides independent view and battle zoom controls:
 They can be combined. Defaults retain 4:3 and 100%. Changes persist in the
 existing mod state. Battle controls apply to ordinary battles (mode `0x600`);
 the field preference applies to modes `0x200..0x2ff`, the gym (`0xa00`), shops
-(`0xf00`), and the expanded Start root and Items in the Status overlay (`0x1000`)
+(`0xf00`), and the expanded Start root, Items, Sort and Techniques in the Status overlay (`0x1000`)
 while their menu tasks are active. The lab, card battles, other Status children (including the
 map), movies and rewards retain their original view. In battle 16:9,
 enemy health, battle commands/submenus and bottom dialogue stay aligned on the
@@ -37,9 +37,8 @@ game-side culling need coverage across more battles.
 
 `src/view.c` separates persisted preferences from the effective scene settings.
 `src/view_frontend.inc` configures the pinned runtime's native-wide compositor,
-updates presentation aspect, and gates gameplay presentation on the current scene
-mode. Its change detector includes the mode itself: two wide fields with different
-area IDs must update the exact-state gate even though both use 16:9.
+updates presentation aspect, and shares a live scene predicate with the GPU.
+Two wide scenes can change mode without briefly failing a cached exact-mode gate.
 `tools/view.cmake` generates a local copy of `gte.cpp`. Its projection hook scales
 the X/Y perspective terms before adding OFX/OFY. H, camera transforms, SZ, lighting
 and depth cue calculation retain their original values. Ordinary HUD sprites do
@@ -308,3 +307,32 @@ and root-to-field captures retain a 426-pixel viewport throughout. The native
 tests additionally cover constant tile widths across every scroll phase, joined
 wipe columns and their palette variants, immediate preference changes, and
 unsupported destination/state-load isolation.
+
+### Sort and Techniques
+
+These pages share the party-card, ribbon and backdrop artwork with Items, but
+have distinct task layouts. The same bounded owner-chain check recognizes
+Sort (`0x800980b0`, 35 children) and Techniques (`0x80096380`, 45 children)
+in the controller's second slot, like Items. The first slot holds the Start root
+when returning from a page. Each check
+also validates the callback prologue, lifecycle, English layout and parent tasks.
+
+Sort keeps the complete party cards on the left, including selection highlights
+and the two-step swap UI. Techniques keeps its list tab, border, names and cursor
+together on the right. Both use the full-width description panel and compact
+instruction ribbon. Technique descriptions stay left aligned, while the MP cost
+follows the right edge. Shared background and wipe handling preserves the new
+aspect while loading or returning to the root. Unknown Status children still
+use 4:3; merely selecting a row does not authorize their drawing layout.
+
+Local captures and diagnostic task/packet snapshots are under
+`output/status-wide-01/`. Copied-save checks include swapping Patamon and Guilmon,
+the linking arrow, no-technique messages for Kumamon and Guilmon, and Small Heal
+restoring Patamon from 100 to 884 HP while spending 16 MP. The test-only HP change
+was made in the copied session. Confirmation, cancellation and return to the
+correct root row were checked, along with live 4:3/16:9 switching and map isolation.
+Field-entry captures for both new pages remain 426 pixels wide throughout loading.
+Native regressions cover first/second child-slot
+isolation, malformed task chains, callback reuse, language/signature guards,
+list-tab and cursor alignment, party-card anchors, and MP/description separation
+in both framebuffer bands at every supported margin.

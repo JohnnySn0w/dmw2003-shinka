@@ -1,5 +1,6 @@
 #include "cpu_state.h"
 #include "mod_plugins.h"
+#include "menu_wide.h"
 
 /* European SLES-03936 only; the package also guards the complete disc hash.
  * Guest state carries the entry marker so loading a state cannot leave a host
@@ -50,11 +51,10 @@ static uint32_t lab_child(uint32_t p) {
     return children >= 0x80090000u && children <= 0x801ffffcu && !(children & 3)
         ? READ(children) : 0;
 }
-int shinka_menu_items_active(void) {
+int shinka_menu_status_layout(void) {
     uint32_t p, children;
     if (READ(MODE) != STATUS || READ(MODE + 4)
         || READ(0x8005cca8) != 2 /* verified English layout */
-        || READ(0x80091d18) != 0x27bdffd8 || READ(0x80091d1c) != 0xafb10014
         || READ(0x80099894) != 0x27bdffa8) return 0;
     /* Follow the live owner chain, not a RAM scan or a pointer retained across
      * savestate loads. Other Status children use a different final callback. */
@@ -68,8 +68,21 @@ int shinka_menu_items_active(void) {
     children = READ(p + 0x24);
     if (children < 0x80090000 || children > 0x801ffff8 || (children & 3)) return 0;
     p = READ(children + 4);
-    return object(p, 0x80091d18) && READ(p + 0x20) == 53 && READ(p + 0xc) <= 1;
+    if (object(p, 0x80091d18) && READ(p + 0x20) == 53 && READ(p + 0xc) <= 1
+        && READ(0x80091d18) == 0x27bdffd8 && READ(0x80091d1c) == 0xafb10014)
+        return SHINKA_STATUS_ITEMS;
+    /* All three pages occupy child slot 1. Slot 0 is null while a page is open
+     * and becomes the Start root on return. Recognize callback and layout
+     * together, not the last selected row. */
+    if (object(p, 0x800980b0) && READ(p + 0x20) == 35 && READ(p + 0xc) <= 1
+        && READ(0x800980b0) == 0x27bdffd0 && READ(0x800980b4) == 0xafb3001c)
+        return SHINKA_STATUS_SORT;
+    if (object(p, 0x80096380) && READ(p + 0x20) == 45 && READ(p + 0xc) <= 1
+        && READ(0x80096380) == 0x27bdffd0 && READ(0x80096384) == 0xafb3001c)
+        return SHINKA_STATUS_TECHNIQUES;
+    return SHINKA_STATUS_NONE;
 }
+int shinka_menu_items_active(void) { return shinka_menu_status_layout() == SHINKA_STATUS_ITEMS; }
 /* The action menu resets root+64 before its partner selector opens. Remember
  * identity, not position: Switch Digimon can reorder the three party slots.
  * This is session UI memory; the savestate-load hook deliberately clears it. */

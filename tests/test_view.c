@@ -11,6 +11,7 @@ static int root_menu;
 static int items_menu;
 int shinka_menu_root_active(void) { return root_menu; }
 int shinka_menu_items_active(void) { return items_menu; }
+int shinka_menu_status_layout(void) { return items_menu; }
 int psx_mod_game_started(void) { return started; }
 uint32_t psx_mod_read_word(uint32_t addr) {
     if (addr == 0x8004b3f8) return mode;
@@ -159,7 +160,9 @@ int main(void) {
     }
     options[2]=0;CHECK(!shinka_view_wide_requested());shinka_view_tick();CHECK(!frontend);
     options[2]=1;
-    for(unsigned row=1;row<8;++row) { destination=row;shinka_view_tick();CHECK(!frontend); }
+    for(unsigned row=0;row<8;++row) {
+        destination=row;shinka_view_tick();CHECK(frontend==(row==0 || row==1 || row==3));
+    }
     destination=0;language=3;shinka_view_tick();CHECK(!frontend);language=2;
     previous_mode=0x600;shinka_view_tick();CHECK(!frontend); /* stale row after a state load */
     previous_mode=0x21d;started=0;shinka_view_tick();CHECK(!frontend);started=1;
@@ -257,7 +260,36 @@ int main(void) {
             CHECK(advance[3]==0x000c000c);
         }
     }
-    options[2]=0;shinka_view_tick();
+    for(int kind=SHINKA_STATUS_SORT;kind<=SHINKA_STATUS_TECHNIQUES;++kind)
+    for(int band=0;band<=256;band+=256) for(int margin=1;margin<=160;++margin) {
+        mode=0x1000;root_menu=0;items_menu=kind;options[2]=1;shinka_view_tick();CHECK(frontend);
+        uint32_t title[]={0x64808080,0x00130099,0x3a170000,0x000c0008};
+        shinka_menu_wide_rect(title,4,0,band,0,band,319,band+239,margin);
+        CHECK((int16_t)title[1]==153+margin+24);
+        uint32_t card[]={0x64808080,0x00130074,0x7f28c14c,0x000c0008};
+        shinka_menu_wide_rect(card,4,0,band,0,band,319,band+239,margin);
+        CHECK((int16_t)card[1]==116-margin);
+        if(kind==SHINKA_STATUS_TECHNIQUES) {
+            /* The list tab starts before x=160; it must stay with its text,
+             * panel and cursor rather than split around the old midpoint. */
+            const int xs[]={148,157,164,166,196,316};
+            for(unsigned i=0;i<sizeof(xs)/sizeof(*xs);++i) {
+                uint32_t list[]={0x64808080,0x00310000u|(unsigned)xs[i],
+                    i ? 0x3a170000u : 0x7dea8060u,0x000c0008};
+                CHECK(!shinka_menu_wide_rect(list,4,0,band,0,band,319,band+239,margin));
+                CHECK((int16_t)list[1]==xs[i]+margin);
+            }
+            uint32_t cost[]={0x64808080,0x00d40126,0x3a171590,0x000c0008};
+            uint32_t prose[]={0x64808080,0x00c60126,0x3a171590,0x000c0008};
+            uint32_t edge[]={0x64808080,0x00c2012f,0x7dea00f8,0x00260004};
+            shinka_menu_wide_rect(cost,4,0,band,0,band,319,band+239,margin);
+            shinka_menu_wide_rect(prose,4,0,band,0,band,319,band+239,margin);
+            shinka_menu_wide_rect(edge,4,0,band,0,band,319,band+239,margin);
+            CHECK((int16_t)cost[1]+9==(int16_t)edge[1]); /* last glyph stays inside the border */
+            CHECK((int16_t)prose[1]==294-margin);
+        }
+    }
+    items_menu=SHINKA_STATUS_ITEMS;options[2]=0;shinka_view_tick();
     CHECK(!frontend);
     { uint32_t glyph[]={0x64808080,0x002500bc,0x3a170000,0x000c0008};
       CHECK(!shinka_menu_wide_rect(glyph,4,0,0,0,0,319,239,53));CHECK(glyph[1]==0x002500bc); }

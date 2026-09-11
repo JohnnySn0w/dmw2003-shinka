@@ -3,6 +3,7 @@
 #include <string.h>
 #include "cpu_state.h"
 #include "mod_plugins.h"
+#include "../src/menu_wide.h"
 
 static unsigned char ram[8388608];
 static unsigned writes;
@@ -395,6 +396,29 @@ int main(void) {
         W(0x80091d1c,0);CHECK(!shinka_menu_items_active());W(0x80091d1c,0xafb10014);
         W(root+0x104,0);CHECK(!shinka_menu_items_active());W(root+0x104,items);
         shinka_lab_selection_reset();CHECK(shinka_menu_items_active()); /* load follows live owners */
+        for(int kind=SHINKA_STATUS_SORT;kind<=SHINKA_STATUS_TECHNIQUES;++kind) {
+            uint32_t callback=kind==SHINKA_STATUS_SORT ? 0x800980b0 : 0x80096380;
+            unsigned count=kind==SHINKA_STATUS_SORT ? 35 : 45;
+            W(items+0x48,callback);W(items+0x20,count);
+            W(callback,0x27bdffd0);W(callback+4,0xafb3001c);
+            writes=0;CHECK(shinka_menu_status_layout()==kind);CHECK(!writes);
+            CHECK(!shinka_menu_items_active());
+            for(int i=0;i<4;++i) {
+                W(objects[i]+0xc,2);CHECK(!shinka_menu_status_layout());W(objects[i]+0xc,1);
+                uint32_t cb=R(objects[i]+0x48);
+                W(objects[i]+0x48,0x8001270c);CHECK(!shinka_menu_status_layout());W(objects[i]+0x48,cb);
+                if(i<3) {
+                    W(objects[i]+0x24,0x801fffff);CHECK(!shinka_menu_status_layout());W(objects[i]+0x24,objects[i]+0x100);
+                }
+            }
+            W(items+0x20,count+1);CHECK(!shinka_menu_status_layout());W(items+0x20,count);
+            W(callback+4,0);CHECK(!shinka_menu_status_layout());W(callback+4,0xafb3001c);
+            W(root+0x104,0);W(root+0x100,items);CHECK(!shinka_menu_status_layout());
+            W(root+0x100,0);W(root+0x104,items);
+            W(0x8005cca8,3);CHECK(!shinka_menu_status_layout());W(0x8005cca8,2);
+            W(0x8004b3fc,0x200);CHECK(!shinka_menu_status_layout());W(0x8004b3fc,0);
+            shinka_lab_selection_reset();CHECK(shinka_menu_status_layout()==kind);
+        }
     }
     puts("Full lab actions, partner retention, legacy restoration, root return and menu input checks passed.");
     return 0;

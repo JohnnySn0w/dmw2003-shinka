@@ -4,7 +4,7 @@
 
 int shinka_menu_wide_mode(unsigned mode) {
     return mode == 0xa00 || mode == 0xf00
-        || (mode == 0x1000 && (shinka_menu_root_active() || shinka_menu_items_active()));
+        || (mode == 0x1000 && (shinka_menu_root_active() || shinka_menu_status_layout()));
 }
 
 static int stretch_x(int x, int margin) {
@@ -47,7 +47,8 @@ int shinka_menu_wide_rect(uint32_t* words, int count, int offset_x, int offset_y
     unsigned mode = psx_mod_read_word(0x8004b3f8u), clut;
     int x, y, w, h, anchor = 0, dest_x, dest_w = 0;
     int root = ((mode >= 0x200 && mode < 0x300) || mode == 0x1000) && shinka_menu_root_active();
-    int layout = root || shinka_menu_wide_mode(mode);
+    int status = mode == 0x1000 && !root ? shinka_menu_status_layout() : SHINKA_STATUS_NONE;
+    int layout = root || status || mode == 0xa00 || mode == 0xf00;
     int transition = (mode == 0x1000 || (mode >= 0x200 && mode < 0x300))
         && shinka_view_wide_requested();
     int backdrop = layout || (mode == 0x1000 && transition);
@@ -87,7 +88,7 @@ int shinka_menu_wide_rect(uint32_t* words, int count, int offset_x, int offset_y
             dest_w = ribbon_x(x + w, 116) + margin - dest_x;
         } else dest_x = x + (x >= 140 ? margin : -margin);
     } else if (mode == 0x1000) {
-        if (clut == 0x7dea && y != 18) {
+        if (clut == 0x7dea && y != 18 && (status != SHINKA_STATUS_TECHNIQUES || y >= 194)) {
             /* List/description panels still meet their exact screen edges. */
             dest_x = stretch_x(x, margin);
             dest_w = stretch_x(x + w, margin) - dest_x;
@@ -99,7 +100,13 @@ int shinka_menu_wide_rect(uint32_t* words, int count, int offset_x, int offset_y
         else if (y >= 194 && w == 12 && h == 12 && (words[2] & 65535) == 0x3c54
             && clut >= 0x3057 && clut <= 0x3157 && (clut - 0x3057) % 64 == 0)
             dest_x = stretch_x(x + w, margin) - w; /* every advance-icon pulse */
+        else if (status == SHINKA_STATUS_TECHNIQUES && clut == 0x3a17
+            && y == 212 && x >= 266)
+            dest_x = x + stretch_x(303, margin) - 303; /* MP block retains its inset from the inner border */
         else if (y >= 194) dest_x = x - margin; /* unbroken description */
+        else if (status == SHINKA_STATUS_SORT) dest_x = x - margin;
+        else if (status == SHINKA_STATUS_TECHNIQUES)
+            dest_x = x + (x >= 148 ? margin : -margin); /* list tab, frame, text and cursor together */
         else if (y >= 174 && y <= 187) {
             /* Selected item, equipped count, inventory count. */
             dest_x = x + (x < 154 ? -margin : x >= 230 ? margin : 0);

@@ -1,6 +1,63 @@
 # Runtime profiling
 
-## Follow-up experiments and publication � 2026-09-11
+## Caller stacks and opt-in pixel history — 2026-09-11
+
+A new [Windows caller-stack sampler](host-stack-profiling.md) captured 1,631
+opening-movie stacks. Device service appeared in 57.45% of samples, but that
+included presentation callbacks and pacing waits. Excluding presentation,
+device-service stacks accounted for 570 samples (34.95%). MDEC transfer service
+appeared in 9.81%; the display-history recorder appeared in 7.42%, including
+graphics-driver waits. These are sampled wall-time residency figures, **not
+inclusive CPU percentages**. Inlining and tail calls also limit attribution.
+
+The useful finding was an avoidable host-side cost: the debug display-history
+ring reads both the displayed area and full VRAM back from the GPU at each
+eligible frame. Shinka now leaves this recorder off unless `PSX_DISPLAY_RING`
+is explicitly enabled before launch. This also avoids its 84 MiB allocation.
+The pinned framework is unchanged; the adjustment is in Shinka's generated
+debug-server copy. One-shot screenshots, presented-frame capture, GPU command
+history, navigation, and the debug server remain available. Exact historical
+pixel comparisons require `PSX_DISPLAY_RING=1`; they cannot recover prior frames
+from a run where capture was disabled.
+
+Separate, unsampled comparisons used the same executable and environment
+toggle, copied checkpoints, seven seconds warmup, and twenty seconds measured:
+
+| Checkpoint | History enabled CPU ms/update | History disabled CPU ms/update | Reduction |
+| --- | ---: | ---: | ---: |
+| Opening movie, repeated pair | 18.859 | 17.844 | 5.4% |
+| Battle command menu | 8.835 | 7.781 | 11.9% |
+
+These samples held about 50 guest updates/sec and recorded zero new host audio
+underrun samples. Guest scheduler, RAM-write, and MMIO activity remained close.
+The repeated movie pair was measured off-then-on, reversing the exploratory
+on-then-off pair (17.813 vs 17.063 ms/update). A short compiler run overlapped
+the exploratory disabled run, so only the uncontended repeated pair is used
+in the table. Host clocks and scheduling varied between runs: these results
+are checkpoint measurements, not a campaign-wide speedup guarantee.
+
+A second diagnostic capture with history disabled collected 1,637 complete
+stacks, with no display-history path present. Device service excluding
+presentation appeared in 602 samples (36.77%). The median suspend/copy/resume
+interval was 61.5 microseconds, p95 91.7 microseconds. These sampled runs are
+kept separate from the CPU acceptance measurements. The tool records loaded
+module identities and stack-depth diagnostics; the summarizer validates the
+matching map and distinguishes leaf, inclusive, and caller-edge counts.
+
+Final-build validation covered default-off history, explicit opt-in history,
+one-shot captures, title and battle rendering, and three movie checkpoints with
+clean borders. A battle replay returned to the field with all 7,904 party-record
+bytes matching the earlier verified outcome. All 91 Python tests, Ruff, and
+12 Shinka native suites passed. The standalone profiler also builds separately
+without original game data. Evidence remains in `output/host-profiler/` and
+the replay in `output/memory-lto/display-history-off-outcome.json`.
+
+The next scheduler investigation should focus on device service after excluding
+presentation/pacing and on actual transfer callers. Removing diagnostic GPU
+round trips required no change to DMA timing, intermediate RAM visibility, or
+interrupt order; those contracts remain prerequisites for larger batching work.
+
+## Follow-up experiments and publication — 2026-09-11
 
 Three further experiments were built and measured from the same copied opening
 movie checkpoint. Each sample used seven seconds of warmup and twenty seconds

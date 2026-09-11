@@ -97,6 +97,12 @@ sector deadlines, and re-enabling a previously masked response.
 
 ## Reusable investigation workflow
 
+For caller attribution, use the [host stack sampler](host-stack-profiling.md)
+in a separate diagnostic run. Device-service stacks include frame presentation
+and pacing callbacks; their entire inclusive residency must not be mistaken
+for device CPU computation. Continuous pixel-history capture is opt-in in
+Shinka (`PSX_DISPLAY_RING=1`) because its GPU readbacks themselves add overhead.
+
 Use an isolated save profile, a named checkpoint and fixed settings. Record
 CPU time, guest cadence, audio underrun deltas, and counts of relevant events
 or queries. Inspect the source condition that predicts each event alongside

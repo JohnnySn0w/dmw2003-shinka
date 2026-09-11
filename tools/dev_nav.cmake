@@ -10,6 +10,20 @@ endif()
 string(REPLACE "${_debug_anchor}"
     "#include \"dev_nav_server.inc\"\n${_debug_anchor}\n    { \"shinka_nav\", handle_shinka_nav },"
     _debug_code "${_debug_code}")
+# Continuous GPU readback is a forensic feature, not a normal-play requirement.
+# Preserve explicit opt-in and all one-shot captures without paying for a full
+# 64-frame VRAM/display history at every eligible vblank.
+set(_ring_old "const char *e = getenv(\"PSX_DISPLAY_RING\");\n        enabled = (!e || !*e || *e != '0') ? 1 : 0;")
+string(FIND "${_debug_code}" "${_ring_old}" _ring_position)
+if(_ring_position EQUAL -1)
+    message(FATAL_ERROR "Review pinned display-history configuration before changing its default")
+endif()
+string(REPLACE "${_ring_old}"
+    "const char *e = getenv(\"PSX_DISPLAY_RING\");\n        enabled = (e && *e && *e != '0') ? 1 : 0;"
+    _debug_code "${_debug_code}")
+string(REPLACE "Keep the forensic ring default-on, but"
+    "Shinka makes the forensic ring opt-in (PSX_DISPLAY_RING=1);"
+    _debug_code "${_debug_code}")
 file(CONFIGURE OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/shinka-runtime/debug_server.c"
     CONTENT "${_debug_code}" @ONLY)
 get_target_property(_debug_sources shinka SOURCES)

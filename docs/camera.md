@@ -220,7 +220,17 @@ its left tip sits 52 pixels before the plain root list, or 24 pixels before the
 Items category list beside portraits. Its angled cap retains its original width;
 only the plain body is shortened. Keeping the entire original ribbon exposed
 artwork normally hidden behind the party and made the widescreen bar too long.
-This includes SETTINGS
+
+The root uses the original encoded triangle button hint. Savestates from older
+Shinka builds can retain the already-built text "Triangle: Close Status" or
+"Triangle: Close Menu". The menu hook checks the ribbon child's copied string
+for those exact retired labels and reruns the native label setters, preserving
+the current row. It leaves other text and closing menus alone. Copied-state
+checks covered restored roots in 4:3/16:9, repeated loading, Settings return,
+and a fresh field root; native tests cover both legacy strings and rejection of
+unrelated text/tasks and invalid buffer bounds.
+
+Root anchoring also includes SETTINGS
 and the full-screen root reached by backing out of ITEMS. A validated pointer
 from the resident menu callback gates those transforms; it is cleared on state
 loads and rejected during another mode, queued transitions, teardown or the

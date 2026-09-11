@@ -111,6 +111,38 @@ int main(void) {
         }
         W(0x8004b3f8,0x21d);
     }
+    {
+        /* A restored root bypasses the setter. These are the actual encoded
+         * legacy strings; repair both roots without moving the selected row. */
+        const uint32_t header=0x80110000, text=0x80120000;
+        const unsigned char old_status[] = {
+            0x21,0x39,0x30,0x28,0x35,0x2e,0x33,0x2c,1,7,1,1,
+            0x10,0x33,0x36,0x3a,0x2c,1,1,0x20,0x3b,0x28,0x3b,0x3c,0x3a,0};
+        const unsigned char old_menu[] = {
+            0x21,0x39,0x30,0x28,0x35,0x2e,0x33,0x2c,1,7,1,1,
+            0x10,0x33,0x36,0x3a,0x2c,1,1,0x1a,0x2c,0x35,0x3c,0};
+        W(0x80100000,header);W(header+0x28,0x80014274);W(header+0x48,0x8001ac14);
+        W(header+0x114,0x800194e8);W(header+0x5c,text);
+        for(int full=0;full<2;++full) {
+            unsigned length=full ? sizeof(old_status) : sizeof(old_menu);
+            memcpy(ram+offset(text),full ? old_status : old_menu,length);
+            psx_mod_write_half(header+0x62,(uint16_t)(length-1));
+            W(0x8004b3f8,full ? 0x1000 : 0x21d);W(menu+0x58,2);W(menu+0x10,3);
+            shinka_journal_quick_menu(&cpu);
+            CHECK(R(menu+0x10)==0 && R(menu+0x58)==2 && R(menu+0xa0)==0);
+            /* Do not interrupt an accepted action or refresh unrelated text. */
+            W(menu+0x10,4);shinka_journal_quick_menu(&cpu);CHECK(R(menu+0x10)==4);
+            W(menu+0x10,3);ram[offset(text)+length-2]^=1;
+            shinka_journal_quick_menu(&cpu);CHECK(R(menu+0x10)==3);
+            ram[offset(text)+length-2]^=1;
+            W(header+0x5c,0x801ffff8);shinka_journal_quick_menu(&cpu);CHECK(R(menu+0x10)==3);
+            W(header+0x5c,text);W(header+0x48,0x8001b0a4);
+            shinka_journal_quick_menu(&cpu);CHECK(R(menu+0x10)==3);
+            W(header+0x48,0x8001ac14);
+        }
+        W(0x80100000,0);W(menu+0x58,4);W(0x8004b3f8,0x21d);
+        shinka_journal_quick_menu(&cpu);
+    }
     W(0x8004b3fc, 0x1000); CHECK(shinka_menu_root_active()); W(0x8004b3fc, 0);
     for(unsigned life=1;life<=2;++life) for(unsigned phase=0;phase<=7;++phase) {
         W(menu + 0xc,life);W(menu + 0x10,phase);CHECK(shinka_menu_root_active());

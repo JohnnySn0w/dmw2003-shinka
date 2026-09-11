@@ -215,6 +215,34 @@ static void refresh_menu(uint32_t p, unsigned page, unsigned selection) {
     psx_mod_write_half(0x8004b818, 0);
 }
 
+static int legacy_root_hint(uint32_t p) {
+    /* Old savestates own a copied, already-rendered string: the text setter
+     * hook cannot repair it until the native menu rebuilds its labels.
+     * Follow only the ribbon child and match our two retired English hints. */
+    static const unsigned char prefix[] = {
+        0x21,0x39,0x30,0x28,0x35,0x2e,0x33,0x2c,0x01,0x07,
+        0x01,0x01,0x10,0x33,0x36,0x3a,0x2c,0x01,0x01
+    }; /* "Triangle: Close " in the game's encoding */
+    static const unsigned char status[] = {0x20,0x3b,0x28,0x3b,0x3c,0x3a,0};
+    static const unsigned char menu[] = {0x1a,0x2c,0x35,0x3c,0};
+    uint32_t children = READ(p + 0x24), header, text;
+    const unsigned char* suffix;
+    unsigned length, i;
+    if (children < 0x80090000u || children > 0x801ffffcu || (children & 3)) return 0;
+    header = READ(children);
+    if (!object(header, 0x8001ac14) || READ(header + 0x114) != 0x800194e8) return 0;
+    length = psx_mod_read_half(header + 0x62);
+    if (length != 25 && length != 23) return 0;
+    text = READ(header + 0x5c);
+    if (text < 0x80090000u || text > 0x80200000u - length - 1) return 0;
+    for (i = 0; i < sizeof(prefix); ++i)
+        if (psx_mod_read_byte(text + i) != prefix[i]) return 0;
+    suffix = length == 25 ? status : menu;
+    for (; i <= length; ++i)
+        if (psx_mod_read_byte(text + i) != suffix[i - sizeof(prefix)]) return 0;
+    return 1;
+}
+
 void shinka_journal_quick_menu(CPUState* cpu) {
     uint32_t p = cpu->gpr[4], row, count;
     uint16_t pressed;
@@ -237,6 +265,10 @@ void shinka_journal_quick_menu(CPUState* cpu) {
         return;
     }
     if (READ(p + 0xc) != 1) return;
+    if (enabled && !READ(p + 0xa0) && READ(p + 0x10) == 3 && legacy_root_hint(p)) {
+        refresh_menu(p, 0, READ(p + 0x58));
+        return;
+    }
     count = 7 + (READ(p + 0x60) != 0);
     if (!enabled) {
         /* A save made with this layout still owns the appended children.

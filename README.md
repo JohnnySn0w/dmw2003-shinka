@@ -26,9 +26,11 @@ SETTINGS also includes [Battle motion](docs/battle-animation-speed.md), with ind
 1x, 1.25x, 1.5x and 2x idle and action pose speeds. Both default to 1x. Camera and script delays
 keep their own timing; action poses include attacks and reactions.
 
-SETTINGS also offers experimental [battle camera controls](docs/camera.md):
-**4:3 / 16:9 view** and independent **100% / 90% / 80% zoom**. Field areas retain
-their original view while their tile-streaming requirements are investigated.
+SETTINGS offers [Screen view and battle camera controls](docs/camera.md):
+independent **4:3 / 16:9** choices for battles and an opt-in **field preview**,
+plus **100% / 90% / 80% battle zoom**. The field preview reveals extra scenery
+without stretching sprites, but scrolling can expose missing background strips;
+it is not yet a complete widescreen conversion. Full-screen menus retain 4:3.
 
 See [Windows build, launch, and overlay-capture instructions](docs/windows-baseline.md) for the runnable baseline and current validation limits.
 

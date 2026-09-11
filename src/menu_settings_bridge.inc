@@ -112,25 +112,25 @@ extern "C" int shinka_music_palette_set(int palette) {
 }
 
 extern "C" int shinka_view_get(int option) {
-    if (option < 0 || option > 1) return 0;
+    if (option < 0 || option > 2) return 0;
     auto& manager = PSXRecompV4::state().manager;
     if (!manager.feature_enabled("shinka.evolution-journal", "menu-chart")) return 0;
     auto text = manager.feature_option_value("shinka.evolution-journal", "menu-chart",
-        option ? "battle_zoom" : "battle_view");
-    return text.size() == 1 && text[0] >= '0' && text[0] <= (option ? '2' : '1') ? text[0] - '0' : 0;
+        option == 2 ? "field_view" : option ? "battle_zoom" : "battle_view");
+    return text.size() == 1 && text[0] >= '0' && text[0] <= (option == 1 ? '2' : '1') ? text[0] - '0' : 0;
 }
 
 extern "C" int shinka_view_set(int option, int value) {
-    if (option < 0 || option > 1 || value < 0 || value > (option ? 2 : 1)) return 0;
+    if (option < 0 || option > 2 || value < 0 || value > (option == 1 ? 2 : 1)) return 0;
     auto& runtime = PSXRecompV4::state();
     auto previous = runtime.manager;
     std::string error;
     bool ok = runtime.manager.set_feature_option("shinka.evolution-journal", "menu-chart",
-        option ? "battle_zoom" : "battle_view", std::to_string(value), &error)
+        option == 2 ? "field_view" : option ? "battle_zoom" : "battle_view", std::to_string(value), &error)
         && PSXRecompV4::mod_runtime_commit(runtime.disc_path, &error);
     if (!ok) {
         runtime.manager = std::move(previous);
-        std::fprintf(stderr, "Shinka battle view: %s\n", error.c_str());
+        std::fprintf(stderr, "Shinka view: %s\n", error.c_str());
         return 0;
     }
     return 1;

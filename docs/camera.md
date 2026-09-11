@@ -1,16 +1,24 @@
 # Experimental camera options
 
-SETTINGS provides two independent battle controls:
+SETTINGS provides independent view and battle zoom controls:
 
-- **Battle view:** 4:3 or 16:9. Native widescreen extends the horizontal rendering
+- **Screen view → Battle:** 4:3 or 16:9. Native widescreen extends the horizontal rendering
   surface instead of stretching characters.
+- **Screen view → Field:** 4:3 or **16:9 test**. The default is 4:3. The test
+  reveals field scenery already submitted outside the original viewport, without
+  changing sprite proportions. Scrolling can expose blank or incomplete strips
+  at the edges because the guest's tile loader still covers the original view.
+  Small interiors can have authored black space outside their artwork. This is
+  a preview, not a complete field widescreen conversion.
 - **Battle zoom:** 100%, 90%, or 80% projected size. At 80%, the same viewport
   covers approximately 25% more world span along each axis. This changes the
   effective field of view; it does not move the scripted camera backwards.
 
 They can be combined. Defaults retain 4:3 and 100%. Changes persist in the
-existing mod state and apply to ordinary battles (mode `0x600`). Fields, the lab,
-card battles, full-screen menus and rewards retain their original view. In 16:9,
+existing mod state. Battle controls apply to ordinary battles (mode `0x600`);
+the field preview applies only to modes `0x200..0x2ff`, including the field quick
+menu. The lab, card battles, full-screen menus, movies and rewards retain their
+original view. In battle 16:9,
 enemy health, battle commands/submenus and bottom dialogue stay aligned on the
 left; player health/MP and the miniature portrait move to the right. The bottom
 dialogue panel spans between the outer edges of both health panels. Its text and
@@ -26,7 +34,9 @@ game-side culling need coverage across more battles.
 
 `src/view.c` separates persisted preferences from the effective scene settings.
 `src/view_frontend.inc` configures the pinned runtime's native-wide compositor,
-updates presentation aspect, and gates gameplay presentation on the battle mode.
+updates presentation aspect, and gates gameplay presentation on the current scene
+mode. Its change detector includes the mode itself: two wide fields with different
+area IDs must update the exact-state gate even though both use 16:9.
 `tools/view.cmake` generates a local copy of `gte.cpp`. Its projection hook scales
 the X/Y perspective terms before adding OFX/OFY. H, camera transforms, SZ, lighting
 and depth cue calculation retain their original values. Ordinary HUD sprites do
@@ -51,7 +61,9 @@ lines; the MP-cost font is identified separately from ordinary prose.
 
 Debug tooling uses `shinka_nav` operation `view`. With no arguments it reports
 stored width/zoom and effective wide/percent values. To persist a choice, supply
-`option: 0` (width, values 0..1) or `option: 1` (zoom, values 0..2), plus `value`.
+`option: 0` (battle width, values 0..1), `option: 1` (battle zoom, values 0..2),
+or `option: 2` (field preview, values 0..1), plus `value`. The report's `field`
+member is the stored field preference; `active_wide` is the effective scene state.
 Use `screenshot` or `wide_shot` for native-wide captures; `screenshot_file` only
 captures the original 320-pixel VRAM rectangle and omits the extra sides.
 
@@ -119,3 +131,33 @@ Field work must account for the temporary list, texture-slot ownership and VRAM
 placement, loading schedule, each visual layer, object culling and camera bounds
 together. A wider GPU output alone cannot reveal tiles the guest never loaded or
 submitted. No field streaming code or map data is patched by this prototype.
+
+### Opt-in field preview — 2026-09-11
+
+The owned renderer now exposes the already-submitted tile overhang at 426x240.
+The Screen view submenu has separate Battle and Field preferences, clears the
+unused rows when opening, and returns the highlight to Screen view. Battle zoom
+remains a separate SETTINGS row. Page 6 is used for the new submenu; page 5 stays
+reserved for the map's stock close path. A new settings fingerprint bit prevents
+an old saved menu page from overwriting the current field preference.
+
+Live OpenGL tests with copied cards/checkpoints covered Central Park, Asuka Inn,
+and Wire Forest Entrance, ten moving Central Park captures, field-to-field state
+loads, a Kunemon battle, the map, and controls in both menu roots. The native
+view was 320x240 with the preview off and 426x240 with it on. Field projections
+stayed at 100% while the battle retained its separately selected 80% zoom. The
+map retained 320x240. A Central Park scrolling capture exposed a 21-pixel blank
+strip at the left edge, confirming that renderer-only expansion is incomplete.
+No claim is made for all maps, NPC visibility, cutscenes, or transition effects.
+
+All 14 native suites, 147 Python tests, and Ruff passed. Native checks cover both
+width preferences independently, field-range boundaries, boot/menu/movie/save
+scene isolation, unchanged battle HUD behavior in fields, both settings roots,
+persistence failure, and saved-page preference reconciliation. The installed
+build was smoke-tested at the default 4:3 field view with the new submenu; player
+settings and original memory cards were not changed. Captures and scene reports
+are local under `output/field-wide-01/`.
+
+The next step is expanding the field tile working set, including its temporary
+list and residency/VRAM scheme, then testing scrolling, object culling, and
+camera bounds. Merely raising the four-column loop limit is not sufficient.

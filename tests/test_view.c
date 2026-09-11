@@ -4,18 +4,20 @@
 #include "battle_hud.h"
 #define CHECK(c) do { if (!(c)) { fprintf(stderr,"line %d: %s\n",__LINE__,#c); exit(1); } } while (0)
 static uint32_t mode;
-static int started = 1, options[2], frontend;
+static int started = 1, options[3], frontend;
 int psx_mod_game_started(void) { return started; }
 uint32_t psx_mod_read_word(uint32_t addr) { CHECK(addr == 0x8004b3f8); return mode; }
 int shinka_view_get(int option) { return options[option]; }
 void shinka_view_frontend(int wide) { frontend = wide; }
 int main(void) {
-    const uint32_t modes[] = {0, 0x202, 0x21d, 0x600, 0x700, 0xd00, 0xd01, 0x1000, 0x1400};
-    for (unsigned m=0;m<sizeof(modes)/sizeof(*modes);++m) for(int w=0;w<2;++w) for(int z=0;z<3;++z) {
+    const uint32_t modes[] = {0, 0x1ff, 0x200, 0x202, 0x21d, 0x2ff, 0x300,
+        0x600, 0x700, 0xc00, 0xc01, 0xd00, 0xd01, 0xe00, 0x1000, 0x1400};
+    for (unsigned m=0;m<sizeof(modes)/sizeof(*modes);++m) for(int w=0;w<2;++w)
+    for(int z=0;z<3;++z) for(int f=0;f<2;++f) {
         int64_t x=12000000, y=-6000000;
-        mode=modes[m];options[0]=w;options[1]=z;shinka_view_tick();
+        mode=modes[m];options[0]=w;options[1]=z;options[2]=f;shinka_view_tick();
         int percent=mode==0x600 ? 100-10*z : 100;
-        CHECK(frontend==(mode==0x600 && w));
+        CHECK(frontend==((mode==0x600 && w) || (mode>=0x200 && mode<0x300 && f)));
         shinka_view_project(&x,&y);
         CHECK(x==120000*percent && y==-60000*percent);
     }
@@ -24,6 +26,14 @@ int main(void) {
     CHECK(x==65536 && y==-65536); /* immediate scene change before present */
     started=0;mode=0x600;shinka_view_tick();
     CHECK(!frontend && shinka_view_zoom_percent()==100);
+    mode=0x21d;options[2]=1;shinka_view_tick();
+    CHECK(!frontend); /* field preview cannot affect boot */
+    started=1;shinka_view_tick();CHECK(frontend);
+    {
+        uint32_t panel[]={0x64808080,0x001400CB,0x3E2059C4,0x001C0018};
+        shinka_battle_hud_command(panel,4,0,0,0,0,319,239,53);
+        CHECK(panel[1]==0x001400CB); /* battle anchors never move field sprites */
+    }
     started=1;mode=0x600;options[0]=1;shinka_view_tick();
     for(int band=0;band<=256;band+=256) {
         uint32_t panel[]={0x64808080,0x001400CB,0x3E2059C4,0x001C0018};
@@ -114,6 +124,6 @@ int main(void) {
             0,0,319,239,scenario==2 ? 0 : 53);
         CHECK(sprite[1]==(scenario==3 ? 0x006DFFF0u : 0x006D0025u));
     }
-    puts("Battle projection, scene isolation and independent camera settings passed.");
+    puts("Field preview, battle projection, scene isolation and independent settings passed.");
     return 0;
 }

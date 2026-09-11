@@ -33,7 +33,7 @@ void shinka_chart_selection_reset(void) {}
 static int battle_rate = 3, dv_rate = 1, fixed_rate = 10, fail_save;
 static int encounter_rate = 100;
 static int music_palette;
-static int view_options[2];
+static int view_options[3];
 static int motion_options[2] = {100, 100};
 int shinka_motion_get(int option) { return motion_options[option]; }
 int shinka_motion_set(int option, int value) { if (fail_save) return 0; motion_options[option]=value; return 1; }
@@ -145,20 +145,38 @@ int main(void) {
     W(menu + 0x5c, 5); W(menu + 0x58, 4); W(menu + 0x10, 3);
     shinka_journal_quick_menu(&cpu);
     CHECK(!view_options[0] && R(menu + 0x58) == 7 && R(menu + 0x10) == 0);
-    for (unsigned mode=0; mode<2; ++mode) for (unsigned option=0;option<2;++option) {
+    for (unsigned mode=0; mode<2; ++mode) for (unsigned option=0;option<3;++option) {
+        unsigned page=option==1 ? 1 : 6, row=option==1 ? 5 : option==2 ? 1 : 0;
+        unsigned choices=option==1 ? 3 : 2;
         W(0x8004b3f8,mode ? 0x1000 : 0x21d);
-        W(menu+0xa0,1);W(menu+0x5c,8);W(menu+0x58,4+option);
-        for (unsigned i=0;i<(option ? 3u : 2u);++i) {
-            W(menu+0xa4,0x401400 | (view_options[0]<<26) | (view_options[1]<<27));
+        W(menu+0xa0,page);W(menu+0x5c,8);W(menu+0x58,row);
+        for (unsigned i=0;i<choices;++i) {
+            W(menu+0xa4,0x401400 | (view_options[0]<<26) | (view_options[1]<<27) | (view_options[2]<<19));
             W(menu+0x10,3);psx_mod_write_half(0x8004b818,0x20);
             shinka_journal_quick_menu(&cpu);
-            CHECK(view_options[option]==(i+1)%(option ? 3u : 2u));
-            CHECK(R(menu+0x58)==4+option && R(menu+0xa0)==1);
+            CHECK(view_options[option]==(i+1)%choices);
+            CHECK(R(menu+0x58)==row && R(menu+0xa0)==page);
         }
         W(menu+0xa4,0x401400);W(menu+0x10,3);fail_save=1;
         psx_mod_write_half(0x8004b818,0x20);
         shinka_journal_quick_menu(&cpu);
         CHECK(view_options[option]==0 && (R(menu+0xa4)&1));fail_save=0;
+    }
+    /* Screen view shares the expanded allocation, clears old rows and returns
+     * to its own highlight in either root. A saved page cannot undo preferences. */
+    for (unsigned mode=0;mode<2;++mode) for (unsigned cards=0;cards<2;++cards) {
+        W(0x8004b3f8,mode ? 0x1000 : 0x21d);W(menu+0x60,cards);
+        W(menu+0xa0,1);W(menu+0x5c,8);W(menu+0x58,4);
+        W(menu+0x10,3);W(menu+0xa4,0x401400);
+        psx_mod_write_half(0x8004b818,0x2000);shinka_journal_quick_menu(&cpu);
+        CHECK(R(menu+0xa0)==6 && R(menu+0x58)==0 && R(menu+0x5c)==8);
+        view_options[2]=1;W(menu+0x10,3);W(menu+0x58,1);
+        shinka_journal_quick_menu(&cpu);
+        CHECK(view_options[2]==1 && R(menu+0x10)==0 && R(menu+0x58)==1);
+        W(menu+0x10,3);W(menu+0xa4,0x481400);W(menu+0x58,2);
+        psx_mod_write_half(0x8004b818,0x2000);shinka_journal_quick_menu(&cpu);
+        CHECK(R(menu+0xa0)==1 && R(menu+0x58)==4 && R(menu+0x5c)==8);
+        view_options[2]=0;
     }
     /* Motion submenu works in both roots, including with no card-folder row.
      * Opening, changing rates, returning, and old BACK selection are distinct. */

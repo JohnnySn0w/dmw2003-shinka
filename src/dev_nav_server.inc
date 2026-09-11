@@ -28,8 +28,8 @@ static void handle_shinka_nav(int id,const char* json) {
             send_err(id,"Invalid or unsaved view setting");return;
         }
         shinka_view_tick();
-        send_fmt("{\"id\":%d,\"ok\":true,\"width\":%d,\"zoom\":%d,\"active_wide\":%d,\"active_percent\":%d}",
-            id,shinka_view_get(0),shinka_view_get(1),shinka_view_wide_active(),shinka_view_zoom_percent());
+        send_fmt("{\"id\":%d,\"ok\":true,\"width\":%d,\"zoom\":%d,\"field\":%d,\"active_wide\":%d,\"active_percent\":%d}",
+            id,shinka_view_get(0),shinka_view_get(1),shinka_view_get(2),shinka_view_wide_active(),shinka_view_zoom_percent());
         return;
     }
     if (!strcmp(op,"music")) {

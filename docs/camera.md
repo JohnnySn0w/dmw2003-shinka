@@ -236,3 +236,13 @@ Native tests check both framebuffer bands, adjacent panel seams at every allowed
 margin, original texture dimensions, glyph spacing, cursor anchoring, 4:3 and
 unrelated-scene isolation, plus root lifecycle/state-reset guards. Local captures
 and copied checkpoints are under `output/npc-wide-01/`.
+
+The first pass recognized only one of the three 48×48 scrolling background
+layers. The other two incorrectly followed the UI-column translation rule,
+causing discontinuities as their tiles crossed the column boundary. All three
+captured texture/palette pairs now use the same continuous horizontal mapping.
+The fix leaves the panel and text layout unchanged. The native regression moves
+every layer through the full scrolling range in both framebuffer bands and both
+overlays, checking equal transforms and one/two-pixel steps without a boundary
+jump. Consecutive live captures for the gym and armory are in
+`output/npc-wide-01/scroll-fixed/`.

@@ -37,8 +37,13 @@ int shinka_menu_wide_rect(uint32_t* words, int count, int offset_x, int offset_y
             dest_x = stretch_x(x, margin);
             dest_w = stretch_x(x + w, margin) - dest_x;
         } else dest_x = x + (x >= 140 ? margin : -margin);
-    } else if ((mode == 0xa00 && (clut == 0x7ba4 || clut == 0x7ba6 || clut == 0x7ca7))
-        || (mode == 0xf00 && (clut == 0x7eaa || clut == 0x7ca7))) {
+    } else if ((words[3] == 0x00300030 && (words[2] == 0x7ca7b850
+            || words[2] == 0x7ce65828 || words[2] == 0x7ce75858))
+        || (mode == 0xa00 && (clut == 0x7ba4 || clut == 0x7ba6))
+        || (mode == 0xf00 && clut == 0x7eaa)) {
+        /* All three scrolling background layers need the same continuous
+         * transform. Treating the other two as UI columns made them jump at
+         * the column boundary and drift against the correctly scaled layer. */
         dest_x = stretch_x(x, margin);
         dest_w = stretch_x(x + w, margin) - dest_x;
     } else {

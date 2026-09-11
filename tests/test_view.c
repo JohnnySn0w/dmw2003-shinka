@@ -67,6 +67,25 @@ int main(void) {
         CHECK(!shinka_menu_wide_rect(panel,4,0,0,0,0,99,59,53));
         CHECK(panel[1]==0x009c0000); /* offscreen texture/portrait pass */
     }
+    for(int shop=0;shop<2;++shop) for(int band=0;band<=256;band+=256) {
+        const uint32_t layers[]={0x7ca7b850,0x7ce65828,0x7ce75858};
+        int previous=-1000;
+        mode=shop ? 0xf00 : 0xa00;options[2]=1;shinka_view_tick();
+        for(int x=-96;x<=384;++x) {
+            int reference=0, reference_width=0;
+            for(int layer=0;layer<3;++layer) {
+                uint32_t tile[]={0x64808080,0x002b0000u|(uint16_t)x,layers[layer],0x00300030};
+                int width=shinka_menu_wide_rect(tile,4,0,band,0,band,319,band+239,53);
+                int position=(int16_t)tile[1];
+                CHECK(width==63 || width==64);
+                CHECK(tile[2]==layers[layer] && tile[3]==0x00300030);
+                if(!layer) { reference=position;reference_width=width; }
+                else CHECK(position==reference && width==reference_width);
+            }
+            if(previous!=-1000) CHECK(reference-previous==1 || reference-previous==2);
+            previous=reference; /* no column-boundary jump during scrolling */
+        }
+    }
     for(int fullscreen=0;fullscreen<2;++fullscreen) {
         mode=fullscreen ? 0x1000 : 0x21d;root_menu=1;options[2]=1;shinka_view_tick();
         CHECK(frontend);

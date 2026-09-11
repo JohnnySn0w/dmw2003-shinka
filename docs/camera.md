@@ -216,8 +216,11 @@ spacing across the column boundary. Border artwork is widened with the panels.
 The guest's packets, textures, selection coordinates and save data stay intact.
 
 Both expanded Start roots anchor the party/currency panels left and the option
-list/cursor right. The top instruction ribbon moves with the right menu at its
-original width, preserving its overhang instead of stretching across the screen.
+list/cursor right. The top instruction ribbon follows the visible 4:3 proportions:
+its left tip sits 52 pixels before the plain root list, or 24 pixels before the
+Items category list beside portraits. Its angled cap retains its original width;
+only the plain body is shortened. Keeping the entire original ribbon exposed
+artwork normally hidden behind the party and made the widescreen bar too long.
 This includes SETTINGS
 and the full-screen root reached by backing out of ITEMS. A validated pointer
 from the resident menu callback gates those transforms; it is cleared on state
@@ -243,7 +246,7 @@ and copied checkpoints are under `output/npc-wide-01/`.
 
 The category selector, two-column inventory lists and item recipient chooser
 now use the field widescreen preference. Party summaries and animated portraits
-stay together on the left; categories and the instruction ribbon move right.
+stay together on the left; categories and the compact instruction ribbon move right.
 Inventory panels and the bottom description expand, while names, icons and
 underlines retain their original sizes. The page counter stays centered and
 the shoulder-button hints follow their respective columns. The selected-item

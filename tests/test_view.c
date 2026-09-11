@@ -97,17 +97,20 @@ int main(void) {
         shinka_menu_wide_rect(field,4,0,0,0,0,319,239,53);
         CHECK(cursor[1]==0x003100e5 && cursor[3]==0x000c0008);
         CHECK(field[1]==0x003100b0 && field[3]==0x00800080);
+        uint32_t button[]={0x64808080,0x00130099,0x38174ab4,0x000c000c};
+        shinka_menu_wide_rect(button,4,0,0,0,0,319,239,53);
+        CHECK(button[1]==0x001300ce && button[2]==0x38174ab4); /* native green triangle */
         for(int band=0;band<=256;band+=256) for(int margin=1;margin<=160;++margin) {
-            /* Captured ribbon: nine 32px tiles, starting at x=34. Its tiles
-             * cross the party/menu split but must move together with x=168. */
-            int end=34+margin;
+            /* Visible 4:3 edge is x=116; preserve the cap, shorten the body. */
+            int end=116+margin;
             for(int tile=0;tile<9;++tile) {
                 int x=34+32*tile;
                 uint32_t ribbon[]={0x64808080,0x000d0000u|(unsigned)x,
                     tile ? 0x26978d20u : 0x26975fd4u,0x00190020};
-                CHECK(!shinka_menu_wide_rect(ribbon,4,0,band,0,band,319,band+239,margin));
+                int width=shinka_menu_wide_rect(ribbon,4,0,band,0,band,319,band+239,margin);
+                CHECK(width>0 && (tile || width==32));
                 CHECK((int16_t)ribbon[1]==end && ribbon[3]==0x00190020);
-                end+=32;
+                end+=width;
             }
             CHECK(end-(168+margin)==154); /* original right edge relative to menu */
         }
@@ -117,6 +120,16 @@ int main(void) {
     mode=0x1000;items_menu=1;options[2]=1;shinka_view_tick();CHECK(frontend);
     for(int band=0;band<=256;band+=256) for(int margin=1;margin<=160;++margin) {
         const unsigned backgrounds[]={0x7da81060,0x7deb1090,0x7da93000};
+        int ribbon_end=144+margin;
+        for(int tile=0;tile<9;++tile) {
+            uint32_t ribbon[]={0x64808080,0x000d0000u|(unsigned)(34+tile*32),
+                tile ? 0x26978d20u : 0x26975fd4u,0x00190020};
+            int width=shinka_menu_wide_rect(ribbon,4,0,band,0,band,319,band+239,margin);
+            CHECK(width>0 && (tile || width==32));
+            CHECK((int16_t)ribbon[1]==ribbon_end && ribbon[3]==0x00190020);
+            ribbon_end+=width;
+        }
+        CHECK(ribbon_end==322+margin); /* 24px visible overhang at the menu's left */
         for(int layer=0;layer<3;++layer) {
             int end=-margin;
             for(int x=0;x<384;x+=48) {
@@ -135,7 +148,7 @@ int main(void) {
             uint32_t glyph[]={0x64808080,((unsigned)positions[i][1]<<16)|(unsigned)positions[i][0],
                 i==10 ? 0x7f28c14cu : i==11 ? 0x7faa0098u : 0x3a170000u,0x000c0008};
             CHECK(!shinka_menu_wide_rect(glyph,4,0,band,0,band,319,band+239,margin));
-            CHECK((int16_t)glyph[1]==positions[i][0]+positions[i][2]*margin);
+            CHECK((int16_t)glyph[1]==positions[i][0]+positions[i][2]*margin+(i==9 ? 24 : 0));
             CHECK(glyph[3]==0x000c0008);
         }
         uint32_t panel[]={0x64808080,0x00c20000,0x7deab368,0x00260028};

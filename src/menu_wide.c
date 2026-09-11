@@ -13,6 +13,13 @@ static int stretch_x(int x, int margin) {
     return (scaled >= 0 ? scaled / 320 : -((-scaled + 319) / 320)) - margin;
 }
 
+static int ribbon_x(int x, int start) {
+    /* The first 32px tile is the angled cap. The original ribbon starts at
+     * x=34, mostly hidden behind the party. Shorten only its plain body to
+     * match the visible 4:3 overhang, keeping the right edge at x=322. */
+    return x <= 66 ? x + start - 34 : start + 32 + (x - 66) * (290 - start) / 256;
+}
+
 /* Panels are tiled textured rectangles, not a single menu bitmap. Expand the
  * panel/background artwork; translate glyphs and icons as intact columns.
  * This edits the host packet only. Returned width uses the renderer's separate
@@ -32,11 +39,11 @@ int shinka_menu_wide_rect(uint32_t* words, int count, int offset_x, int offset_y
     if (root) {
         /* The root UI has its own panel palette and resident white/yellow font
          * palettes. Field tiles, NPCs, shadows and dialogue use other palettes. */
-        if (clut != 0x2697 && clut != 0x3a17 && clut != 0x3417) return 0;
+        if (clut != 0x2697 && clut != 0x3a17 && clut != 0x3417
+            && !(clut == 0x3817 && y >= 13 && y < 32)) return 0;
         if (clut == 0x2697 && y == 13) {
-            /* The instruction ribbon belongs to the right menu, including
-             * its left-hand tiles. Keep its original length and overhang. */
-            dest_x = x + margin;
+            dest_x = ribbon_x(x, 116) + margin;
+            dest_w = ribbon_x(x + w, 116) + margin - dest_x;
         } else dest_x = x + (x >= 140 ? margin : -margin);
     } else if (mode == 0x1000) {
         if ((words[3] == 0x00300030 && (words[2] == 0x7da81060
@@ -45,7 +52,11 @@ int shinka_menu_wide_rect(uint32_t* words, int count, int offset_x, int offset_y
             /* All three background layers and the list/description panels. */
             dest_x = stretch_x(x, margin);
             dest_w = stretch_x(x + w, margin) - dest_x;
-        } else if (clut == 0x2697 && y == 13) dest_x = x + margin;
+        } else if (clut == 0x2697 && y == 13) {
+            dest_x = ribbon_x(x, 144) + margin;
+            dest_w = ribbon_x(x + w, 144) + margin - dest_x;
+        } else if (clut == 0x3a17 && y >= 19 && y < 32 && x >= 150)
+            dest_x = x + margin + 24; /* title clears the intact angled cap */
         else if (y >= 194 && w == 12 && h == 12 && (words[2] & 65535) == 0x3c54
             && clut >= 0x3057 && clut <= 0x3157 && (clut - 0x3057) % 64 == 0)
             dest_x = stretch_x(x + w, margin) - w; /* every advance-icon pulse */

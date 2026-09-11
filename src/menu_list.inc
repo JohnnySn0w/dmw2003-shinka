@@ -109,8 +109,8 @@ void shinka_menu_text(CPUState* cpu) {
         label = READ(p + 0xa4) & 1 ? "Settings save failed" : READ(p + 0xa0) == 4
             ? "Actions: Attacks and reactions" : READ(p + 0xa0) == 6
             ? "Field test: Blank edges" : READ(p + 0xa0) == 1
-            ? (shinka_music_palette_get() && !shinka_music_available() ? "Music pack missing" : "SETTINGS: Left Right") : READ(MODE) == STATUS
-            ? "Triangle: Close Status" : "Triangle: Close Menu";
+            ? (shinka_music_palette_get() && !shinka_music_available() ? "Music pack missing" : "SETTINGS: Left Right")
+            : NULL; /* retain the stock hint, including its colored button glyph */
     } else if (cpu->gpr[31] == 0x80012938) {
         row = READ(p + 0x18);
         if (row >= 8) return;

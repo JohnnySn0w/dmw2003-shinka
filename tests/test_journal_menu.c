@@ -21,6 +21,7 @@ void psx_mod_write_half(uint32_t a, uint16_t v) { memcpy(ram + offset(a), &v, 2)
 void psx_mod_write_byte(uint32_t a, uint8_t v) { ram[offset(a)] = v; ++writes; }
 void psx_mod_write_code_word(uint32_t a, uint32_t v) { psx_mod_write_word(a, v); }
 void shinka_journal_quick_menu(CPUState *cpu);
+void shinka_menu_text(CPUState *cpu);
 void shinka_journal_transition(CPUState *cpu);
 void shinka_menu_allocate(CPUState *cpu);
 void shinka_menu_task_ready(CPUState *cpu);
@@ -95,6 +96,20 @@ int main(void) {
     W(menu + 0x58, 4); shinka_journal_quick_menu(&cpu);
     CHECK(R(menu + 0x58) == 4); /* Square no longer changes STATUS */
     CHECK(shinka_menu_root_active());
+    {
+        /* Preserve the original encoded button hint and its colored glyph;
+         * settings still supplies its custom header, then restores stock. */
+        cpu.gpr[17]=menu;cpu.gpr[31]=0x8001288c;
+        for(int full=0;full<2;++full) {
+            W(0x8004b3f8,full ? 0x1000 : 0x21d);
+            W(menu+0xa0,0);W(menu+0xa4,0);cpu.gpr[5]=0x80150000;cpu.gpr[6]=123;
+            shinka_menu_text(&cpu);CHECK(cpu.gpr[5]==0x80150000 && cpu.gpr[6]==123);
+            W(menu+0xa0,1);shinka_menu_text(&cpu);CHECK(cpu.gpr[5]!=0x80150000);
+            W(menu+0xa0,0);cpu.gpr[5]=0x80150000;cpu.gpr[6]=123;
+            shinka_menu_text(&cpu);CHECK(cpu.gpr[5]==0x80150000 && cpu.gpr[6]==123);
+        }
+        W(0x8004b3f8,0x21d);
+    }
     W(0x8004b3fc, 0x1000); CHECK(!shinka_menu_root_active()); W(0x8004b3fc, 0);
     W(menu + 0xc, 2); CHECK(!shinka_menu_root_active()); W(menu + 0xc, 1);
     W(menu + 0x10, 4); CHECK(!shinka_menu_root_active()); W(menu + 0x10, 3);

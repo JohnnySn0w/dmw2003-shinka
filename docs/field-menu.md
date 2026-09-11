@@ -66,6 +66,9 @@ at child offsets 0xac and 0xb0; three guarded generated memory accesses handle
 these appended slots. The existing destructor owns all children. The two extra
 task words store the page and the displayed settings/error state, including in
 savestates. The original text setters allocate and copy each encoded label.
+The ordinary root keeps its original encoded help text and colored controller
+button glyphs. Settings supplies its own contextual header, then returns to the
+stock hint on exit; spelled-out "Triangle" prompts were a prototype replacement.
 
 The background renderer receives a small dynamically constructed sprite
 descriptor. It copies six tile definitions from the loaded game resource and

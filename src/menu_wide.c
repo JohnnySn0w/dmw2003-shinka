@@ -34,8 +34,9 @@ int shinka_menu_wide_rect(uint32_t* words, int count, int offset_x, int offset_y
          * palettes. Field tiles, NPCs, shadows and dialogue use other palettes. */
         if (clut != 0x2697 && clut != 0x3a17 && clut != 0x3417) return 0;
         if (clut == 0x2697 && y == 13) {
-            dest_x = stretch_x(x, margin);
-            dest_w = stretch_x(x + w, margin) - dest_x;
+            /* The instruction ribbon belongs to the right menu, including
+             * its left-hand tiles. Keep its original length and overhang. */
+            dest_x = x + margin;
         } else dest_x = x + (x >= 140 ? margin : -margin);
     } else if ((words[3] == 0x00300030 && (words[2] == 0x7ca7b850
             || words[2] == 0x7ce65828 || words[2] == 0x7ce75858))

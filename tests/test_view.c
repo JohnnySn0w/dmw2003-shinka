@@ -95,6 +95,20 @@ int main(void) {
         shinka_menu_wide_rect(field,4,0,0,0,0,319,239,53);
         CHECK(cursor[1]==0x003100e5 && cursor[3]==0x000c0008);
         CHECK(field[1]==0x003100b0 && field[3]==0x00800080);
+        for(int band=0;band<=256;band+=256) for(int margin=1;margin<=160;++margin) {
+            /* Captured ribbon: nine 32px tiles, starting at x=34. Its tiles
+             * cross the party/menu split but must move together with x=168. */
+            int end=34+margin;
+            for(int tile=0;tile<9;++tile) {
+                int x=34+32*tile;
+                uint32_t ribbon[]={0x64808080,0x000d0000u|(unsigned)x,
+                    tile ? 0x26978d20u : 0x26975fd4u,0x00190020};
+                CHECK(!shinka_menu_wide_rect(ribbon,4,0,band,0,band,319,band+239,margin));
+                CHECK((int16_t)ribbon[1]==end && ribbon[3]==0x00190020);
+                end+=32;
+            }
+            CHECK(end-(168+margin)==154); /* original right edge relative to menu */
+        }
         root_menu=0;shinka_view_tick();
         CHECK(frontend==!fullscreen); /* full-screen map/status child keeps its own mode */
     }

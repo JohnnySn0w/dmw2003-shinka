@@ -216,7 +216,9 @@ spacing across the column boundary. Border artwork is widened with the panels.
 The guest's packets, textures, selection coordinates and save data stay intact.
 
 Both expanded Start roots anchor the party/currency panels left and the option
-list/cursor right, and widen the top instruction bar. This includes SETTINGS
+list/cursor right. The top instruction ribbon moves with the right menu at its
+original width, preserving its overhang instead of stretching across the screen.
+This includes SETTINGS
 and the full-screen root reached by backing out of ITEMS. A validated pointer
 from the resident menu callback gates those transforms; it is cleared on state
 loads and rejected during another mode, queued transitions, teardown or the

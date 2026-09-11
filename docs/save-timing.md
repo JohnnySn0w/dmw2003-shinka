@@ -45,7 +45,7 @@ The resident load wrapper `0x80014d04` submits a separate asynchronous file
 operation for every 128 bytes. The card library at `0x8003cba4` accepts larger
 sector-aligned requests but performs its file setup and open/read/close sequence
 for each request. The similarly structured wrapper at `0x80014fc4` is the **write**
-path and remains unchanged.
+path; it was left unchanged in that first loading experiment.
 
 Tests used the installed retail-BIOS runtime, normal 50 Hz playback, and copies
 of cards and states under `output/card-loading/`. Measurements start after the
@@ -94,9 +94,49 @@ Validation so far:
 - Generator regression tests require the exact read sites and verify that the
   corresponding write-side instructions remain unchanged.
 
-This is a loading optimization. The roughly 30-second save/write observation
-above remains a separate item. Real card removal, fragmented cards, multiple save
-files and additional campaign saves still merit further integration coverage.
+That first change addressed loading. Saving was subsequently tested below.
+Real card removal, fragmented cards, multiple save files and additional campaign
+saves still merit further integration coverage.
+
+## September 11: saving follow-up
+
+The same batching policy now also applies to the resident **write** wrapper.
+Only its subsequent-request size (`0x800151c8`) and successful completion
+accounting (`0x800151ac`) change. The first sector, retry restart, original
+sector rounding, and the library's asynchronous error paths remain in place.
+The backend still checks and flushes **each individual sector**; no writes are
+deferred until exit and no disk flush is removed.
+
+An overwrite from a copied save-menu checkpoint produced 80 successful file
+sector writes (`0x44`–`0x93`) in both runs. The last sector was first observed at
+**28.72 seconds originally, 7.63 seconds with batching**. An additional card
+housekeeping write to `0x3f` appeared in the candidate trace and is excluded from
+the 80 file writes. Both runs displayed **Saved**.
+
+The independent confirmation runs differed in eight bytes across the full
+128 KiB card: the duplicated play-time fields and their associated integrity
+bytes. The on-screen time differed by one second; all other card bytes matched.
+Artifacts remain local under `output/card-saving/`.
+
+A second controlled run captured a native savestate while an original-speed
+128-byte write was pending. After allowing that baseline to finish, a separate
+profile resumed the checkpoint with batching enabled. It completed the remaining
+writes and produced a **byte-for-byte identical full 128 KiB card**. This replay
+holds the already-prepared save metadata constant and verifies old in-flight
+write compatibility without masking any bytes in the comparison.
+
+Finally, a fresh process opened the independently batched card from the title
+screen through Continue, card selection and file selection. The loaded
+`0x2700`-byte body matched the saved disk sectors exactly, LOADED appeared, and
+the game entered Asuka Inn with the expected story, party and position. The
+source card hash was unchanged throughout. All 14 native tests, 147 Python tests
+and lint checks passed. No card-removal or host-disk-failure injection was done.
+
+`SHINKA_CARD_WRITE_BATCH=0` restores single-sector write submissions independently
+of the loading option. Completion always uses the pending request's serialized
+length, so changing this policy does not reinterpret an old in-flight request.
+Read and write generation require their distinct exact instruction sites; tests
+also ensure applying either hook leaves the other wrapper untouched.
 
 ## Reproduction tooling
 

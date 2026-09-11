@@ -36,9 +36,11 @@ def shard(code, number):
         code = code.replace(needle, needle + '\n    shinka_map_present();')
         declarations.append('extern void shinka_map_present(void);')
     if number == '01':
-        code = card_read_hooks(code)
+        code = card_transfer_hooks(code)
+        code = card_transfer_hooks(code, write=True)
         declarations.append('extern uint32_t shinka_card_read_chunk(uint32_t, uint32_t);')
-        declarations.append('extern uint32_t shinka_card_read_completed(uint32_t, uint32_t, uint32_t);')
+        declarations.append('extern uint32_t shinka_card_write_chunk(uint32_t, uint32_t);')
+        declarations.append('extern uint32_t shinka_card_transfer_completed(uint32_t, uint32_t, uint32_t);')
         needle = '    PGXP_STORE(0xAC800018u, _pgxa, cpu->gpr[0]); }  /* 0x800142B8: 0xAC800018 */'
         if code.count(needle) != 1:
             raise ValueError('Review resident task-advance substate reset')
@@ -64,7 +66,7 @@ def shard(code, number):
                         '#include "SLES_039.36_decls.h"\n' + '\n'.join(declarations))
 
 
-def card_read_hooks(code):
+def card_transfer_hooks(code, *, write=False):
     # Initial and retry submissions remain 128 bytes. Completion accounting
     # uses the library's actual request size, so old
     # in-flight savestates still work. All progress stays in serialized RAM.
@@ -75,15 +77,18 @@ def card_read_hooks(code):
         ('80014F04', '24110080', 0, 'cpu->read_word(0x80048a50u)',
          'cpu->gpr[17] = 128;', 'cpu->gpr[17] = _card_chunk;'),
     )
+    if write:
+        sites = tuple((pc, *site[1:]) for pc, site in zip(('800151AC', '800151C8'), sites))
     for pc, insn, source, progress, assignment, replacement in sites:
         target = 2 if source == 2 else 17
         old = (f'    {{ uint32_t _pgx1 = cpu->gpr[{source}]; {assignment}\n'
                f'    PGXP_ALU(0x{insn}u, cpu->gpr[{target}], _pgx1, 0x00000080u); }}'
                f'  /* 0x{pc}: 0x{insn} */')
         if code.count(old) != 1:
-            raise ValueError(f'Review resident card read site {pc}')
-        size = (f'shinka_card_read_completed(cpu->gpr[19], {progress}, cpu->read_word(0x800828ecu))'
-                if source == 2 else f'shinka_card_read_chunk(cpu->gpr[19], {progress})')
+            raise ValueError(f'Review resident card {"write" if write else "read"} site {pc}')
+        operation = 'write' if write else 'read'
+        size = (f'shinka_card_transfer_completed(cpu->gpr[19], {progress}, cpu->read_word(0x800828ecu))'
+                if source == 2 else f'shinka_card_{operation}_chunk(cpu->gpr[19], {progress})')
         new = old.replace('uint32_t _pgx1', f'uint32_t _card_chunk = {size}; uint32_t _pgx1')
         new = new.replace(assignment, replacement).replace('_pgx1, 0x00000080u)', '_pgx1, _card_chunk)')
         code = code.replace(old, new)

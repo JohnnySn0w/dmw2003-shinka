@@ -64,7 +64,7 @@ outside bridge remains available. See
 [availability rules and current coverage](docs/menu-map.md).
 
 Existing DuckStation memory cards can be copied into isolated test profiles; see [save imports and profile selection](docs/save-profiles.md).
-Memory-card loading now batches reads: the tested save body loads in about 6 seconds instead of 25, with identical loaded data. See [timing and validation](docs/save-timing.md). Saving retains its original timing.
+Memory-card transfers now use larger batches: the tested save body loads in about 6 seconds instead of 25, and saving takes about 8 seconds instead of 29. Per-sector checks and disk flushes are retained. See [timing and validation](docs/save-timing.md).
 
 The [developer navigation tool](docs/developer-navigation.md) provides named
 warps, position bookmarks, measured movement, routes and checkpoints, plus

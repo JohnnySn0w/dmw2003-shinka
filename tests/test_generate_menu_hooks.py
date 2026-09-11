@@ -3,10 +3,10 @@ import unittest
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'tools'))
-from generate_menu_hooks import card_read_hooks, shard
+from generate_menu_hooks import card_transfer_hooks, shard
 
 
-class CardReadHookTests(unittest.TestCase):
+class CardTransferHookTests(unittest.TestCase):
     SOURCE = '''    { uint32_t _pgx1 = cpu->gpr[2]; cpu->gpr[2] = cpu->gpr[2] + 128;
     PGXP_ALU(0x24420080u, cpu->gpr[2], _pgx1, 0x00000080u); }  /* 0x80014EE8: 0x24420080 */
     { uint32_t _pgx1 = cpu->gpr[0]; cpu->gpr[17] = 128;
@@ -16,21 +16,31 @@ class CardReadHookTests(unittest.TestCase):
         for code in ('', self.SOURCE * 2, self.SOURCE.replace('80014EE8', '800151A8'),
                      self.SOURCE.replace('+ 128;', '+ 256;')):
             with self.assertRaises(ValueError):
-                card_read_hooks(code)
+                card_transfer_hooks(code)
 
     def test_preserves_surrounding_io_and_matches_progress(self):
         code = '/* initial request */\n' + self.SOURCE + '\n/* retry and error handling */'
-        result = card_read_hooks(code)
+        result = card_transfer_hooks(code)
         self.assertTrue(result.startswith('/* initial request */'))
         self.assertTrue(result.endswith('/* retry and error handling */'))
-        self.assertIn('shinka_card_read_completed(cpu->gpr[19], cpu->gpr[2], cpu->read_word(0x800828ecu))', result)
+        self.assertIn('shinka_card_transfer_completed(cpu->gpr[19], cpu->gpr[2], cpu->read_word(0x800828ecu))', result)
         self.assertIn('shinka_card_read_chunk(cpu->gpr[19], cpu->read_word(0x80048a50u))', result)
         self.assertEqual(result.count('_pgx1, _card_chunk)'), 2)
 
-    def test_write_wrapper_is_unchanged(self):
+    def test_read_hook_leaves_write_wrapper_unchanged(self):
         writes = self.SOURCE.replace('80014EE8', '800151AC').replace('80014F04', '800151C8')
-        result = card_read_hooks(self.SOURCE + '\n' + writes)
+        result = card_transfer_hooks(self.SOURCE + '\n' + writes)
         self.assertTrue(result.endswith(writes))
+
+    def test_write_batching_targets_only_write_wrapper(self):
+        writes = self.SOURCE.replace('80014EE8', '800151AC').replace('80014F04', '800151C8')
+        result = card_transfer_hooks(self.SOURCE + '\n' + writes, write=True)
+        self.assertTrue(result.startswith(self.SOURCE))
+        self.assertIn('shinka_card_write_chunk(cpu->gpr[19], cpu->read_word(0x80048a50u))', result)
+        self.assertIn('shinka_card_transfer_completed', result)
+        for code in (self.SOURCE, writes * 2, writes.replace('800151AC', '800151A8')):
+            with self.assertRaises(ValueError):
+                card_transfer_hooks(code, write=True)
 
 
 class FrameHookTests(unittest.TestCase):

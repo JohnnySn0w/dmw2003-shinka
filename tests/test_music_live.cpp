@@ -1,5 +1,6 @@
 #include "music_live.h"
 #include <array>
+#include <cmath>
 #include <cstdio>
 #include <cstdlib>
 #include <filesystem>
@@ -32,6 +33,14 @@ int main() {
     shinka_music_block(2);
     shinka_music_key_on(0,1040,ram.data());
     CHECK(shinka_music_matched_voices()==1);
+    CHECK(shinka_music_meter_begin(1));
+    shinka_music_meter_voice(0,500,-500,0); // old pack has no trustworthy role
+    shinka_music_meter_voice(-1,1000,1000,0);
+    shinka_music_meter_voice(24,1000,1000,0);
+    shinka_music_meter_frame();
+    CHECK(shinka_music_meter_rms(3)==500 && shinka_music_meter_rms(0)==0);
+    CHECK(shinka_music_meter_begin(0));
+    CHECK(!shinka_music_meter_active() && shinka_music_meter_frames()==0);
     CHECK(shinka_music_sample(0,1040,4096,700,ram.data(),0)==2000);
     CHECK(shinka_music_sample(0,1040,4096,700,ram.data(),0)==2100);
     CHECK(shinka_music_sample(0,1040,0,700,ram.data(),0)==2200);
@@ -83,6 +92,41 @@ int main() {
         for(int i=0;i<10000;i++) shinka_music_sample(0,1040,4096,700,ram.data(),0);
         CHECK(shinka_music_sample(0,1040,4096,700,ram.data(),0)==700);
         CHECK(shinka_music_sample(0,1040,4096,-1234,ram.data(),1)==-1234);
+        // Meter the role's summed stereo bus, including phase cancellation and
+        // silent frames. Noise and unrecognized voices remain unclassified.
+        CHECK(shinka_music_meter_begin(2));
+        shinka_music_meter_voice(0,300,-400,0);
+        shinka_music_meter_voice(0,-100,100,0);
+        shinka_music_meter_frame();
+        shinka_music_meter_voice(0,600,800,1);
+        shinka_music_meter_voice(1,-600,-800,0);
+        shinka_music_meter_frame();
+        CHECK(!shinka_music_meter_active() && shinka_music_meter_frames()==2);
+        CHECK(std::abs(shinka_music_meter_rms(role)-std::sqrt(130000.0/4))<.0001);
+        CHECK(shinka_music_meter_peak(role)==300 && shinka_music_meter_rms(3)==0);
+        // Bounded measurement freezes exactly at its requested frame count.
+        shinka_music_meter_voice(0,32767,32767,0);shinka_music_meter_frame();
+        CHECK(shinka_music_meter_frames()==2 && shinka_music_meter_peak(role)==300);
+        CHECK(!shinka_music_meter_begin(1323001));
+        CHECK(shinka_music_meter_frames()==2);
+        CHECK(shinka_music_meter_begin(1));
+        shinka_music_meter_voice(1,600,800,0);shinka_music_meter_frame();
+        CHECK(std::abs(shinka_music_meter_rms(3)-std::sqrt(500000.0))<.0001);
+        CHECK(shinka_music_meter_peak(3)==800 && shinka_music_meter_peak(99)==0);
+        CHECK(shinka_music_meter_begin(10));shinka_music_reset();
+        CHECK(!shinka_music_meter_active() && shinka_music_meter_frames()==0);
+        // Metering never changes the replacement sample stream or its phase.
+        for(int palette=0;palette<4;++palette) {
+            std::array<int16_t,16> baseline{};
+            shinka_music_block(palette);shinka_music_key_on(0,1040,ram.data());
+            for(auto& s:baseline) s=shinka_music_sample(0,1040,4096,700,ram.data(),0);
+            shinka_music_key_on(0,1040,ram.data());CHECK(shinka_music_meter_begin(16));
+            for(auto s:baseline) {
+                auto observed=shinka_music_sample(0,1040,4096,700,ram.data(),0);
+                CHECK(observed==s);
+                shinka_music_meter_voice(0,observed,-observed,0);shinka_music_meter_frame();
+            }
+        }
         CHECK(ram==before);
     }
     // A root two octaves above the rendered reference compensates a quarter-

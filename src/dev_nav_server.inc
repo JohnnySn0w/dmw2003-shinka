@@ -45,6 +45,18 @@ static void handle_shinka_nav(int id,const char* json) {
             id,shinka_music_palette_get(),shinka_music_matched_voices(),shinka_music_status());
         return;
     }
+    if (!strcmp(op,"music-meter")) {
+        int frames = json_get_int(json,"frames",-1);
+        if (frames != -1 && (frames < 0 || !shinka_music_meter_begin((unsigned)frames))) {
+            send_err(id,"Use 0..1323000 meter frames (0 clears)");return;
+        }
+        send_fmt("{\"id\":%d,\"ok\":true,\"frames\":%u,\"active\":%s,"
+            "\"rms\":[%.6f,%.6f,%.6f,%.6f],\"peak\":[%.0f,%.0f,%.0f,%.0f]}",
+            id,shinka_music_meter_frames(),shinka_music_meter_active() ? "true" : "false",
+            shinka_music_meter_rms(0),shinka_music_meter_rms(1),shinka_music_meter_rms(2),shinka_music_meter_rms(3),
+            shinka_music_meter_peak(0),shinka_music_meter_peak(1),shinka_music_meter_peak(2),shinka_music_meter_peak(3));
+        return;
+    }
     if (!strcmp(op,"lab")) {
         ShinkaNavLab s;
         error=shinka_nav_lab(&s);

@@ -16,7 +16,7 @@ namespace {
 constexpr uint32_t RAM = 512 * 1024;
 constexpr float FADE = 1.0f / 2205.0f; // 50 ms at the SPU's 44100 Hz.
 struct Wave { std::vector<int16_t> pcm; uint32_t loop = 0; bool looping = false; };
-struct Sample { uint32_t offset = 0; float gain = 1; double rate = 1; std::array<Wave, 3> waves; };
+struct Sample { uint32_t offset = 0; unsigned role = 3; float gain = 1; double rate = 1; std::array<Wave, 3> waves; };
 struct Bank { std::vector<uint8_t> original; std::vector<Sample> samples; };
 struct Voice {
     const Sample* sample = nullptr;
@@ -32,6 +32,11 @@ std::array<Voice, 24> voices;
 int requested = 0;
 bool written = false;
 unsigned matched = 0;
+struct Meter {
+    unsigned remaining = 0, frames = 0;
+    std::array<std::array<int64_t, 2>, 4> sum{};
+    std::array<double, 4> squares{}, peak{};
+} meter;
 char status[128] = "Original (music pack missing)";
 
 uint32_t u32(std::istream& file) {
@@ -59,6 +64,7 @@ extern "C" void shinka_music_reset(void) {
     voices = {};
     matched = 0;
     written = false;
+    meter = {};
 }
 extern "C" void shinka_music_written(void) { written = true; }
 extern "C" int shinka_music_available(void) { return !banks.empty(); }
@@ -91,6 +97,7 @@ extern "C" int shinka_music_load(const char* path) {
                 check(sample.offset % 16 == 0 && sample.offset <= bytes - 16, "invalid sample offset");
                 const auto role = tagged ? u32(file) : 0;
                 check(role <= 2, "invalid music instrument role");
+                sample.role = tagged ? role : 3;
                 // Apply to alternate timbres only, before the original SPU's
                 // envelope/volume/reverb. Keep melody level and headroom intact.
                 // Legacy packs carry no role information: never guess from pitch.
@@ -201,3 +208,36 @@ extern "C" int16_t shinka_music_sample(int index, uint32_t address, uint32_t pit
 
 extern "C" const char* shinka_music_status(void) { return status; }
 extern "C" unsigned shinka_music_matched_voices(void) { return matched; }
+
+extern "C" int shinka_music_meter_begin(unsigned frames) {
+    if (frames > 30 * 44100) return 0;
+    meter = {};
+    meter.remaining = frames;
+    return 1;
+}
+extern "C" int shinka_music_meter_active(void) { return meter.remaining != 0; }
+extern "C" void shinka_music_meter_voice(int index, int32_t left, int32_t right, int noise) {
+    if (!meter.remaining || index < 0 || index >= 24) return;
+    const auto* sample = voices[index].sample;
+    const unsigned role = sample && !noise ? sample->role : 3;
+    meter.sum[role][0] += left;
+    meter.sum[role][1] += right;
+}
+extern "C" void shinka_music_meter_frame(void) {
+    if (!meter.remaining) return;
+    for (unsigned role = 0; role < 4; ++role) {
+        const double left = double(meter.sum[role][0]), right = double(meter.sum[role][1]);
+        // Sum simultaneous voices BEFORE squaring: include interference within
+        // each group, not the sum of unrelated individual-voice RMS values.
+        meter.squares[role] += left * left + right * right;
+        meter.peak[role] = std::max({meter.peak[role], std::abs(left), std::abs(right)});
+    }
+    meter.sum = {};
+    ++meter.frames;
+    --meter.remaining;
+}
+extern "C" unsigned shinka_music_meter_frames(void) { return meter.frames; }
+extern "C" double shinka_music_meter_rms(unsigned role) {
+    return role < 4 && meter.frames ? std::sqrt(meter.squares[role] / (2.0 * meter.frames)) : 0;
+}
+extern "C" double shinka_music_meter_peak(unsigned role) { return role < 4 ? meter.peak[role] : 0; }

@@ -175,3 +175,71 @@ Developer diagnostics: `{"cmd":"shinka_nav","op":"music"}` returns the saved
 palette, pack status and count of matched note starts. Adding `"palette":0..3`
 uses the same persistent setter as SETTINGS. These settings are shared across
 save profiles; restore the player's prior selection after testing.
+
+## Measuring instrument-group balance
+
+An opt-in diagnostic meter now measures the stereo sum of each routed group:
+melody, bass, percussion, and unclassified. It observes the real voice mixer
+**after ADSR and voice volume/panning, before shared reverb, main volume and
+bus saturation**. Voices in each group are summed before computing RMS, so
+phase cancellation is included. Peaks and RMS use signed-16-bit PCM units,
+but group sums may exceed that range before the game's final saturation.
+These measurements do not include CD/movie input or the shared reverb return.
+
+The meter does not change audio, guest memory, sample cursors or saved settings.
+It stops automatically after the requested number of 44,100 Hz frames (maximum
+30 seconds), is inactive by default, and resets on savestate load. Normal
+playback skips the per-voice accumulation and per-frame meter calls. Untagged
+legacy packs, unmatched voices and noise are explicitly unclassified; they are
+not guessed to be melody. Classified roles still depend on provisional pack
+routing, including the first-tone rule for shared samples.
+
+```json
+{"cmd":"shinka_nav","op":"music-meter","frames":264600}
+{"cmd":"shinka_nav","op":"music-meter"}
+```
+
+The first request starts a six-second measurement; the second reads progress.
+The response contains `active`, completed `frames`, and four-element `rms` and
+`peak` arrays in the role order above. `frames:0` clears/disables the meter.
+The completed result remains readable until another measurement or state load.
+
+For a running debug session with **copied** checkpoints, the comparison tool
+reloads each scene for each palette, settles the crossfade, writes JSON and a
+Markdown table, then restores the prior Soundtrack setting even on failure:
+
+```powershell
+python tools/measure_music_balance.py --port 4384 --output output/mix-check --scene central-park:1 --scene battle:4 --seconds 6
+```
+
+Use slots appropriate to that diagnostic profile. These sequential short
+replays are not sample-aligned stems, and RMS does not establish perceived
+brightness or musical taste. Zero bass-group energy means that no samples
+tagged as bass contributed in the window; it does not establish that the
+arrangement has no low-frequency material.
+
+The first live pass used `SHKMUS03` pack hash
+`17f7c7279c2c4b7231bee24ad4f4257bc4d23f77872b13a7871f3aecd17a12c6`.
+The table shows **percussion RMS relative to melodic-group RMS**, in dB:
+
+| Copied scene | Original | DS | Sampled | Chip |
+| --- | ---: | ---: | ---: | ---: |
+| Central Park, six seconds | -8.6 | -12.2 | -11.6 | -8.0 |
+| Idle random battle, six seconds | +4.5 | -1.5 | -0.9 | +5.0 |
+| South Station, six seconds | -16.2 | -14.5 | -12.1 | -13.3 |
+| Starter selection, eight seconds | +0.2 | -9.6 | -8.0 | -8.2 |
+
+Battle bass relative to melody was +6.6 dB Original, +2.3 DS, +1.5 Sampled,
+and +3.7 Chip. The current DS/Sampled battle reductions are visible in these
+measurements, while Chip percussion is close to Original. South Station shows
+a different result, so a universal additional percussion cut is not justified
+by this pass. Instrument routing, timbre, and longer listening comparisons
+remain the next checks. No mix gains were changed. North Badland W was not
+verified in this pass: an older checkpoint label pointed to starter selection,
+which was identified visually and recorded under its actual scene.
+
+Local results are under `output/music-meter-01/results/` and `starter-menu/`.
+All 16 native suites, 169 Python tests and Ruff passed. New tests cover role
+grouping, stereo RMS, cancellation, silent frames, bounds, legacy/noise
+classification, state reset, unchanged sample output and settings restoration
+after a successful or interrupted measurement.

@@ -34,7 +34,53 @@ int main(void) {
         CHECK(bar[1]==0x0025005A && bar[3]==0x0025FFDA && bar[5]==0x002B005A && bar[7]==0x002BFFDA);
         uint32_t description[]={0x64808080,0x00D00125,0x3B171580,0x000C0008};
         shinka_battle_hud_command(description,4,0,band,0,band,319,band+239,53);
-        CHECK(description[1]==0x00D000F0); /* rightmost text follows left-aligned box */
+        CHECK(description[1]==0x00D0015E); /* MP cost follows the right box edge */
+        uint32_t prose[]={0x64808080,0x00D00125,0x3A171580,0x000C0008};
+        shinka_battle_hud_command(prose,4,0,band,0,band,319,band+239,53);
+        CHECK(prose[1]==0x00D000ED); /* long ordinary dialogue does not split */
+        /* Captured pulse palettes: each must retain one anchor in both buffers,
+         * at every supported width. Ordinary text/other textures stay left. */
+        const unsigned advance_cluts[]={0x3057,0x3097,0x30d7,0x3117,0x3157};
+        for(unsigned c=0;c<5;++c) for(int margin=1;margin<=160;++margin) {
+            uint32_t advance[]={0x64808080,0x00D00123,
+                (advance_cluts[c]<<16)|0x3c54,0x000C000C};
+            shinka_battle_hud_command(advance,4,0,band,0,band,319,band+239,margin);
+            CHECK(advance[1]==(0x00D00000u|(291u+margin+4)));
+            CHECK(advance[2]==((advance_cluts[c]<<16)|0x3c54) && advance[3]==0x000C000C);
+        }
+        for(int unrelated=0;unrelated<3;++unrelated) {
+            uint32_t sprite[]={0x64808080,0x00D00123,0x30D73C54,0x000C000C};
+            if(unrelated==0) sprite[2]^=1; /* different texture */
+            if(unrelated==1) sprite[2]=0x30d63c54; /* different CLUT column */
+            if(unrelated==2) sprite[2]=0x31973c54; /* outside pulse rows */
+            shinka_battle_hud_command(sprite,4,0,band,0,band,319,band+239,53);
+            CHECK(sprite[1]==0x00D000EB);
+        }
+        options[0]=0;shinka_view_tick();
+        for(unsigned c=0;c<5;++c) {
+            uint32_t advance[]={0x64808080,0x00D00123,(advance_cluts[c]<<16)|0x3c54,0x000C000C};
+            shinka_battle_hud_command(advance,4,0,band,0,band,319,band+239,53);
+            CHECK(advance[1]==0x00D00123);
+        }
+        options[0]=1;shinka_view_tick();
+        for(int margin=1;margin<=160;++margin) {
+            int x=0, previous=8-margin;
+            const int xs[]={11,19,83,147,211,275};
+            for(int tile=0;tile<6;++tile) {
+                uint32_t words[]={0x64808080,0x00bc0000u|xs[tile],
+                    tile==0 ? 0x3e617de0u : tile==5 ? 0x3e614670u : 0x3e6120bcu,
+                    0x00260000u|(tile==0 ? 8 : tile==5 ? 32 : 64)};
+                int width=shinka_battle_dialogue_tile(words,4,0,band,0,band,319,band+239,margin,&x);
+                CHECK(width>0 && x==previous);
+                if(tile==0 || tile==5) CHECK(width==(tile==0 ? 8 : 32));
+                previous=x+width;
+                CHECK(!shinka_battle_dialogue_tile(words,4,160,band,0,band,319,band+239,margin,&x));
+                CHECK(!shinka_battle_dialogue_tile(words,4,0,band,0,band,319,band+239,0,&x));
+                words[2]^=1; /* unrelated texture must not stretch */
+                CHECK(!shinka_battle_dialogue_tile(words,4,0,band,0,band,319,band+239,margin,&x));
+            }
+            CHECK(previous==311+margin);
+        }
         uint32_t cap[]={0x64808080,0x003E0082,0x3EA05940,0x00150020};
         shinka_battle_hud_command(cap,4,0,band,0,band,319,band+239,53);
         CHECK(cap[1]==0x003E004D); /* 162px list edge must not split at x=160 */

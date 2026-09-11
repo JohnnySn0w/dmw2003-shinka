@@ -25,7 +25,7 @@ if(_hud_pos EQUAL -1)
     message(FATAL_ERROR "Review pinned GPU command collection for battle HUD")
 endif()
 string(REPLACE "${_hud_anchor}"
-    "${_hud_anchor}\n    shinka_battle_hud_command(gp0_cmd_buf, gp0_words_needed, draw_offset_x, draw_offset_y,\n        draw_area_left, draw_area_top, draw_area_right, draw_area_bottom, ws_nw_extra()/2);"
+    "${_hud_anchor}\n    int dialogue_x = 0;\n    shinka_hud_dialogue_width = shinka_battle_dialogue_tile(gp0_cmd_buf, gp0_words_needed, draw_offset_x, draw_offset_y,\n        draw_area_left, draw_area_top, draw_area_right, draw_area_bottom, ws_nw_extra()/2, &dialogue_x);\n    shinka_battle_hud_command(gp0_cmd_buf, gp0_words_needed, draw_offset_x, draw_offset_y,\n        draw_area_left, draw_area_top, draw_area_right, draw_area_bottom, ws_nw_extra()/2);\n    if (shinka_hud_dialogue_width) gp0_cmd_buf[1] = (gp0_cmd_buf[1]&0xffff0000u)|(uint16_t)dialogue_x;"
     _hud_code "${_hud_code}")
 file(READ "${CMAKE_CURRENT_SOURCE_DIR}/src/battle_hud_gpu.inc" _hud_helpers)
 set(_hud_copy "            gr_copy_rect(src_x, src_y, dst_x, dst_y, w, h);")
@@ -41,7 +41,13 @@ string(REPLACE "${_hud_target}"
     "${_hud_target}\n    if (shinka_battle_hud_portrait(draw_area_left,draw_area_top,draw_area_right,draw_area_bottom,ws_nw_extra()/2)) {\n        gr_wide_set_target(0); return;\n    }"
     _hud_code "${_hud_code}")
 string(REPLACE "static void gp0_execute_command(void) {" "${_hud_helpers}\nstatic void gp0_execute_command(void) {" _hud_code "${_hud_code}")
-file(CONFIGURE OUTPUT "${_generated}/gpu.c" CONTENT "#include \"battle_hud.h\"\n${_hud_code}" @ONLY)
+set(_hud_stretch "    int ws_w = 0;\n    if (ws_active() && w > 0) {")
+string(FIND "${_hud_code}" "${_hud_stretch}" _hud_stretch_pos)
+if(_hud_stretch_pos EQUAL -1)
+    message(FATAL_ERROR "Review pinned textured rectangle stretch path")
+endif()
+string(REPLACE "${_hud_stretch}" "    int ws_w = shinka_hud_dialogue_width;\n    if (ws_active() && w > 0) {" _hud_code "${_hud_code}")
+file(CONFIGURE OUTPUT "${_generated}/gpu.c" CONTENT "#include \"battle_hud.h\"\nstatic int shinka_hud_dialogue_width;\n${_hud_code}" @ONLY)
 get_target_property(_hud_sources shinka SOURCES)
 if(NOT "${_hud_gpu}" IN_LIST _hud_sources)
     message(FATAL_ERROR "Review pinned GPU source target")

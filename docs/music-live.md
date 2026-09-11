@@ -25,6 +25,16 @@ not play an exported MIDI or a looping whole-song WAV beside the emulator.
 - **DS:** a compact, low-pass-filtered sample/chip blend (70/30 before filtering).
 - **Original:** the original decoded ADPCM samples.
 
+The second balance pass raises the melodic source-level ceiling from .22 to
+.50 RMS while retaining .80 peak headroom per sample. The old universal ceiling
+reduced strong melodic samples much more than quieter percussion. Non-bass
+melodic instruments also receive a modest +3 dB presence lift around 2.2 kHz
+in the sample domain, before native SPU pitch scaling. DS melodic samples regain
+their target level after blending/filtering. Drums retain their previous balance
+in all three alternatives; Original and sound effects are unchanged. This is a
+shared first-pass correction, not a finished mix for every track. Source/target
+RMS and achieved palette levels are recorded per route in `music-live.json`.
+
 These are provisional **sample-level palettes**, not the exact arrangements in
 the earlier offline previews. Asuka's sampled/chip choices start from its profile;
 other banks use recorded automatic choices that need listening review. A sample

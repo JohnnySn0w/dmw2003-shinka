@@ -18,6 +18,36 @@ from music_chip import blep
 
 RATE = 44100
 ROOT = Path(__file__).resolve().parents[1]
+MIX = dict(revision=2, melodic_rms_ceiling=.50, percussion_rms_ceiling=.22,
+           minimum_rms=.025, peak_ceiling=.80, presence_db=3., presence_hz=2200,
+           ds_cutoff_hz=8000)
+
+
+def rms(pcm):
+    return float(np.sqrt(np.mean(np.asarray(pcm, dtype=np.float64)**2)))
+
+
+def lowpass(pcm, cutoff):
+    taps = np.sinc(2*cutoff/RATE*(np.arange(31)-15))*np.hamming(31)
+    taps /= taps.sum()
+    return np.convolve(pcm, taps, mode='same')
+
+
+def presence(pcm, instrument):
+    # Sample-domain presence shelf, before the native SPU pitch/envelope. Keep
+    # drums and bass unboosted so snare brightness cannot bury the melody again.
+    if instrument in ('drums', 'bass'):
+        return pcm
+    high = pcm-lowpass(pcm, MIX['presence_hz'])
+    return pcm+(10**(MIX['presence_db']/20)-1)*high
+
+
+def level_target(original, instrument):
+    # The old universal .22 RMS ceiling disproportionately attenuated strong
+    # melodic source samples. Preserve their source level up to a safer ceiling;
+    # drums retain their previous target and every wave retains peak headroom.
+    ceiling = MIX['percussion_rms_ceiling' if instrument=='drums' else 'melodic_rms_ceiling']
+    return min(ceiling, max(MIX['minimum_rms'], rms(original)))
 
 
 def loop_wave(pcm, root, looping):
@@ -42,7 +72,7 @@ def normalized(pcm, target):
     peak = float(np.max(np.abs(pcm)))
     rms = float(np.sqrt(np.mean(pcm * pcm)))
     require(peak > 1e-7 and rms > 1e-8, 'Silent live instrument')
-    pcm = pcm * min(target / rms, .80 / peak)
+    pcm = pcm * min(target / rms, MIX['peak_ceiling'] / peak)
     return np.rint(np.clip(pcm, -1, 1) * 32767).astype('<i2')
 
 
@@ -143,27 +173,31 @@ def build(exports, inputs, bank_dir, output):
             chip_root = root if not percussion else (33 if oscillator=='kick' else 48) + root-tone['key_min']
             generated = chip(chip_root, oscillator, sample['id'])
             looping = sample['loop_frames'] is not None
-            sampled, loop = loop_wave(sampled, root, looping)
-            generated, chip_loop = loop_wave(generated, chip_root, looping)
+            sampled, loop = loop_wave(presence(sampled, instrument), root, looping)
+            generated, chip_loop = loop_wave(presence(generated, instrument), chip_root, looping)
             with wave.open(str(folder/sample['wav'])) as f:
                 original = np.frombuffer(f.readframes(f.getnframes()), dtype='<i2').astype(np.float64)/32768
-            target = min(.22, max(.025, float(np.sqrt(np.mean(original**2)))))
+            target = level_target(original, instrument)
             sampled = normalized(sampled, target)
             generated = normalized(generated, target)
             # Compact hybrid with an audible synthetic component. Unlike the
             # offline Asuka profile, this runs per sample, not per MIDI part.
-            ds = .7*sampled.astype(np.float64) + .3*generated.astype(np.float64)
+            ds = (.7*sampled.astype(np.float64) + .3*generated.astype(np.float64))/32767
             # Finite low-pass, preserving the shared loop and source pitch.
-            taps = np.sinc(2*8000/RATE*(np.arange(31)-15))*np.hamming(31)
-            taps /= taps.sum()
-            ds = np.convolve(ds, taps, mode='same')
-            ds = np.rint(np.clip(ds, -32768, 32767)).astype('<i2')
+            ds = lowpass(ds, MIX['ds_cutoff_hz'])
+            # Filtering and phase cancellation previously made DS quieter than
+            # its component palettes. Restore the intended level after the blend.
+            ds = (np.rint(np.clip(ds, -1, 1)*32767).astype('<i2')
+                  if instrument=='drums' else normalized(ds, target))
             row = struct.pack('<I', sample['body_offset'])
             for pcm, start in ((ds,loop),(sampled,loop),(generated,chip_loop)):
                 row += struct.pack('<II',len(pcm),start)+pcm.tobytes()
             samples.append(row)
             routes.append(dict(sample=sample['id'], program=program, root=root, soundfont=instrument,
                                chip=oscillator, source_loop=looping, shared_tone_count=len(owners),
+                               original_rms=rms(original), target_rms=target,
+                               palette_rms={key:rms(pcm.astype(np.float64)/32767)
+                                            for key,pcm in [('ds',ds),('sampled',sampled),('chip',generated)]},
                                routing='Asuka profile by sample' if original_route else 'provisional automatic'))
         blobs.append(struct.pack('<II',len(body),len(samples))+body+b''.join(samples))
         report.append(dict(bank=name, source_sha256=meta['inputs'], samples=routes))
@@ -173,7 +207,7 @@ def build(exports, inputs, bank_dir, output):
     data = b'SHKMUS01'+struct.pack('<II',RATE,len(blobs))+b''.join(blobs)
     (output/'music-live.bin').write_bytes(data)
     (output/'music-live.json').write_text(json.dumps(dict(schema=1,sha256=hashlib.sha256(data).hexdigest(),
-        sample_rate=RATE,banks=report,cc0_banks=json.loads(CATALOG.read_text()),
+        sample_rate=RATE,mix=MIX,banks=report,cc0_banks=json.loads(CATALOG.read_text()),
         limitations=['Provisional sample-level routing; not the same arrangement as offline previews.',
                      'Shared samples use their first tone route; original SPU timing/envelopes/pan remain.',
                      'Unknown banks, ambience and streamed audio retain original instruments.']),indent=2)+'\n')

@@ -5,4 +5,6 @@ void shinka_battle_hud_command(uint32_t* words, int count, int offset_x, int off
     int left, int top, int right, int bottom, int margin);
 int shinka_battle_hud_portrait(int left, int top, int right, int bottom, int margin);
 int shinka_battle_hud_cursor(int sx, int sy, int dx, int dy, int w, int h, int margin);
+int shinka_battle_dialogue_tile(const uint32_t* words, int count, int offset_x, int offset_y,
+    int left, int top, int right, int bottom, int margin, int* x);
 #endif

@@ -12,8 +12,11 @@ They can be combined. Defaults retain 4:3 and 100%. Changes persist in the
 existing mod state and apply to ordinary battles (mode `0x600`). Fields, the lab,
 card battles, full-screen menus and rewards retain their original view. In 16:9,
 enemy health, battle commands/submenus and bottom dialogue stay aligned on the
-left; player health/MP and the miniature portrait move to the right. HUD sizes
-remain unchanged. The 4:3 layout retains the original positions.
+left; player health/MP and the miniature portrait move to the right. The bottom
+dialogue panel spans between the outer edges of both health panels. Its text and
+corner artwork keep their original size; technique MP costs follow the right
+edge. Other HUD sizes remain unchanged. The 4:3 layout retains the original
+positions and widths.
 
 These are experiments, not a claim that every arena or cinematic was authored
 for the expanded framing. Attack effects, arena boundaries, sky geometry and
@@ -39,6 +42,12 @@ twelve 12x12 CopyImage tiles at VRAM y=244; `src/battle_hud_gpu.inc` draws those
 through the renderer facade so a negative left-margin destination cannot wrap
 into texture memory. These hooks are gated on ordinary battle mode and an
 active native-wide view.
+
+The dialogue extension recognizes its native six-piece textured panel. It
+preserves the two end caps and stretches only the four middle strips through
+the renderer's scaled-rectangle path. Integer boundary calculations leave no
+gaps between pieces. Dialogue text stays left anchored even on long second
+lines; the MP-cost font is identified separately from ordinary prose.
 
 Debug tooling uses `shinka_nav` operation `view`. With no arguments it reports
 stored width/zoom and effective wide/percent values. To persist a choice, supply
@@ -70,6 +79,23 @@ all twelve cursor tiles and rejection outside the supported environment.
 Live copied-save checks under `output/hud-01/` cover Fight, Tech, DV, Tag and Item
 layouts, all six width/zoom combinations on the Tech screen, and left-aligned
 attack dialogue. Player settings were restored after the diagnostic run.
+
+### Dialogue indicator pulse correction — 2026-09-10
+
+The dialogue advance indicator previously jumped horizontally during its pulse.
+It uses a fixed 12x12 sprite at (291,208), UV `0x3c54`, with five changing CLUTs:
+`0x3057`, `0x3097`, `0x30d7`, `0x3117`, and `0x3157`. The initial alignment rule
+recognized only `0x30d7`; other pulse phases inherited left-aligned text placement.
+The fix recognizes all five palettes while retaining the exact position, UV and
+size checks. Palette animation itself remains unchanged.
+
+The issue reproduced with native battle optimization disabled. After rebuilding,
+24 live screenshots with it enabled covered all five palette variants: every
+image showed the marker at the outer right anchor and none at the old position.
+Regression checks cover every palette, both framebuffer bands, margins 1..160,
+unchanged 4:3 placement, and rejection of unrelated textures/palettes. The view
+suite passed. Local packet and screenshot evidence is in ignored
+`output/dialogue-indicator-01/`.
 
 ## Field expansion audit
 

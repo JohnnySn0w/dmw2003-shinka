@@ -1,8 +1,9 @@
 # Battle animation speed
 
-Status: independent 1x/2x Idle poses and Action poses controls in
+Status: independent 1x, 1.25x, 1.5x and 2x Idle poses and Action poses controls in
 **SETTINGS > Battle motion**, 2026-09-11. Both default to original speed and
-persist separately. The [battle geometry optimization](performance.md) reduces
+persist separately. The game menu displays 100%, 125%, 150% and 200%.
+The [battle geometry optimization](performance.md) reduces
 execution cost independently of these animation rates.
 
 ## Controls and guarded timeline hook
@@ -17,8 +18,11 @@ in Settings. Loading a savestate retains the current saved preferences.
 For diagnostic comparisons only, `SHINKA_BATTLE_MOTION=2` forces both rates to 2x
 for the process. Unset/other values use the menu preferences. This override is
 not saved. The debug command `shinka_nav` with `op: "motion"` reads the rates;
-optional `option` (0 idle, 1 action) and `value` (1 or 2) use the same validated
-setting/persistence path as the menu.
+optional `option` (0 idle, 1 action) and `value` (100, 125, 150 or 200) use the
+same validated setting/persistence path as the menu. Legacy diagnostic values
+1 and 2 remain accepted; replies report numeric multipliers such as 1.25.
+Persisted keys retain the strings `"1"` and `"2"`, with `"1.25"` and `"1.5"`
+added as manifest choices. Existing settings need no migration or reinterpretation.
 
 The owned interpreter copy intercepts only the cycle-aware load of `0x800a4464`
 at `0x80083d30`. It preserves that load's timing/hazard accounting and subsequent
@@ -34,11 +38,21 @@ guards generated from the supported owned `FIGHTSTG.PRO`. It rejects ambiguous
 ownership, unsupported overlays, out-of-bounds tables, completed clips, and
 unexpected elapsed steps. Scenery sharing the model callback is excluded.
 
-The experimental rate doubles steps 1â€“4 and stops at the first loop/end marker
-or final entry, leaving marker processing and completion notification to the
-original routine. Remainders are discarded at boundaries; there is no host-side
-phase state to leak across save loads or allocation reuse. Ordinary interpolation
-entries with the high bit set are not mistaken for exact `0x8000` loop markers.
+The experimental rates scale elapsed steps 1–4 and stop at the first loop/end
+marker or final entry, leaving marker processing and completion notification to
+the original routine. Ordinary interpolation entries with the high bit set are
+not mistaken for exact `0x8000` loop markers.
+
+Each of the group's eight model slots has a host-only quarter-step accumulator.
+It carries fractional time through ordinary steps and native loop jumps; integer
+overshoot at a marker is discarded. Thus short loops and script-held actions
+need not last exactly the inverse of the selected multiplier. The accumulator
+is retained only when model, control, resource, clip, entry count, selected rate
+and expected next position agree. Any rejected guard/delta clears that model's
+fraction. The clip setup's final position store (`0x80083c14`, exact instruction
+`0xae220080`) clears it even for a same-clip restart or recycled allocation.
+Save loading and successful settings changes clear all fractions. These resets
+write no guest state. Returning to 100% uses the original elapsed step.
 
 Scope remains experimental: the idle/action split follows the default-pose
 marker rather than universal attack clip IDs. Digivolution, multi-hit,
@@ -52,7 +66,48 @@ pointers, changed overlay bytes, immediate recovery after rejection, and absence
 of guest-memory writes. Local generated guard bytes and game captures remain
 ignored and are not distributed.
 
-### Menu integration validation
+### Fractional-rate validation (2026-09-11)
+
+Live field and full-screen Status menus showed both percentages correctly
+and returned to the Battle motion row. The field menu cycled all four values
+and wrapped backward from 100% to 200%; native tests exercised cycling in both roots. Fractional preferences survived both slot-10 loading and a
+process restart. The native checks cover cumulative elapsed time with mixed
+1–4-frame steps, independent actors, loop/end boundaries, same-clip resets,
+state resets, changed identities/rates/positions and guard failures.
+
+Using the copied Patamon-versus-Kunemon checkpoint:
+
+| Action rate | Basic attack clips 15 / 17 / 19 (guest frames) |
+| --- | --- |
+| Original 1x reference | 18 / 18 / 26 |
+| 1.25x | 14 / 14 / 20 |
+| 1.5x | 12 / 12 / 16 |
+| Earlier 2x reference | 8 / 8 / 14 |
+
+The 1.25x and 1.5x basic attacks completed each of those clips once and returned
+to the field. Script-held clips remained about 52 and 112–114 frames. Air Blast
+at 1.5x still held clip 39 for 207 frames, with six loops rather than the original
+three. All three complete write captures passed recorder-integrity checks
+(10,784, 10,762 and 10,309 writes respectively), and all 7,904 saved party bytes
+matched the corresponding references afterward, including Air Blast's 24 MP
+cost. Damage equality is not claimed: the captured Air Blast showed 976 rather
+than 969, consistent with the previously traced timing-dependent RNG behavior
+below. These lethal-enemy outcomes do not establish broader multi-hit or boss
+correctness, and screenshots do not establish audiovisual hit synchronization.
+
+Evidence is local under `output/motion-fraction/`,
+`output/battle-events/fraction-*` and `fraction125-*`, with matching outcomes in
+`output/motion-prototype/`. All 135 Python tests, 13 native tests and Ruff passed.
+A final 100%/100% battle also matched the original party data. Both test
+preferences were restored to 100%, and the installed build launched successfully
+with original-speed defaults. The previous executable/map/manifest were backed
+up under `output/motion-fraction/installed-before/`; no test mod state or save
+files were copied into the installed profile.
+
+The fractional build executable SHA-256 is
+`b49284c68592dd364fc2791fb7c2bfe4ef58dc0d0530d09c6cb3968e359c5e9f`.
+
+### Earlier 1x/2x menu integration validation
 
 Live checks covered the field overlay and full-screen Status root, both rate
 rows, returning to Battle motion, and persistence across process restart and
@@ -77,7 +132,7 @@ Local captures are under `output/motion-settings/` and
 13 native tests, and Ruff. Both rate preferences were returned to 1x before
 installation; original saves and the user's other settings were retained.
 
-Installed executable SHA-256:
+That earlier menu build executable SHA-256:
 `c432708cef53c7b8bdca330e25173dd88e1bcbc70fa5a1354e43917b1acd4fd7`.
 The previous executable/map/manifest are backed up locally under
 `output/motion-settings/installed-before/`.
@@ -164,7 +219,7 @@ The original proposal included finer rates and narrower attack classification:
 | Battle model motion | Idle poses and ordinary model motion outside attacks | 1x, 1.25x, 1.5x, 2x |
 | Attack animation | Attack motions; include related hit/recovery motion only where needed for synchronization | 1x, 1.25x, 1.5x, 2x |
 
-The current implementation ships 1x/2x and the broader idle/action distinction
+The current implementation ships all four rates and the broader idle/action distinction
 described above. Fractional rates remain future work: they need phase handling
 that survives loop markers, clip replacement and save loading correctly.
 
@@ -419,8 +474,8 @@ runtime was unchanged. The later menu integration is described at the top.
 1. Extend coverage to additional actors, misses, recoil, multi-hit actions,
    defeat and digivolution. Check visible/audible hit alignment and effect-frame
    timing, including cameras that interpolate instead of taking direct sets.
-2. Add fractional accumulation for 1.25x and 1.5x, with per-object reset rules
-   for clip changes, allocation reuse, state load and battle exit.
+2. Expand fractional-rate campaign coverage beyond the normal attack and
+   Air Blast checkpoint; accumulation and reset handling are now implemented.
 3. Preserve events crossed by an accelerated timeline exactly once. Equality
    checks against a skipped frame can drop a hit or effect; repeating whole battle
    callbacks can duplicate damage or consume extra RNG. Neither is acceptable.

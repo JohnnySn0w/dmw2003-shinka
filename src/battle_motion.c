@@ -8,8 +8,18 @@
 #define R psx_mod_read_word
 extern int shinka_motion_get(int option);
 
-/* Diagnostic prototype. No guest writes or host-side animation phase: loading
- * a state, changing clips, or reusing an allocation cannot inherit a remainder. */
+/* Emulator-thread only. Fractions belong to a model/clip, never the global
+ * clock. Clip setup and savestate hooks also clear these host-only records. */
+typedef struct {
+    uint32_t model, control, resource, clip, count, expected;
+    unsigned percent, remainder;
+} MotionPhase;
+static MotionPhase phases[8];
+void shinka_battle_motion_reset(void) { memset(phases, 0, sizeof(phases)); }
+void shinka_battle_motion_restart(uint32_t model) {
+    for (unsigned i = 0; i < 8; ++i)
+        if (phases[i].model == model) memset(&phases[i], 0, sizeof(phases[i]));
+}
 static int ram(uint32_t p, uint32_t size) {
     return !(p & 3) && p >= 0x80000000u && p <= 0x80200000u - size;
 }
@@ -49,27 +59,40 @@ static int combatant(uint32_t model) {
     if (control < p + 0x50 || control >= p + 0x180
         || (control - p - 0x50) % 0x4c || !R(control)) return 0;
     for (unsigned i = 0; i < 8; ++i)
-        if (R(table + i * 4) == model) return 1;
+        if (R(table + i * 4) == model) return (int)i + 1;
     return 0;
 }
 static uint32_t half(uint32_t p) {
     return (R(p & ~3u) >> ((p & 2) * 8)) & 0xffffu;
 }
 
-uint32_t shinka_battle_motion_step(uint32_t model, uint32_t delta, unsigned factor) {
-    uint32_t count, position, destination;
-    if (factor != 2 || !delta || delta > 4) return delta;
+uint32_t shinka_battle_motion_step(uint32_t model, uint32_t delta, unsigned percent) {
+    uint32_t count, position, destination, expected, control, resource, clip;
+    MotionPhase* phase = NULL;
+    unsigned remainder = 0, scaled;
+    int slot;
+    if ((percent != 125 && percent != 150 && percent != 200) || !delta || delta > 4)
+        goto stock;
     if (R(0x8004b3f8) != 0x600 || !ram(model, 0x2634)
-        || !object(model, 0x80083e0c) || !combatant(model)) return delta;
+        || !object(model, 0x80083e0c)) goto stock;
+    slot = combatant(model);
+    if (!slot) goto stock;
     /* Check live instructions every time; an overlay reload invalidates this
      * site regardless of the address or any previous successful match. */
     for (unsigned i = 0; i < sizeof(battle_motion_code) / 4; ++i)
-        if (R(0x80083a54 + i * 4) != battle_motion_code[i]) return delta;
+        if (R(0x80083a54 + i * 4) != battle_motion_code[i]) goto stock;
     count = R(model + 0xa0); position = R(model + 0x80);
     if (R(model + 0x7c) || count < 2 || count > 1600 || position >= count - 1)
-        return delta;
-    destination = position + delta * factor;
+        goto stock;
+    control = R(model + 0x64); resource = R(model + 0x74); clip = R(model + 0x78);
+    phase = &phases[slot - 1];
+    if (phase->model == model && phase->control == control && phase->resource == resource
+        && phase->clip == clip && phase->count == count && phase->expected == position
+        && phase->percent == percent) remainder = phase->remainder;
+    scaled = delta * (percent / 25) + remainder;
+    destination = position + scaled / 4;
     if (destination >= count) destination = count - 1;
+    expected = destination;
     /* Let the original routine process the FIRST marker. Jumping straight to
      * the scaled endpoint could skip completion or a loop destination. Do not
      * wrap here: that would bypass the game's completion notification. */
@@ -77,12 +100,17 @@ uint32_t shinka_battle_motion_step(uint32_t model, uint32_t delta, unsigned fact
         uint32_t entry = half(model + 0xa4 + next * 2);
         if (entry == 0x8000 || entry == 0xffff) {
             if (entry == 0x8000 && half(model + 0xd24 + next * 2) >= count)
-                return delta;
+                goto stock;
             destination = next;
+            expected = entry == 0x8000 ? half(model + 0xd24 + next * 2) : next;
             break;
         }
     }
+    *phase = (MotionPhase){model, control, resource, clip, count, expected, percent, scaled % 4};
     return destination - position;
+stock:
+    shinka_battle_motion_restart(model);
+    return delta;
 }
 
 /* Use the game's per-actor default pose, rather than assuming that every
@@ -104,17 +132,17 @@ uint32_t shinka_battle_motion_load(uint32_t model, uint32_t delta) {
     uint32_t result;
     if (override < 0) {
         const char* value = getenv("SHINKA_BATTLE_MOTION");
-        override = value && !strcmp(value, "2") ? 2 : 0;
+        override = value && !strcmp(value, "2") ? 200 : 0;
     }
     idle = override ? override : shinka_motion_get(0);
     action = override ? override : shinka_motion_get(1);
-    if (idle == 1 && action == 1) return delta;
+    if (idle == 100 && action == 100) { shinka_battle_motion_reset(); return delta; }
     category = shinka_battle_motion_category(model);
-    if (category < 0) return delta;
+    if (category < 0) { shinka_battle_motion_restart(model); return delta; }
     factor = category ? action : idle;
     result = shinka_battle_motion_step(model, delta, (unsigned)factor);
     if (!reported && result != delta) {
-        fprintf(stderr, "[shinka] Battle motion: idle=%dx actions=%dx, model=%08x step=%u->%u\n",
+        fprintf(stderr, "[shinka] Battle motion: idle=%d%% actions=%d%%, model=%08x step=%u->%u\n",
             idle, action, model, delta, result);
         reported = 1;
     }

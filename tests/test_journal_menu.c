@@ -34,7 +34,7 @@ static int battle_rate = 3, dv_rate = 1, fixed_rate = 10, fail_save;
 static int encounter_rate = 100;
 static int music_palette;
 static int view_options[2];
-static int motion_options[2] = {1, 1};
+static int motion_options[2] = {100, 100};
 int shinka_motion_get(int option) { return motion_options[option]; }
 int shinka_motion_set(int option, int value) { if (fail_save) return 0; motion_options[option]=value; return 1; }
 int shinka_view_get(int option) { return view_options[option]; }
@@ -171,16 +171,29 @@ int main(void) {
         for (unsigned option = 0; option < 2; ++option) {
             W(menu + 0x58, option); W(menu + 0x10, 3); W(menu + 0xa4, 0x401400);
             psx_mod_write_half(0x8004b818, 0x20); shinka_journal_quick_menu(&cpu);
-            CHECK(motion_options[option] == 2 && motion_options[1-option] == 1);
-            W(menu + 0x10, 3); W(menu + 0xa4, 0x401400 | (1u << (17 + option))); fail_save = 1;
+            CHECK(motion_options[option] == 125 && motion_options[1-option] == 100);
+            W(menu + 0x10, 3); W(menu + 0xa4, 0x401400 | (1u << (option ? 29 : 17))); fail_save = 1;
             psx_mod_write_half(0x8004b818, 0x20); shinka_journal_quick_menu(&cpu);
-            CHECK(motion_options[option] == 2 && (R(menu + 0xa4) & 1)); fail_save = 0;
+            CHECK(motion_options[option] == 125 && (R(menu + 0xa4) & 1)); fail_save = 0;
             W(menu + 0x10, 3); W(menu + 0xa4, 0x401400); /* stale state cannot overwrite preferences */
             psx_mod_write_half(0x8004b818, 0x20); shinka_journal_quick_menu(&cpu);
-            CHECK(motion_options[option] == 2 && R(menu + 0x10) == 0);
-            W(menu + 0x10, 3); W(menu + 0xa4, 0x401400 | (1u << (17 + option)));
+            CHECK(motion_options[option] == 125 && R(menu + 0x10) == 0);
+            W(menu + 0x10, 3); W(menu + 0xa4, 0x401400 | (1u << (option ? 29 : 17)));
             psx_mod_write_half(0x8004b818, 0x80); shinka_journal_quick_menu(&cpu);
-            CHECK(motion_options[option] == 1);
+            CHECK(motion_options[option] == 100);
+            /* Every choice, forward wrap and backward wrap in both roots. */
+            for (unsigned index = 0; index < 4; ++index) {
+                static const int values[] = {125, 150, 200, 100};
+                W(menu + 0x10, 3); W(menu + 0xa4, 0x401400 | (index << (option ? 29 : 17)));
+                psx_mod_write_half(0x8004b818, 0x2000); shinka_journal_quick_menu(&cpu);
+                CHECK(motion_options[option] == values[index] && motion_options[1-option] == 100);
+            }
+            W(menu + 0x10, 3); W(menu + 0xa4, 0x401400);
+            psx_mod_write_half(0x8004b818, 0x80); shinka_journal_quick_menu(&cpu);
+            CHECK(motion_options[option] == 200);
+            W(menu + 0x10, 3); W(menu + 0xa4, 0x401400 | (3u << (option ? 29 : 17)));
+            psx_mod_write_half(0x8004b818, 0x20); shinka_journal_quick_menu(&cpu);
+            CHECK(motion_options[option] == 100);
         }
         W(menu + 0x58, 2); W(menu + 0x10, 3); W(menu + 0xa4, 0x401400);
         psx_mod_write_half(0x8004b818, 0x2000); shinka_journal_quick_menu(&cpu);

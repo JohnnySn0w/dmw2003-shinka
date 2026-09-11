@@ -59,21 +59,27 @@ default = 0
 feature = "menu-chart"
 id = "battle_idle_rate"
 label = "Battle idle pose speed"
-type = "integer"
-min = 1
-max = 2
-step = 1
-default = 1
+type = "choice"
+default = "1"
+choice = [
+    { value = "1", label = "1x (100%)" },
+    { value = "1.25", label = "1.25x (125%)" },
+    { value = "1.5", label = "1.5x (150%)" },
+    { value = "2", label = "2x (200%)" },
+]
 
 [[option]]
 feature = "menu-chart"
 id = "battle_action_rate"
 label = "Battle action pose speed (attacks and reactions)"
-type = "integer"
-min = 1
-max = 2
-step = 1
-default = 1
+type = "choice"
+default = "1"
+choice = [
+    { value = "1", label = "1x (100%)" },
+    { value = "1.25", label = "1.25x (125%)" },
+    { value = "1.5", label = "1.5x (150%)" },
+    { value = "2", label = "2x (200%)" },
+]
 
 [[plugin]]
 feature = "menu-chart"

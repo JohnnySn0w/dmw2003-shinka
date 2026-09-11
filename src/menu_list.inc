@@ -22,12 +22,16 @@ static int expanded(uint32_t p) {
     return object(p, QUICK_MENU) && READ(p + 0x20) == 0x2d;
 }
 
+static int motion_index(int percent) {
+    return percent == 200 ? 3 : percent == 150 ? 2 : percent == 125 ? 1 : 0;
+}
+
 static uint32_t rate_tag(int battle, int dv, int fixed) {
     return (uint32_t)((battle << 8) | (dv << 12) | (fixed ? 0x10000 : 0)
         | ((shinka_encounter_rate_get() / 50 + 1) << 20)
         | (shinka_music_palette_get() << 24)
         | (shinka_view_get(0) << 26) | (shinka_view_get(1) << 27)
-        | ((shinka_motion_get(0) - 1) << 17) | ((shinka_motion_get(1) - 1) << 18));
+        | (motion_index(shinka_motion_get(0)) << 17) | (motion_index(shinka_motion_get(1)) << 29));
 }
 
 uint32_t shinka_menu_slot(uint32_t p, uint32_t address) {
@@ -111,7 +115,7 @@ void shinka_menu_text(CPUState* cpu) {
             shinka_rates_get(&battle, &dv, &fixed);
             if (!row) WRITE(p + 0xa4, (READ(p + 0xa4) & 1) | rate_tag(battle, dv, fixed));
             if (row < 2) {
-                snprintf(value, sizeof(value), "%s poses: %dx", row ? "Action" : "Idle", shinka_motion_get(row));
+                snprintf(value, sizeof(value), "%s poses: %d%%", row ? "Action" : "Idle", shinka_motion_get(row));
                 label = value;
             } else label = row == 2 ? "BACK" : "";
         } else if (READ(p + 0xa0) == 1) {
@@ -259,7 +263,10 @@ void shinka_journal_quick_menu(CPUState* cpu) {
         if ((pressed & button(14)) || (row == 2 && (pressed & button(13)))) {
             WRITE(p + 0xa4, 0); refresh_menu(p, 1, 6);
         } else if (row < 2 && (pressed & (button(5) | button(7) | button(13)))) {
-            WRITE(p + 0xa4, !shinka_motion_set(row, 3 - shinka_motion_get(row)));
+            static const int rates[] = {100, 125, 150, 200};
+            int direction = pressed & button(7) ? -1 : 1;
+            int next = (motion_index(shinka_motion_get(row)) + direction + 4) % 4;
+            WRITE(p + 0xa4, !shinka_motion_set(row, rates[next]));
             refresh_menu(p, 4, row);
         }
         return;

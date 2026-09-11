@@ -23,7 +23,7 @@ The first gameplay feature is optional **1–4x normal battle EXP**, applied thr
 An experimental English menu adds **DIGIVOLUTIONS** and **SETTINGS** as selectable rows in both the world overlay and the full-screen root reached after leaving a submenu. Enable it with `python tools/configure_journal.py --enable` and restart. DIGIVOLUTIONS opens the full lab interface for switching partners, selecting battle forms, loading techniques and viewing the chart; leaving it highlights DIGIVOLUTIONS again. Select an anonymous chart node and press X for directional training hints. SETTINGS includes live EXP controls and **0%, 50%, 100%, 150%, 200% random encounter rates**. See [menu controls and implementation](docs/field-menu.md), [encounter behavior](docs/encounters.md) and [lab integration](docs/evolution-journal.md).
 
 SETTINGS also includes [Battle motion](docs/battle-animation-speed.md), with independent
-1x/2x idle and action pose speeds. Both default to 1x. Camera and script delays
+1x, 1.25x, 1.5x and 2x idle and action pose speeds. Both default to 1x. Camera and script delays
 keep their own timing; action poses include attacks and reactions.
 
 SETTINGS also offers experimental [battle camera controls](docs/camera.md):

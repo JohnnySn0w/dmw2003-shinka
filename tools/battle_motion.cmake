@@ -26,8 +26,18 @@ endif()
 string(REPLACE "${_old}"
     "        else\n            cpu->gpr[rt] = psx_cyc_load_word(cpu, addr, rt, 1u << rs);\n        if (pc == 0x80083d30u && addr == 0x800a4464u && rt == 2u)\n            cpu->gpr[rt] = shinka_battle_motion_load(cpu->gpr[18], cpu->gpr[rt]);\n        psx_pgxp_load(cpu, insn, addr, cpu->gpr[rt]);"
     _text "${_text}")
+# The clip setup's final position store also runs for same-clip restarts and
+# recycled objects. Reset host fractions without changing the guest store.
+set(_old "        cpu->write_word(addr, cpu->gpr[rt]);\n        psx_pgxp_store(cpu, insn, addr, cpu->gpr[rt]);")
+string(FIND "${_text}" "${_old}" _site)
+if(_site EQUAL -1)
+    message(FATAL_ERROR "Review pinned interpreter SW path for clip reset")
+endif()
+string(REPLACE "${_old}"
+    "        cpu->write_word(addr, cpu->gpr[rt]);\n        if (pc == 0x80083c14u && insn == 0xae220080u)\n            shinka_battle_motion_restart(cpu->gpr[17]);\n        psx_pgxp_store(cpu, insn, addr, cpu->gpr[rt]);"
+    _text "${_text}")
 file(CONFIGURE OUTPUT "${_generated}/dirty_ram_interp.c"
-    CONTENT "#include <stdint.h>\nextern uint32_t shinka_battle_motion_load(uint32_t, uint32_t);\n${_text}" @ONLY)
+    CONTENT "#include <stdint.h>\nextern uint32_t shinka_battle_motion_load(uint32_t, uint32_t);\nextern void shinka_battle_motion_restart(uint32_t);\n${_text}" @ONLY)
 get_target_property(_sources shinka SOURCES)
 if(NOT "${_source}" IN_LIST _sources)
     message(FATAL_ERROR "Review interpreter source target before motion hook")

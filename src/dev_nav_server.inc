@@ -13,11 +13,13 @@ static void handle_shinka_nav(int id,const char* json) {
     if (!json_get_str(json,"op",op,sizeof(op))) { send_err(id,"Missing op");return; }
     if (!strcmp(op,"motion")) {
         int option = json_get_int(json,"option",-1), value = json_get_int(json,"value",-1);
+        /* Old diagnostic callers used integer multipliers. New callers use percent. */
+        if (value == 1 || value == 2) value *= 100;
         if ((option != -1 || value != -1) && !shinka_motion_set(option,value)) {
             send_err(id,"Invalid or unsaved motion setting");return;
         }
-        send_fmt("{\"id\":%d,\"ok\":true,\"idle\":%d,\"action\":%d}",
-            id,shinka_motion_get(0),shinka_motion_get(1));
+        send_fmt("{\"id\":%d,\"ok\":true,\"idle\":%.2f,\"action\":%.2f}",
+            id,shinka_motion_get(0) / 100.0,shinka_motion_get(1) / 100.0);
         return;
     }
     if (!strcmp(op,"view")) {

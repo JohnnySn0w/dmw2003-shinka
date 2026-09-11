@@ -43,7 +43,7 @@ palettes remain available. This row selects curated palettes, not arbitrary
 `.sf2` files. The [camera options](camera.md) apply independently to 3D battles;
 field expansion still requires changes to tile streaming.
 
-**Battle motion** offers **1x or 2x** for each category, both defaulting to 1x.
+**Battle motion** offers **100%, 125%, 150% or 200%** for each category, both defaulting to 100% (original speed).
 Idle follows each combatant's own default pose. Action includes attacks,
 reactions, entrances and victory poses; the rates replace one another, never
 multiply. Camera speed, sound pitch and explicit script delays are not scaled,

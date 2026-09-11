@@ -42,7 +42,8 @@ screenshots do not include this layer.
 - Disabling the layer restored the original title logo and shadow.
 - The opening-movie checkpoint still exposes stray pixels outside its picture;
   these also appear with the replacement disabled and are separate from this
-  title-screen change.
+  title-screen change. The [movie state restoration fix](movie-coherency.md)
+  subsequently resolved this on 2026-09-11.
 
 Local screenshots and command captures are under `output/title-screen/` and
 are intentionally not published with game imagery. These checks do not establish

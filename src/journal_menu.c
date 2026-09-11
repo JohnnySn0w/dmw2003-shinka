@@ -31,9 +31,16 @@ static int object(uint32_t p, uint32_t callback) {
 
 int shinka_menu_root_active(void) {
     uint32_t p = wide_menu_root, mode = READ(MODE);
+    /* Render lifetime, not input readiness: phases 4..6 hide the controls;
+     * lifecycle 2 runs the closing wipe before lifecycle 3 releases the task.
+     * A cancelled Status root also spans the final release-to-field handoff;
+     * a confirmed submenu must stop here so its own layout can take over.
+     * Its layout/aspect must survive that interval regardless of cursor row.
+     * A queued mode doesn't hide the old screen until MODE actually changes. */
     return p && mode == wide_menu_mode && ((mode >> 8) == 2 || mode == STATUS)
-        && !READ(MODE + 4) && object(p, QUICK_MENU) && READ(p + 0x20) == 0x2d
-        && READ(p + 0xc) <= 1 && READ(p + 0x10) <= 3 && READ(p + 0xa0) != 5;
+        && object(p, QUICK_MENU) && READ(p + 0x20) == 0x2d
+        && (READ(p + 0xc) <= 2 || (mode == STATUS && READ(p + 0xc) == 3 && !READ(p + 0x14)))
+        && READ(p + 0x10) <= 7 && READ(p + 0xa0) != 5;
 }
 
 #include "menu_list.inc"

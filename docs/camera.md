@@ -269,16 +269,42 @@ The first pass recognized only one of the three 48×48 scrolling background
 layers. The other two incorrectly followed the UI-column translation rule,
 causing discontinuities as their tiles crossed the column boundary. All three
 captured texture/palette pairs now use the same continuous horizontal mapping
-in gym, shop, Items and both Start roots. The root backdrop previously exposed
-the error as a repeating center wiggle and left/right tile desynchronization.
+in gym, shop, Items and both Start roots. The Start root previously omitted
+these background textures from its drawing patch entirely.
 
-The field-to-Status handoff also has a short aspect latch. Status mode is shared
-by the root, Items, map and other pages, and its task tree takes several frames
-to identify the destination. During that interval the previous widescreen state
-is held so the window does not flash to 4:3; unresolved pages then settle to
-their stock 4:3 layout.
+Scrolling exposed a second problem: rounding each moving tile's left and right
+edges separately alternated its destination width between 63 and 64 pixels at
+16:9. That changed texture sampling during motion even when adjacent edges met.
+The repeating background grid now rounds its tile pitch once (48 to 64 pixels
+at 16:9), and all three layers share that pitch. Tile widths and texel sampling
+stay constant through the 96-pixel scroll wrap. Only the repeating backdrop
+uses this slight scale rounding; panels still match their exact screen edges.
+
+The field-to-Items handoff uses the resident destination row, language and
+previous field mode to retain the requested aspect while its task tree loads
+or tears down. UI layout patches still require the verified live menu objects;
+the recognized background tiles keep repainting the margins during teardown.
+The native closing wipe is a separate five-column grid of 64×64 translucent
+tiles using animated palettes. Its destination rectangles now span the full
+viewport too, preserving texture dimensions, palettes and animation timing.
+The Start root remains admitted through its closing phases and lifecycle 2,
+including the final release-to-field handoff when cancelled. Confirmed submenus
+stop admission at lifecycle 3; any actual mode change also ends it. Using input-ready
+phases alone caused another narrowing when exiting with a non-Items row selected.
+The GPU reads the same live scene predicate
+as the frontend, avoiding an exact-mode gate mismatch between frontend updates.
+The former eight-call latch expired during actual loading and was dependent on
+renderer call frequency; it has been removed. Setting 4:3 takes effect immediately,
+and unsupported Status destinations do not inherit a host-side widescreen latch
+after a savestate load.
 The fix leaves the panel and text layout unchanged. The native regression moves
 every layer through the full scrolling range in both framebuffer bands and both
 overlays, checking equal transforms and one/two-pixel steps without a boundary
 jump. Consecutive live captures for the gym and armory are in
-`output/npc-wide-01/scroll-fixed/`.
+`output/npc-wide-01/scroll-fixed/`. Further transition and fixed-pitch scrolling
+captures are in `output/menu-handoff-02/`: the before capture drops from 426 to
+320 pixels twice during field-to-Items loading; the updated entry, Items-to-root
+and root-to-field captures retain a 426-pixel viewport throughout. The native
+tests additionally cover constant tile widths across every scroll phase, joined
+wipe columns and their palette variants, immediate preference changes, and
+unsupported destination/state-load isolation.

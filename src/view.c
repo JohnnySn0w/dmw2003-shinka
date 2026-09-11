@@ -4,30 +4,31 @@
 
 static int active_wide;
 static int active_percent = 100;
-static int previous_wide;
-static unsigned menu_transition_hold;
-
-void shinka_view_tick(void) {
+int shinka_view_wide_requested(void) {
     unsigned mode = psx_mod_read_word(0x8004b3f8u);
     int started = psx_mod_game_started();
     int battle = started && mode == 0x600;
     int field = started && ((mode >= 0x200 && mode < 0x300) || shinka_menu_wide_mode(mode));
-    int wide = (battle && shinka_view_get(0) == 1)
-        || (field && shinka_view_get(2) == 1);
-    /* Mode 0x1000 is shared by the root, Items, map and other Status pages.
-     * Their task chain is rebuilt over several frames. Keep the previous field
-     * aspect briefly while that chain resolves; otherwise the window visibly
-     * flashes 4:3 between the old field and the new menu. The hold expires
-     * quickly for map/other Status pages, which remain 4:3 afterward. */
-    if (started && mode == 0x1000 && !wide && previous_wide && menu_transition_hold < 8) {
-        wide = 1;
-        ++menu_transition_hold;
-    } else if (wide || mode != 0x1000) {
-        menu_transition_hold = 0;
+    if (started && mode == 0x1000 && !field) {
+        /* The resident Start handler stores its destination row before loading
+         * STSTATUS. Row zero is Items. Use that guest state for presentation
+         * while the overlay constructs/destroys its tasks, however long it
+         * takes. Drawing patches still require the verified live task chain.
+         * No host latch can leak across state loads or delay a 4:3 setting. */
+        unsigned previous = psx_mod_read_word(0x8004b400u);
+        field = previous >= 0x200 && previous < 0x300
+            && psx_mod_read_word(0x8005cca8u) == 2
+            && psx_mod_read_word(0x8005ccf0u) == 0;
     }
+    return (battle && shinka_view_get(0) == 1)
+        || (field && shinka_view_get(2) == 1);
+}
+
+void shinka_view_tick(void) {
+    int battle = psx_mod_game_started() && psx_mod_read_word(0x8004b3f8u) == 0x600;
+    int wide = shinka_view_wide_requested();
     int zoom = battle ? shinka_view_get(1) : 0;
     active_wide = wide;
-    previous_wide = wide;
     active_percent = zoom == 1 ? 90 : zoom == 2 ? 80 : 100;
     shinka_view_frontend(wide);
 }

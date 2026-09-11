@@ -5,13 +5,19 @@
 #include "menu_wide.h"
 #define CHECK(c) do { if (!(c)) { fprintf(stderr,"line %d: %s\n",__LINE__,#c); exit(1); } } while (0)
 static uint32_t mode;
+static uint32_t previous_mode, language = 2, destination = 2;
 static int started = 1, options[3], frontend;
 static int root_menu;
 static int items_menu;
 int shinka_menu_root_active(void) { return root_menu; }
 int shinka_menu_items_active(void) { return items_menu; }
 int psx_mod_game_started(void) { return started; }
-uint32_t psx_mod_read_word(uint32_t addr) { CHECK(addr == 0x8004b3f8); return mode; }
+uint32_t psx_mod_read_word(uint32_t addr) {
+    if (addr == 0x8004b3f8) return mode;
+    if (addr == 0x8004b400) return previous_mode;
+    if (addr == 0x8005cca8) return language;
+    CHECK(addr == 0x8005ccf0); return destination;
+}
 int shinka_view_get(int option) { return options[option]; }
 void shinka_view_frontend(int wide) { frontend = wide; }
 int main(void) {
@@ -88,6 +94,26 @@ int main(void) {
             previous=reference; /* no column-boundary jump during scrolling */
         }
     }
+    /* A repeating tile must keep its sampling width throughout a scroll.
+     * Sharing integer edges alone allowed 63/64px breathing at 16:9. */
+    for(int scene=0;scene<4;++scene) for(int band=0;band<=256;band+=256) {
+        const uint32_t status_layers[]={0x7da81060,0x7deb1090,0x7da93000};
+        const uint32_t npc_layers[]={0x7ca7b850,0x7ce65828,0x7ce75858};
+        mode=scene<2 ? (scene ? 0xf00 : 0xa00) : 0x1000;
+        root_menu=scene==3;items_menu=scene==2;options[2]=1;shinka_view_tick();
+        for(int layer=0;layer<3;++layer) for(int phase=-96;phase<96;++phase) {
+            uint32_t texture=scene<2 ? npc_layers[layer] : status_layers[layer];
+            int edge=0;
+            for(int column=0;column<7;++column) {
+                uint32_t tile[]={0x64808080,0x00200000u|(uint16_t)(phase+column*48),texture,0x00300030};
+                int width=shinka_menu_wide_rect(tile,4,0,band,0,band,319,band+239,53);
+                CHECK(width==64); /* constant texture scale, every phase and layer */
+                if(column) CHECK((int16_t)tile[1]==edge);
+                edge=(int16_t)tile[1]+width;
+            }
+        }
+    }
+    root_menu=0;items_menu=0;
     for(int fullscreen=0;fullscreen<2;++fullscreen) {
         mode=fullscreen ? 0x1000 : 0x21d;root_menu=1;options[2]=1;shinka_view_tick();
         CHECK(frontend);
@@ -115,15 +141,53 @@ int main(void) {
             CHECK(end-(168+margin)==154); /* original right edge relative to menu */
         }
         root_menu=0;shinka_view_tick();
-        if (fullscreen) for (int settle=0;settle<8;++settle) shinka_view_tick();
-        CHECK(frontend==!fullscreen); /* full-screen map/status child settles to 4:3 */
+        CHECK(frontend==!fullscreen); /* unsupported children immediately use 4:3 */
     }
-    /* A mode-0x1000 task rebuild must not flash the window to 4:3 before the
-     * root/Items object is discoverable; unresolved Status pages settle back. */
+    /* Actual field -> Items loader interval: the destination exists before its
+     * tasks. The GPU predicate must work even before another frontend tick. */
     started=1;mode=0x21d;root_menu=1;options[2]=1;shinka_view_tick();
-    root_menu=0;mode=0x1000;
-    for(int frame=0;frame<8;++frame) { shinka_view_tick();CHECK(frontend); }
-    shinka_view_tick();CHECK(!frontend);
+    root_menu=0;mode=0x1000;previous_mode=0x21d;destination=0;
+    CHECK(shinka_view_wide_requested());
+    for(int call=0;call<1000;++call) { shinka_view_tick();CHECK(frontend); }
+    {
+        uint32_t tile[]={0x64808080,0x00200000,0x7da81060,0x00300030};
+        uint32_t panel[]={0x64808080,0x00c20000,0x7deab368,0x00260028};
+        CHECK(shinka_menu_wide_rect(tile,4,0,0,0,0,319,239,53)==64);
+        CHECK((int16_t)tile[1]==-53); /* closing backdrop must repaint both margins */
+        CHECK(!shinka_menu_wide_rect(panel,4,0,0,0,0,319,239,53));
+        CHECK(panel[1]==0x00c20000); /* pending presentation isn't layout admission */
+    }
+    options[2]=0;CHECK(!shinka_view_wide_requested());shinka_view_tick();CHECK(!frontend);
+    options[2]=1;
+    for(unsigned row=1;row<8;++row) { destination=row;shinka_view_tick();CHECK(!frontend); }
+    destination=0;language=3;shinka_view_tick();CHECK(!frontend);language=2;
+    previous_mode=0x600;shinka_view_tick();CHECK(!frontend); /* stale row after a state load */
+    previous_mode=0x21d;started=0;shinka_view_tick();CHECK(!frontend);started=1;
+    mode=0xd00;CHECK(!shinka_view_wide_requested()); /* unrelated overlay */
+    mode=0x1000;previous_mode=0;destination=2;
+    for(int field=0;field<2;++field) for(int band=0;band<=256;band+=256)
+    for(int margin=1;margin<=160;++margin) for(unsigned palette=0x3c17;palette<=0x3fd7;palette+=64) {
+        mode=field ? 0x21d : 0x1000;previous_mode=0x21d;destination=0;shinka_view_tick();
+        int end=-margin;
+        for(int col=0;col<5;++col) {
+            uint32_t wipe[]={0x66808080,0xfff40000u|(unsigned)(col*64),(palette<<16)|0x5f40,0x00400040};
+            int width=shinka_menu_wide_rect(wipe,4,0,band,0,band,319,band+239,margin);
+            CHECK(width>0 && (int16_t)wipe[1]==end);
+            CHECK(wipe[2]==((palette<<16)|0x5f40) && wipe[3]==0x00400040);
+            end+=width;
+        }
+        CHECK(end==320+margin);
+    }
+    for(int scenario=0;scenario<5;++scenario) {
+        uint32_t wipe[]={0x66808080,0x003400c0,0x3dd75f40,0x00400040};
+        mode=scenario==0 ? 0xd00 : 0x1000;destination=scenario==1 ? 2 : 0;
+        if(scenario==2) wipe[2]^=1;
+        if(scenario==3) wipe[2]=0x3dd65f40;
+        options[2]=scenario==4 ? 0 : 1;shinka_view_tick();
+        CHECK(!shinka_menu_wide_rect(wipe,4,0,0,0,0,319,239,53));
+        CHECK(wipe[1]==0x003400c0);
+    }
+    options[2]=1;previous_mode=0;destination=2;
     root_menu=1;shinka_view_tick();CHECK(frontend);
     mode=0x1000;items_menu=1;options[2]=1;shinka_view_tick();CHECK(frontend);
     for(int layer=0;layer<3;++layer) {
@@ -194,12 +258,10 @@ int main(void) {
         }
     }
     options[2]=0;shinka_view_tick();
-    for(int settle=0;settle<8;++settle) shinka_view_tick();
     CHECK(!frontend);
     { uint32_t glyph[]={0x64808080,0x002500bc,0x3a170000,0x000c0008};
       CHECK(!shinka_menu_wide_rect(glyph,4,0,0,0,0,319,239,53));CHECK(glyph[1]==0x002500bc); }
     items_menu=0;options[2]=1;shinka_view_tick();
-    for(int settle=0;settle<8;++settle) shinka_view_tick();
     CHECK(!frontend);
     started=1;mode=0x600;options[0]=1;shinka_view_tick();
     for(int band=0;band<=256;band+=256) {

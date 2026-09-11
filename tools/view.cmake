@@ -19,6 +19,21 @@ set_property(TARGET shinka PROPERTY SOURCES "${_view_sources}")
 target_sources(shinka PRIVATE src/view.c)
 set(_hud_gpu "${PSXRECOMP_ROOT}/runtime/src/gpu.c")
 file(READ "${_hud_gpu}" _hud_code)
+set(_view_gate [=[static int ws_gameplay_state_matches(void) {
+    if (!ws_gameplay_state_addr || ws_gameplay_state_value_count == 0)
+        return -1;
+    uint32_t state = psx_read_word(ws_gameplay_state_addr);
+    for (int i = 0; i < ws_gameplay_state_value_count; i++)
+        if (state == ws_gameplay_state_values[i]) return 1;
+    return 0;
+}]=])
+string(FIND "${_hud_code}" "${_view_gate}" _view_gate_pos)
+if(_view_gate_pos EQUAL -1)
+    message(FATAL_ERROR "Review pinned live scene presentation gate")
+endif()
+string(REPLACE "${_view_gate}"
+    "static int ws_gameplay_state_matches(void) { return shinka_view_wide_requested(); }"
+    _hud_code "${_hud_code}")
 set(_hud_anchor "    gp0_ring_record(gp0_cmd_buf, gp0_words_needed);")
 string(REPLACE "${_hud_anchor}" "${_hud_anchor}\n    shinka_field_gpu_source(gp0_cmd_source_addr);" _hud_code "${_hud_code}")
 string(FIND "${_hud_code}" "${_hud_anchor}" _hud_pos)
@@ -50,7 +65,7 @@ endif()
 string(REPLACE "${_hud_stretch}" "    int ws_w = shinka_hud_dialogue_width;\n    if (ws_active() && w > 0) {" _hud_code "${_hud_code}")
 set(_menu_anchor "    if (shinka_hud_dialogue_width) gp0_cmd_buf[1] = (gp0_cmd_buf[1]&0xffff0000u)|(uint16_t)dialogue_x;")
 string(REPLACE "${_menu_anchor}" "${_menu_anchor}\n    if (!shinka_hud_dialogue_width) shinka_hud_dialogue_width = shinka_menu_wide_rect(\n        gp0_cmd_buf, gp0_words_needed, draw_offset_x, draw_offset_y,\n        draw_area_left, draw_area_top, draw_area_right, draw_area_bottom, ws_nw_extra()/2);" _hud_code "${_hud_code}")
-file(CONFIGURE OUTPUT "${_generated}/gpu.c" CONTENT "#include \"battle_hud.h\"\n#include \"menu_wide.h\"\n#include \"field_tiles.h\"\nstatic int shinka_hud_dialogue_width;\n${_hud_code}" @ONLY)
+file(CONFIGURE OUTPUT "${_generated}/gpu.c" CONTENT "#include \"view.h\"\n#include \"battle_hud.h\"\n#include \"menu_wide.h\"\n#include \"field_tiles.h\"\nstatic int shinka_hud_dialogue_width;\n${_hud_code}" @ONLY)
 get_target_property(_hud_sources shinka SOURCES)
 if(NOT "${_hud_gpu}" IN_LIST _hud_sources)
     message(FATAL_ERROR "Review pinned GPU source target")

@@ -110,12 +110,18 @@ int main(void) {
         }
         W(0x8004b3f8,0x21d);
     }
-    W(0x8004b3fc, 0x1000); CHECK(!shinka_menu_root_active()); W(0x8004b3fc, 0);
-    W(menu + 0xc, 2); CHECK(!shinka_menu_root_active()); W(menu + 0xc, 1);
-    W(menu + 0x10, 4); CHECK(!shinka_menu_root_active()); W(menu + 0x10, 3);
+    W(0x8004b3fc, 0x1000); CHECK(shinka_menu_root_active()); W(0x8004b3fc, 0);
+    for(unsigned life=1;life<=2;++life) for(unsigned phase=0;phase<=7;++phase) {
+        W(menu + 0xc,life);W(menu + 0x10,phase);CHECK(shinka_menu_root_active());
+    }
+    W(menu + 0xc,3);CHECK(!shinka_menu_root_active());W(menu + 0xc,1);
+    W(menu + 0x10,8);CHECK(!shinka_menu_root_active());W(menu + 0x10,3);
     W(menu + 0xa0, 5); CHECK(!shinka_menu_root_active()); W(menu + 0xa0, 0);
     W(0x8004b3f8, 0x1000); CHECK(!shinka_menu_root_active());
     shinka_journal_quick_menu(&cpu); CHECK(shinka_menu_root_active());
+    W(menu+0xc,3);W(menu+0x14,0);CHECK(shinka_menu_root_active()); /* final field handoff */
+    W(menu+0x14,1);CHECK(!shinka_menu_root_active()); /* confirmed child takes over */
+    W(menu+0xc,1);W(menu+0x14,0);
     shinka_lab_selection_reset(); CHECK(!shinka_menu_root_active());
     W(0x8004b3f8, 0x21d); shinka_journal_quick_menu(&cpu);
     CHECK(shinka_menu_root_active());

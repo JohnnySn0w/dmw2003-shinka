@@ -110,6 +110,7 @@ include("${CMAKE_CURRENT_SOURCE_DIR}/tools/title_logo.cmake")
 include("${CMAKE_CURRENT_SOURCE_DIR}/tools/movie_coherency.cmake")
 include("${CMAKE_CURRENT_SOURCE_DIR}/tools/battle_native.cmake")
 include("${CMAKE_CURRENT_SOURCE_DIR}/tools/runtime_perf.cmake")
+include("${CMAKE_CURRENT_SOURCE_DIR}/tools/battle_motion.cmake")
 add_custom_command(TARGET shinka POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E make_directory "$<TARGET_FILE_DIR:shinka>/mods/packages/shinka.evolution-journal/0.1.0"
     COMMAND ${CMAKE_COMMAND} -E copy_if_different

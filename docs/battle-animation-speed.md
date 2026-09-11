@@ -1,10 +1,95 @@
 # Battle animation speed investigation
 
-Status: live model-timeline audit, 2026-09-11. No animation speed hook or menu
-setting is enabled yet. Work resumed after the user's CPU-heavy task cleared; the
+Status: default-off 2x model-timeline prototype, 2026-09-11. The two separate
+menu controls are still pending. Work resumed after the user's CPU-heavy task cleared; the
 [battle geometry optimization](performance.md) reduces execution cost without
 changing animation speed. Its rendering routines are not yet an identified
 model-animation clock.
+
+## Controlled prototype
+
+`SHINKA_BATTLE_MOTION=2` enables the diagnostic prototype for the process. An
+unset variable or any other value keeps original motion. It is not a saved
+preference and is not exposed in Settings yet. The playable installation remains
+unchanged while the prototype is evaluated in a separate build against copied
+saves.
+
+The owned interpreter copy intercepts only the cycle-aware load of `0x800a4464`
+at `0x80083d30`. It preserves that load's timing/hazard accounting and subsequent
+PGXP processing, then substitutes the model-local step. It never writes the
+shared delta, advances the battle script itself, or changes camera interpolation,
+audio rate, input, or host pacing. This does **not** guarantee identical camera
+cue timing: finishing a pose can release a script wait earlier.
+
+The hook checks the active battle mode, follows the live owner/wrapper/battle/
+combatant-group graph, verifies controller signatures and the model's group
+membership/action record, and compares the live setup/timeline/update code with
+guards generated from the supported owned `FIGHTSTG.PRO`. It rejects ambiguous
+ownership, unsupported overlays, out-of-bounds tables, completed clips, and
+unexpected elapsed steps. Scenery sharing the model callback is excluded.
+
+The experimental rate doubles steps 1–4 and stops at the first loop/end marker
+or final entry, leaving marker processing and completion notification to the
+original routine. Remainders are discarded at boundaries; there is no host-side
+phase state to leak across save loads or allocation reuse. Ordinary interpolation
+entries with the high bit set are not mistaken for exact `0x8000` loop markers.
+
+Scope remains deliberately experimental: all eligible combatant clips receive
+the same rate, including reactions and casting loops. The prototype does not yet
+classify attack versus ordinary motion or validate digivolution, multi-hit,
+counterattack, boss, or multi-enemy sequences. A native overlay that bypasses the
+interpreter site will retain original speed; the currently generated battle
+geometry overlay does not contain this timeline routine.
+
+Native regression tests cover marker crossings, clamping, invalid ownership and
+pointers, changed overlay bytes, immediate recovery after rejection, and absence
+of guest-memory writes. Local generated guard bytes and game captures remain
+ignored and are not distributed.
+
+### Graphical prototype validation
+
+The earlier AMD OpenGL startup stall did not recur in this session. Both rates
+ran through the graphical runner using the same copied slot-10 checkpoint.
+The default build and 2x basic-attack replay both returned to the field with all
+7,904 saved party bytes equal to the existing reference. Air Blast also returned
+to the field at both rates with identical saved party bytes and the expected
+24 MP cost. Rendered damage screenshots were inspected separately from the trace
+analysis; the immediate field screenshot caught the loading transition and is
+not evidence of a fully rendered field. This is not an audio/pitch or visual-taste
+acceptance test.
+
+| Patamon segment | Original step | 2x model step |
+| --- | ---: | ---: |
+| Basic clip 15 | 18 frames | 8 frames |
+| Basic clip 16, script-held | 52 frames | 52 frames |
+| Basic clip 17 | 18 frames | 8 frames |
+| Basic clip 18, script-held | 112 frames | 114 frames |
+| Basic clip 19 | 26 frames | 14 frames |
+| Air Blast clip 39 | 207 frames / 3 loops | 207 frames / 9 loops |
+
+These are captured guest-frame spans between clip selections, not exact
+wall-clock benchmarks or a promise of a 2x faster turn. The complete clip
+sequences, completion notifications, parsed sound/effect command sequences, and
+explicit script-delay operands were preserved in the paired captures. Camera
+updates continued through their original direct-set path; this checkpoint does
+not exercise the camera interpolation path. Cue times may move with script waits.
+
+The basic attack prepared 815 damage at both rates. Air Blast prepared 969 in
+the fresh 1x trace and 976 in the 2x trace (an earlier headless recording prepared
+440). Repeating the 1x trace again produced 969 and the same 10,462 write count.
+Preparation occurred 198 frames after trace start in both 1x runs, versus 195
+frames at 2x. This timing difference precedes the selected attack clip and needs
+an RNG/control-flow trace; it has not been established as harmless variation or
+a damage-calculation regression. Both defeated the same 120-HP enemy. Matching
+post-battle party bytes therefore cannot establish identical damage rolls or
+nonlethal battle behavior. Do not claim general battle-outcome parity from this
+checkpoint. Resolve this before adding player-facing rate controls.
+
+Local evidence: `output/battle-events/motion-{default,double}-{basic,air}-*`,
+`output/motion-prototype/comparison.json`, and the matching outcome/screenshot
+files. Diagnostic executable SHA-256:
+`d45d300349019cbdc7953f06b853bf8077ea7476b4de22049bb7c95c58cb3dc7`.
+Validation: 134 Python tests, 13 native tests, and Ruff passed.
 
 ## Intended controls
 

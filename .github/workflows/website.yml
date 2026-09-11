@@ -1,0 +1,60 @@
+name: Website checks and publishing
+
+on:
+  push:
+    branches: [main]
+    paths: ['website/**', 'tools/check_website.py', 'tests/test_website.py', '.github/workflows/website.yml']
+  pull_request:
+    paths: ['website/**', 'tools/check_website.py', 'tests/test_website.py', '.github/workflows/website.yml']
+  workflow_dispatch:
+    inputs:
+      publish:
+        description: 'Publish the website publicly to GitHub Pages (requires Pages enabled)'
+        required: true
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.12'
+      - run: python tools/check_website.py
+      - run: python -m unittest discover -s tests -p test_website.py -v
+      - run: node --check website/dist/app.js
+
+  publish:
+    if: github.event_name == 'workflow_dispatch' && inputs.publish && github.ref == 'refs/heads/main'
+    needs: check
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    concurrency:
+      group: github-pages
+      cancel-in-progress: false
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v4
+        with:
+          path: website/dist
+      - name: Publish website
+        id: deployment
+        uses: actions/deploy-pages@v4

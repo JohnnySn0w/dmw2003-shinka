@@ -42,3 +42,7 @@ pinned framework. Python source coverage does not measure the emulator, generate
 game code, or how much of the campaign has been tested.
 
 Badge URLs follow the [GitHub workflow badge documentation](https://docs.github.com/en/actions/how-tos/monitor-workflows/add-a-status-badge).
+
+The separate [website workflow](website-publishing.md) checks local links,
+media controls and JavaScript syntax. Its public deployment job runs only on an
+explicit manual request from `main`; normal pushes and pull requests only validate.

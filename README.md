@@ -31,6 +31,7 @@ runtime and interpreter fallback, with optional improvements to the original gam
 
 See the [website source and gameplay showcase](website/README.md) for captures,
 feature GIFs and an audible demonstration of all four soundtrack settings.
+The [publishing guide](docs/website-publishing.md) covers GitHub Pages and custom domains.
 
 ## Build and play
 

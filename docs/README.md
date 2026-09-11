@@ -37,4 +37,4 @@ sections preserve earlier observations; they are not all current limitations.
 - [Music format/export](music.md) and [palette design](music-palettes.md): local soundtrack tooling.
 - [Combat models](combat-models.md): format analysis, export and offline smoothing prototype.
 - [Title screen](title-screen.md) and [branding](../assets/README.md): project artwork integration.
-- [Website](../website/README.md) and [media provenance](../website/MEDIA.md): the feature showcase.
+- [Website](../website/README.md), [publishing and domains](website-publishing.md) and [media provenance](../website/MEDIA.md): the feature showcase.

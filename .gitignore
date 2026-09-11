@@ -28,6 +28,7 @@ SLES_039.36
 *.srm
 *.state
 *.savestate
+shinka-card-import.json
 
 # Development artifacts
 __pycache__/

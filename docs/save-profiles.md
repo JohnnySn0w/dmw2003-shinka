@@ -11,25 +11,43 @@ its own native savestates, so diagnostic slots can be reused across profiles.
 Mod settings currently apply across profiles through the runtime's
 `build-windows/Release/mods/state.toml`.
 
-## Import a card
+## Find a card or profile
 
-From the repository root, choose a new destination directory:
+From the repository root:
 
 ```powershell
-$sourceCard = 'PATH\TO\DuckStation\memcards\Digimon World 2003 (Europe) (En,Fr,De,Es,It)_1.mcd'
-$testProfile = Join-Path (Get-Location) 'output/progressed-test-saves'
-if (Test-Path -LiteralPath $testProfile) { throw 'Choose a new test profile.' }
-$cardBytes = [IO.File]::ReadAllBytes($sourceCard)
-if ($cardBytes.Length -ne 131072 -or $cardBytes[0] -ne 0x4D -or $cardBytes[1] -ne 0x43) {
-    throw 'Expected a raw 128 KiB PlayStation memory card with an MC header.'
-}
-New-Item -ItemType Directory -Path $testProfile -ErrorAction Stop | Out-Null
-$copiedCard = Join-Path $testProfile 'card1.mcd'
-[IO.File]::WriteAllBytes($copiedCard, $cardBytes)
-if ((Get-FileHash -LiteralPath $sourceCard).Hash -ne (Get-FileHash -LiteralPath $copiedCard).Hash) {
-    throw 'Card changed during import; do not use this copy.'
-}
+python tools/save_profiles.py list
 ```
+
+This prints absolute profile paths and the `card1.mcd` / `card2.mcd` files it
+finds under `output/`, up to three directory levels down. It includes diagnostic
+profiles; it does not guess which profile a running game is using. The launch
+script's default remains `output/player-saves`. Use a narrower root or a greater
+depth for a custom layout:
+
+```powershell
+python tools/save_profiles.py list --root 'output/title-screen' --depth 2
+python tools/save_profiles.py inspect 'output/player-saves/card1.mcd'
+```
+
+`inspect` checks the raw card's size and MC header and displays its SHA-256
+fingerprint. It does not repair cards or validate every saved game's contents.
+All commands accept `--json` for tooling.
+
+## Import a card
+
+Close the emulator writing the source card and choose a new destination profile:
+
+```powershell
+python tools/save_profiles.py import-card 'PATH\TO\DuckStation\memcards\game_1.mcd' 'output/progressed-test-saves'
+```
+
+The helper checks the card format, creates `card1.mcd` with exclusive creation,
+flushes and verifies the copy, and confirms that the source still matches. It
+never overwrites an existing profile, even an empty one. If verification or
+writing fails, it removes only its newly created files. A local, Git-ignored
+`shinka-card-import.json` records the source path, timestamp and fingerprint.
+Use `--slot 2` to import as `card2.mcd` instead; the destination must still be new.
 
 Launch with the new profile:
 
@@ -44,3 +62,16 @@ card if none is present.
 
 All cards, native states, screenshots and import provenance stay under ignored
 `output/`; none should be committed to the repository.
+
+## Verification
+
+Synthetic tests cover exact copying, source preservation, existing-profile
+refusal, invalid headers and sizes, slot selection, a changing source, disk-write
+failure cleanup, unrelated-file preservation and bounded profile discovery.
+These are import-tool checks, separate from the game's [save/load timing and
+compatibility tests](save-timing.md).
+
+A September 11 command-line check imported a diagnostic copy of the player's
+card into a fresh profile. Independent source/destination SHA-256 checks matched,
+and both the card and provenance file were confirmed excluded from Git. Profile
+discovery also found the installed build's two cards under `output/title-screen/saves`.

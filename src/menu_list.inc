@@ -219,6 +219,7 @@ void shinka_journal_quick_menu(CPUState* cpu) {
     uint32_t p = cpu->gpr[4], row, count;
     uint16_t pressed;
     if (!expanded(p) || READ(0x8004b3fc)) return;
+    wide_menu_root = p; wide_menu_mode = READ(MODE);
     if (READ(MODE) == STATUS && READ(p + 0xa0) == 5) return; /* map's stock close path */
     if (READ(MODE) == STATUS && READ(p + 0xc) == 1 && READ(p + 0x10) == 4
         && READ(p + 0x14) == 1 && READ(p + 0xa0) == 0

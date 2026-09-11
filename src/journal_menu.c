@@ -13,10 +13,12 @@
 #define READ psx_mod_read_word
 #define WRITE psx_mod_write_word
 static int enabled;
+static uint32_t wide_menu_root, wide_menu_mode;
 static uint32_t lab_selection_root, lab_selection_menu;
 static int lab_selected_rookie = -1, lab_choosing;
 extern void shinka_chart_selection_reset(void);
 void shinka_lab_selection_reset(void) {
+    wide_menu_root = 0; wide_menu_mode = 0;
     shinka_chart_selection_reset();
     lab_selected_rookie = -1; lab_choosing = 0;
     lab_selection_root = lab_selection_menu = 0;
@@ -25,6 +27,13 @@ int shinka_journal_enabled(void) { return enabled; }
 static int object(uint32_t p, uint32_t callback) {
     return p >= 0x80090000u && p <= 0x801eff00u && !(p & 3u)
         && READ(p + 0x28) == 0x80014274u && READ(p + 0x48) == callback;
+}
+
+int shinka_menu_root_active(void) {
+    uint32_t p = wide_menu_root, mode = READ(MODE);
+    return p && mode == wide_menu_mode && ((mode >> 8) == 2 || mode == STATUS)
+        && !READ(MODE + 4) && object(p, QUICK_MENU) && READ(p + 0x20) == 0x2d
+        && READ(p + 0xc) <= 1 && READ(p + 0x10) <= 3 && READ(p + 0xa0) != 5;
 }
 
 #include "menu_list.inc"

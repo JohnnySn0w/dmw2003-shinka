@@ -1,5 +1,6 @@
 #include "view.h"
 #include "mod_plugins.h"
+#include "menu_wide.h"
 
 static int active_wide;
 static int active_percent = 100;
@@ -8,7 +9,7 @@ void shinka_view_tick(void) {
     unsigned mode = psx_mod_read_word(0x8004b3f8u);
     int started = psx_mod_game_started();
     int battle = started && mode == 0x600;
-    int field = started && mode >= 0x200 && mode < 0x300;
+    int field = started && ((mode >= 0x200 && mode < 0x300) || shinka_menu_wide_mode(mode));
     int wide = (battle && shinka_view_get(0) == 1)
         || (field && shinka_view_get(2) == 1);
     int zoom = battle ? shinka_view_get(1) : 0;

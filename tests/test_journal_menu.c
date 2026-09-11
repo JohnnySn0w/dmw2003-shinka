@@ -26,6 +26,7 @@ void shinka_menu_allocate(CPUState *cpu);
 void shinka_menu_task_ready(CPUState *cpu);
 void shinka_register_journal(void);
 void shinka_lab_selection_reset(void);
+int shinka_menu_root_active(void);
 void shinka_chart_selection_reset(void) {}
 #define W psx_mod_write_word
 #define R psx_mod_read_word
@@ -92,6 +93,16 @@ int main(void) {
     CHECK(shinka_menu_slot(menu, 0x80100028) == 0x801000b0);
     W(menu + 0x58, 4); shinka_journal_quick_menu(&cpu);
     CHECK(R(menu + 0x58) == 4); /* Square no longer changes STATUS */
+    CHECK(shinka_menu_root_active());
+    W(0x8004b3fc, 0x1000); CHECK(!shinka_menu_root_active()); W(0x8004b3fc, 0);
+    W(menu + 0xc, 2); CHECK(!shinka_menu_root_active()); W(menu + 0xc, 1);
+    W(menu + 0x10, 4); CHECK(!shinka_menu_root_active()); W(menu + 0x10, 3);
+    W(menu + 0xa0, 5); CHECK(!shinka_menu_root_active()); W(menu + 0xa0, 0);
+    W(0x8004b3f8, 0x1000); CHECK(!shinka_menu_root_active());
+    shinka_journal_quick_menu(&cpu); CHECK(shinka_menu_root_active());
+    shinka_lab_selection_reset(); CHECK(!shinka_menu_root_active());
+    W(0x8004b3f8, 0x21d); shinka_journal_quick_menu(&cpu);
+    CHECK(shinka_menu_root_active());
     W(menu + 0x58, 7); psx_mod_write_half(0x8004b818, 0xa000);
     shinka_journal_quick_menu(&cpu);
     CHECK(R(menu + 0xa0) == 1 && R(menu + 0x58) == 0 && R(menu + 0x10) == 0);

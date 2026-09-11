@@ -2,22 +2,25 @@
 #include <stdlib.h>
 #include "view.h"
 #include "battle_hud.h"
+#include "menu_wide.h"
 #define CHECK(c) do { if (!(c)) { fprintf(stderr,"line %d: %s\n",__LINE__,#c); exit(1); } } while (0)
 static uint32_t mode;
 static int started = 1, options[3], frontend;
+static int root_menu;
+int shinka_menu_root_active(void) { return root_menu; }
 int psx_mod_game_started(void) { return started; }
 uint32_t psx_mod_read_word(uint32_t addr) { CHECK(addr == 0x8004b3f8); return mode; }
 int shinka_view_get(int option) { return options[option]; }
 void shinka_view_frontend(int wide) { frontend = wide; }
 int main(void) {
     const uint32_t modes[] = {0, 0x1ff, 0x200, 0x202, 0x21d, 0x2ff, 0x300,
-        0x600, 0x700, 0xc00, 0xc01, 0xd00, 0xd01, 0xe00, 0x1000, 0x1400};
+        0x600, 0x700, 0xa00, 0xa01, 0xc00, 0xc01, 0xd00, 0xd01, 0xe00, 0xf00, 0xf01, 0x1000, 0x1400};
     for (unsigned m=0;m<sizeof(modes)/sizeof(*modes);++m) for(int w=0;w<2;++w)
     for(int z=0;z<3;++z) for(int f=0;f<2;++f) {
         int64_t x=12000000, y=-6000000;
         mode=modes[m];options[0]=w;options[1]=z;options[2]=f;shinka_view_tick();
         int percent=mode==0x600 ? 100-10*z : 100;
-        CHECK(frontend==((mode==0x600 && w) || (mode>=0x200 && mode<0x300 && f)));
+        CHECK(frontend==((mode==0x600 && w) || (((mode>=0x200 && mode<0x300) || mode==0xa00 || mode==0xf00) && f)));
         shinka_view_project(&x,&y);
         CHECK(x==120000*percent && y==-60000*percent);
     }
@@ -33,6 +36,48 @@ int main(void) {
         uint32_t panel[]={0x64808080,0x001400CB,0x3E2059C4,0x001C0018};
         shinka_battle_hud_command(panel,4,0,0,0,0,319,239,53);
         CHECK(panel[1]==0x001400CB); /* battle anchors never move field sprites */
+    }
+    for(int band=0;band<=256;band+=256) for(int m=1;m<=160;++m) {
+        mode=0xf00;options[2]=1;shinka_view_tick();
+        int end=-m;
+        for(int x=0;x<320;x+=32) {
+            uint32_t panel[]={0x64808080,0x009c0000u|(unsigned)x,0x7eaa6400,0x00260020};
+            int width=shinka_menu_wide_rect(panel,4,0,band,0,band,319,band+239,m);
+            CHECK((int16_t)panel[1]==end && width>0);
+            CHECK(panel[2]==0x7eaa6400 && panel[3]==0x00260020);
+            end+=width;
+        }
+        CHECK(end==320+m); /* all ten strips meet without cracks */
+        uint32_t a[]={0x64808080,0x00a00096,0x3a170000,0x000c0008};
+        uint32_t b[]={0x64808080,0x00a000a2,0x3a170000,0x000c0008};
+        CHECK(!shinka_menu_wide_rect(a,4,0,band,0,band,319,band+239,m));
+        CHECK(!shinka_menu_wide_rect(b,4,0,band,0,band,319,band+239,m));
+        CHECK((int16_t)b[1]-(int16_t)a[1]==12); /* description crosses column boundary intact */
+        CHECK(a[3]==0x000c0008 && b[3]==0x000c0008); /* glyph size */
+    }
+    {
+        uint32_t panel[]={0x64808080,0x009c0000,0x7eaa6400,0x00260020};
+        mode=0x21d;shinka_view_tick();
+        CHECK(!shinka_menu_wide_rect(panel,4,0,0,0,0,319,239,53));
+        CHECK(panel[1]==0x009c0000);
+        mode=0xf00;options[2]=0;shinka_view_tick();
+        CHECK(!shinka_menu_wide_rect(panel,4,0,0,0,0,319,239,53));
+        CHECK(panel[1]==0x009c0000);
+        options[2]=1;shinka_view_tick();
+        CHECK(!shinka_menu_wide_rect(panel,4,0,0,0,0,99,59,53));
+        CHECK(panel[1]==0x009c0000); /* offscreen texture/portrait pass */
+    }
+    for(int fullscreen=0;fullscreen<2;++fullscreen) {
+        mode=fullscreen ? 0x1000 : 0x21d;root_menu=1;options[2]=1;shinka_view_tick();
+        CHECK(frontend);
+        uint32_t cursor[]={0x64808080,0x003100b0,0x3a170000,0x000c0008};
+        uint32_t field[]={0x64808080,0x003100b0,0x3c400000,0x00800080};
+        shinka_menu_wide_rect(cursor,4,0,0,0,0,319,239,53);
+        shinka_menu_wide_rect(field,4,0,0,0,0,319,239,53);
+        CHECK(cursor[1]==0x003100e5 && cursor[3]==0x000c0008);
+        CHECK(field[1]==0x003100b0 && field[3]==0x00800080);
+        root_menu=0;shinka_view_tick();
+        CHECK(frontend==!fullscreen); /* full-screen map/status child keeps its own mode */
     }
     started=1;mode=0x600;options[0]=1;shinka_view_tick();
     for(int band=0;band<=256;band+=256) {

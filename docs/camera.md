@@ -9,16 +9,19 @@ SETTINGS provides independent view and battle zoom controls:
   proportions. OpenGL also draws preloaded tiles missing from the original
   submission. Unready or unsupported tiles can still leave incomplete edges.
   Small interiors can have authored black space outside their artwork. This is
-  a preview, not a complete field widescreen conversion.
+  a preview, not a complete field widescreen conversion. It also widens the
+  shared gym/shop interfaces and anchors both expanded Start-menu roots to
+  the edges of the wider canvas.
 - **Battle zoom:** 100%, 90%, or 80% projected size. At 80%, the same viewport
   covers approximately 25% more world span along each axis. This changes the
   effective field of view; it does not move the scripted camera backwards.
 
 They can be combined. Defaults retain 4:3 and 100%. Changes persist in the
 existing mod state. Battle controls apply to ordinary battles (mode `0x600`);
-the field preview applies only to modes `0x200..0x2ff`, including the field quick
-menu. The lab, card battles, full-screen menus, movies and rewards retain their
-original view. In battle 16:9,
+the field preference applies to modes `0x200..0x2ff`, the gym (`0xa00`), shops
+(`0xf00`), and the expanded Start root in the Status overlay (`0x1000`) while
+that root is active. The lab, card battles, other Status children (including the
+map), movies and rewards retain their original view. In battle 16:9,
 enemy health, battle commands/submenus and bottom dialogue stay aligned on the
 left; player health/MP and the miniature portrait move to the right. The bottom
 dialogue panel spans between the outer edges of both health panels. Its text and
@@ -201,3 +204,35 @@ and rejection in unrelated scenes. Local evidence is in
 `output/field-stream-02/`. Coverage remains limited: untested tile formats,
 NPC/object culling, native camera clamps, map boundaries and transition effects
 still need investigation. Authored empty space in small interiors is preserved.
+
+### Gym, shop and Start-menu layouts — 2026-09-11
+
+The Field 16:9 preference now also covers the shared training overlay (`0xa00`)
+and buy/sell overlay (`0xf00`). Their panels are tiled textured rectangles.
+`src/menu_wide.c` expands panel and decorative background spans on the host;
+glyphs, item icons and training images keep their original sizes and move as
+columns. Shop description lines and the centered page counter retain their
+spacing across the column boundary. Border artwork is widened with the panels.
+The guest's packets, textures, selection coordinates and save data stay intact.
+
+Both expanded Start roots anchor the party/currency panels left and the option
+list/cursor right, and widen the top instruction bar. This includes SETTINGS
+and the full-screen root reached by backing out of ITEMS. A validated pointer
+from the resident menu callback gates those transforms; it is cleared on state
+loads and rejected during another mode, queued transitions, teardown or the
+map's close path. Only the root panel/font palettes are moved over a field.
+Other scenery and NPC dialogue remain in their world positions. The Status
+overlay returns to 4:3 for its other children; widening ITEMS, the map, the lab,
+card battles and remaining interfaces is still separate work.
+
+Copied-save OpenGL checks covered Leomon's dialogue, training choice and TP
+selector, exit back to Central Park, Gargomon's armory buy list/quantity and sell
+categories/items, Wizardmon's item-shop list, both Start roots, SETTINGS, and
+restoring checkpoints in these interfaces. These shops share the same overlay;
+they do not need separate per-NPC patches. Other gyms and later-story merchants
+have not been individually visited, and training minigames are not yet covered.
+
+Native tests check both framebuffer bands, adjacent panel seams at every allowed
+margin, original texture dimensions, glyph spacing, cursor anchoring, 4:3 and
+unrelated-scene isolation, plus root lifecycle/state-reset guards. Local captures
+and copied checkpoints are under `output/npc-wide-01/`.

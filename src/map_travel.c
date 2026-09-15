@@ -18,6 +18,7 @@ extern int shinka_journal_enabled(void);
 #define PHOENIX_COMPLETE 0x8004b3bfu /* flag 0x1c51, bit 1 */
 #define ZANBAMON_REMOVED 0x8004b3b6u /* flag 0x1c09, bit 1 */
 #define SUZAKU_INTRO_COMPLETE 0x8004b3dfu /* flag 0x400a, bit 2 */
+#define BADLAND_ENCOUNTER 0x8004b3e3u /* flags 0x4029 started, 0x402a complete */
 
 struct arrival { uint32_t stage, x, y; };
 
@@ -37,6 +38,8 @@ static const struct { uint32_t icon, stage, x, y; } destinations[] = {
     {46, 0x23b, 0x437f2, 0x29469}, /* Phoenix Bay, south-side bridge */
     {42, 0x23e, 0x24f57, 0x2cff4}, /* Suzaku City plaza */
     {26, 0x249, 84211, 84884},   /* Pelche Oasis */
+    {29, 0x24a, 128*256, 376*256}, /* North Badland W, native Oasis entry */
+    {27, 0x24b, 144*256, 208*256}, /* North Badland E, native western entry */
 };
 static int object(uint32_t p, uint32_t callback) {
     return p >= 0x80090000u && p <= 0x801eff00u && !(p & 3)
@@ -79,6 +82,10 @@ static int source(uint32_t stage) {
     return 0;
 }
 static const char* departure(uint32_t stage, uint32_t story) {
+    /* WSTAG565 resumes event 0x4f8 while 0x4029 is set and 0x402a
+     * is clear. Preserve its local completion sequence. */
+    if (stage == 0x24a && (B(BADLAND_ENCOUNTER) & 6) == 2)
+        return "Finish the local encounter";
     /* WSTAG200's front exit requires 0x7007 == 0: outside story 20..23.
      * Keep lockdown departures on the original interior/sewer route. */
     if (stage == 0x200 && story >= 20 && story <= 23)
@@ -129,12 +136,14 @@ static const char* plan(uint32_t parent, uint32_t icon, struct arrival* out) {
     const char* blocked;
     int i=destination(icon);
     if (!controller(parent)) return "Reopen menu for travel";
-    if (!source(stage)) return "Travel unavailable here";
+    if (!source(stage)) return "Travel not added here";
     /* Later campaign and post-game access need separate destination validation. */
     if (!story || story > 0x24) return "Travel unavailable now";
     blocked=departure(stage,story);
     if (blocked) return blocked;
     if (i < 0) return "No travel point yet";
+    if (destinations[i].stage == 0x24a && (B(BADLAND_ENCOUNTER) & 6) == 2)
+        return "Finish the local encounter";
     if (stage == 0x23e || destinations[i].stage == 0x23e) {
         if (story < 10 || !(B(ZANBAMON_REMOVED) & 2))
             return "Finish the jungle route";

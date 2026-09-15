@@ -9,7 +9,7 @@ scripted exits, temporary closures and transport unlocks. A previously visited
 area can become inaccessible later. Both departure and arrival need checks.
 
 This is an implementation scope and test plan, not a completed campaign safety
-certification. The eleven-destination network now guards Seiryu's pending departure
+certification. The thirteen-destination network now guards Seiryu's pending departure
 scene, adjusts Asuka's early arrival, gates three South Sector stops behind the
 completed first arrival, and admits Phoenix Bay only after its exact surface field
 has been visited. Suzaku has event-aware arrivals and departures, and Asuka's
@@ -441,6 +441,53 @@ plaza, walking to the southwest exit and pressing Cross loaded Phoenix Bay
 normally. The completed Suzaku checkpoint also reloaded at the plaza. These
 checks used an isolated save profile; the previous test checkpoint was archived
 before replacement, and the owner's original memory cards were not modified.
+
+## North Badland W and E — 2026-09-15
+
+The progressed test save was in North Badland W (`0x24a`, story 20). That field
+was absent from the departure allowlist, so every icon was blocked regardless of
+its visit state. W and E (`0x24b`) now support repeat travel with exact-field visits
+and the existing story 1–36 limit. Unsupported departures now say **Travel not
+added here**, distinguishing missing coverage from a known event restriction.
+
+Original field records supply both new landings:
+
+| Original module / record offset | Transition | Landing in field units |
+| --- | --- | --- |
+| `WSTAG560.PRO` / `0x850` | Pelche Oasis → North Badland W | `(128, 376)` |
+| `WSTAG565.PRO` / `0x92c` | North Badland W → North Badland E | `(144, 208)` |
+| `WSTAG565.PRO` / `0x8fc` | North Badland W → Pelche Oasis | `(660, 496)` |
+| `WSTAG570.PRO` / `0xa80` | North Badland E → North Badland W | `(1392, 960)` |
+
+These action-1 records have no conditional predicates. Travel uses the first two
+landings, scaled by 256 for the field-return coordinates. The annotated words
+for all three modules were compared with files extracted from the owner's disc;
+all matched. The resident field table at `0x8009a884` also identifies their native
+entry callbacks. This establishes the route data, not unrestricted campaign access.
+
+W's callback at module offsets `0x40..0x88` resumes event `0x4f8` when flag
+`0x4029` is set and `0x402a` is clear. Native callbacks set the first flag at
+`0xfc..0x144` and the completion flag at `0x148..0x190`. Their bits are masks
+`2` and `4` in byte `0x8004b3e3`. Both arrival and departure now reject that
+pending combination with **Finish the local encounter**, including rechecks at
+the deferred transition. The event's character identity has not been established.
+North Badland N remains excluded: its separate story-16/flag-`0x40a2` event needs
+its own audit. Original transport predicates remain untouched.
+
+Validation used a copied save profile at story 20. Developer positioning placed
+the party on native exit triggers; Cross then exercised Oasis → W → E and the
+reverse transitions through the original loader. Native map cursor navigation
+and Cross exercised W → E → W → Central Park → W. Checked story and quest flags
+were unchanged across those four map trips, and the new W landing survived a
+checkpoint save/reload. A synthetic pending-encounter fixture displayed the
+restriction and rejected Cross; its original byte was restored afterward.
+
+Native tests cover both landings, exact visits, all eight combinations of the
+low three flag bits, and pending-request revocation on both current and legacy
+commit paths. All 17 native suites passed. Diagnostic artifacts remain local in
+`output/west-travel-01/`; the owner's original cards were not modified by these
+tests. Coverage is specific to these routes and fixtures, not a naturally earned
+replay of every allowed story phase or completion of the pending encounter.
 
 ## Priorities for the existing network
 

@@ -29,6 +29,8 @@ The initial travel network connects these Asuka locations:
 | Phoenix Bay | South-side bridge, or northern approach while its earthquake event is pending |
 | Suzaku City | Plaza, with event approaches for the first conversation, Kail's return and the later earthquake |
 | Pelche Oasis | Path near the waterfront |
+| North Badland W | Native entrance from Pelche Oasis |
+| North Badland E | Native entrance from North Badland W |
 
 The exact arrival area must already be visited in the loaded game. One icon can
 represent several rooms, so having the icon visible is insufficient. If you are
@@ -38,7 +40,10 @@ Travel currently starts from these same fields, plus Asuka Main Lobby and Bulk
 Swamp. Bulk Swamp shares an icon with Bulk Bridge, but only visiting the swamp
 does not unlock the bridge landing.
 Other interiors, dungeons, other servers and unvalidated late campaign states
-show an unavailable message. There is no cross-server map switch. The build
+remain unavailable. **Travel not added here** means the current departure field
+is not implemented; **No travel point yet** means the selected destination is
+not implemented. A blocked source affects every selected destination, even
+those you have visited. There is no cross-server map switch. The build
 accepts story word values 1–36 for this initial network; this is a conservative
 validation boundary, not a claim that every later value denotes post-game.
 Broader campaign coverage, additional arrival points and post-game routes remain
@@ -61,7 +66,12 @@ its exact field has been visited. Jungle Grave remains excluded because its firs
 entry owns the Zanbamon encounter and returns the party through the native event.
 
 Most unsupported icons currently mean that no arrival point has been validated;
-they do not imply a known story lock. The story range above is a broad scope
+they do not imply a known story lock. North Badland W's local encounter must
+finish once started before map travel can use that stop; its pending flags are
+checked for both departures and arrivals, including again at the deferred cut.
+See the [Badland audit](travel-story-audit.md#north-badland-w-and-e--2026-09-15).
+
+Other unsupported icons are still investigation work. The story range above is a broad scope
 limit, not a complete quest-by-quest access policy. Earlier visitation does not
 prove current access: travel could bypass a scripted entrance, escape a gated
 sequence, or reach an area whose NPCs depend on another story phase. Each added

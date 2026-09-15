@@ -29,6 +29,32 @@ From the Shinka repository root:
 
 The build checks the candidate/framework commits and the disc SHA-1 before extracting the boot executable. Generated code and assets stay local. The resulting executable is `build-windows/Release/dmw2003-shinka.exe`; use the launch script so configuration, disc, and separate save paths are supplied correctly. This is not yet a standalone distributable package.
 
+### Launching the executable directly
+
+A double-click launch also needs the local disc and save-profile paths. A configured
+shortcut can pass the same arguments as the launch script. Alternatively, add the
+following sections to `settings.toml` beside the executable, substituting absolute
+paths on your computer. Preserve any existing settings in that file. Include the
+BIOS section only when using the optional retail BIOS backend described below.
+
+```toml
+[disc]
+path = 'C:/Games/your-disc.cue'
+
+[bios]
+path = 'C:/Games/your-bios.bin'
+
+[memcard]
+dir = 'C:/Games/Shinka/output/your-existing-save-profile'
+```
+
+Use the folder containing your existing `card1.mcd` and `card2.mcd` to keep the
+same saves. These machine-specific settings and shortcuts stay outside version
+control. Without configured paths, a direct launch can fail before the disc
+picker opens while Shinka initializes its disc-dependent modifications.
+
+### BIOS, controls and profiles
+
 The default build includes the framework's OpenBIOS. An optional locally supplied SCPH-1001 BIOS with MD5 `924e392ed05558ffdb115408c263dccf` can be compiled and selected by passing `-RetailBios 'PATH\TO\bios.bin'` to **both** scripts. No retail BIOS is included. The completed movie/savestate probes used that optional backend; OpenBIOS reached language selection but has not had the same full smoke test.
 
 Keyboard defaults: arrows = D-pad, Enter = Start, X/S/Z/A = Cross/Circle/Square/Triangle, Q/W/E/R = L1/R1/L2/R2, right Shift = Select. At language selection use **Start** to confirm. Default gamepad face buttons map A/B/X/Y to Cross/Circle/Square/Triangle.

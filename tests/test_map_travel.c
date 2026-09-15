@@ -153,6 +153,38 @@ static void story_policy(void) {
         CHECK(psx_mod_read_byte(p)==0);
     }
 }
+static void badland_policy(void) {
+    const unsigned stages[]={0x24a,0x24b},icons[]={29,27};
+    for(unsigned i=0;i<2;++i) {
+        fresh();watching=0;target(icons[i]);watching=1;
+        select_icon();shinka_map_present();CHECK(R(RETURN)==stages[i]);
+        CHECK(R(RETURN+4)==(i ? 144u : 128u)*256);
+        CHECK(R(RETURN+8)==(i ? 208u : 376u)*256);
+        fresh();watching=0;W(RETURN,stages[i]);watching=1;
+        select_icon();shinka_map_present();CHECK(R(RETURN)==0x21d);
+        fresh();watching=0;target(icons[i]);
+        psx_mod_write_byte(0x8004b3c9,(uint8_t)(0xffu & ~(1u << (stages[i]&7))));
+        watching=1;writes=0;select_icon();CHECK(!writes); // exact landing visit
+    }
+    for(unsigned flags=0;flags<8;++flags) for(unsigned from=0;from<2;++from) {
+        fresh();watching=0;psx_mod_write_byte(0x8004b3e3,(uint8_t)flags);
+        if(from) W(RETURN,0x24a);else target(29);
+        watching=1;writes=0;select_icon();
+        if((flags&6)==2) CHECK(!writes && !R(PARENT+0x78));
+        else {shinka_map_present();CHECK(R(RETURN)==(from ? 0x21du : 0x24au));}
+        CHECK(psx_mod_read_byte(0x8004b3e3)==flags); // no manufactured completion
+    }
+    for(unsigned legacy=0;legacy<2;++legacy) for(unsigned from=0;from<2;++from) {
+        fresh();watching=0;
+        if(from) W(RETURN,0x24a);else target(29);
+        watching=1;
+        if(legacy) {legacy_request();W(PARENT+0x7c,from ? 30 : 29);root_close();}
+        else select_icon();
+        watching=0;psx_mod_write_byte(0x8004b3e3,2);watching=1;
+        if(legacy) transition();else shinka_map_present();
+        CHECK(R(RETURN)==(from ? 0x24au : 0x249u) && !R(PARENT+0x78));
+    }
+}
 static void south_policy(void) {
     const unsigned icons[]={32,43,44}, stages[]={0x232,0x234,0x237};
     /* Visitation can exist before the arrival scene completes. Both directions
@@ -342,6 +374,7 @@ int main(void) {
     phoenix_policy();
     south_policy();
     story_policy();
+    badland_policy();
     fresh();cpu.gpr[31]=0x80099aa4;cpu.gpr[4]=0x80099894;cpu.gpr[5]=0x78;cpu.gpr[6]=8;
     shinka_map_allocate(&cpu);CHECK(cpu.gpr[5]==0x88 && cpu.gpr[6]==12 && writes==0);
     fresh();select_icon();CHECK(R(MAP+0xc)==1 && R(RETURN)==0x249);
@@ -370,7 +403,7 @@ int main(void) {
     cpu.gpr[31]=0x800997ec;cpu.gpr[16]=PARENT;shinka_map_frame(&cpu);CHECK(writes==0);
     /* Every exposed icon must lead to its own area according to the original map. */
     {
-        const unsigned icons[]={20,30,22,21,15,26,32,43,44,46,42};
+        const unsigned icons[]={20,30,22,21,15,26,32,43,44,46,42,29,27};
         for(unsigned i=0;i<sizeof(icons)/sizeof(icons[0]);++i) {
             fresh();watching=0;W(RETURN,0x200);W(0x8004b370,24);
             W(MAP+0x184,icons[i]);W(MAP+0xa8+(icons[i]-1)*4,1);watching=1;

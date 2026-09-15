@@ -24,7 +24,7 @@ runtime and interpreter fallback, with optional improvements to the original gam
 | [Portable Digimon Lab](docs/evolution-journal.md) | Choose battle forms, switch partners and load techniques from the field menu. Explore the evolution chart with directional hints for locked forms. |
 | [Progression and encounters](docs/field-menu.md) | Select 1–4x normal/DV EXP or fixed 10-point DV awards, and random encounter rates from 0–200%. |
 | [Live soundtrack switching](docs/music-live.md) | Switch between Original, DS, Sampled and Chip instruments mid-song. Alternate arrangements are provisional and use a locally built pack. |
-| [Map travel](docs/menu-map.md) | Press X on eleven supported, visited Asuka-server destinations. Story checks protect the scenes audited so far. |
+| [Map travel](docs/menu-map.md) | Press X on thirteen supported, visited Asuka-server destinations, including North Badland W and E. Story checks protect the scenes audited so far. |
 | [Screen view](docs/camera.md) | Choose battle widescreen, battle zoom and an experimental field widescreen preview. The field setting also widens gym/shop interfaces, both expanded Start-menu roots, Items, Sort, Map, Techniques and character Status (including equipment and digivolution details); remaining full-screen menus still use 4:3. |
 | [Battle motion](docs/battle-animation-speed.md) | Adjust idle and action pose speeds separately, from 1–2x, while camera and script timing retain their own rates. |
 | [Faster memory-card transfers](docs/save-timing.md) | Batch repeated file requests while preserving per-sector checks, flushes and completion handling. Existing card formats remain usable. |

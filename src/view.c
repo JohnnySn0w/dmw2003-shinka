@@ -11,15 +11,25 @@ int shinka_view_wide_requested(void) {
     int field = started && ((mode >= 0x200 && mode < 0x300) || shinka_menu_wide_mode(mode));
     if (started && mode == 0x1000 && !field) {
         /* The resident Start handler stores its destination row before loading
-         * STSTATUS. Rows 0..4 are Items/Sort/Map/Techniques/Status. Use that guest state for presentation
+         * STSTATUS. Rows 0..6 include Card Folders and the portable Lab. Use that guest state for presentation
          * while the overlay constructs/destroys its tasks, however long it
          * takes. Drawing patches still require the verified live task chain.
          * No host latch can leak across state loads or delay a 4:3 setting. */
         unsigned previous = psx_mod_read_word(0x8004b400u);
         unsigned row = psx_mod_read_word(0x8005ccf0u);
-        field = previous >= 0x200 && previous < 0x300
+        field = ((previous >= 0x200 && previous < 0x300)
+                || (row == 5 && (previous == 0x400 || previous == 0x1200))
+                || (row == 6 && (previous == 0xd00 || previous == 0xd01))
+                /* Portable lab initially returns through native Status row 4;
+                 * menu construction consumes this marker and restores row 6. */
+                || (previous == 0xd01 && psx_mod_read_word(0x8004b404u) == 0x53484c42u))
             && psx_mod_read_word(0x8005cca8u) == 2
-            && row <= 4;
+            && row <= 6;
+    }
+    if (started && !field && (mode == 0x400 || mode == 0x1200 || mode == 0xd01)) {
+        unsigned previous = psx_mod_read_word(0x8004b400u);
+        field = psx_mod_read_word(0x8005cca8u) == 2
+            && (previous == 0x1000 || previous == 0xd00 || previous == 0xd01);
     }
     return (battle && shinka_view_get(0) == 1)
         || (field && shinka_view_get(2) == 1);

@@ -80,10 +80,53 @@ int shinka_menu_map_pan(void) {
     uint32_t p = status_page();
     return map_page(p) ? (int32_t)READ(p + 0x90) : 0;
 }
+static int live_page(uint32_t p, uint32_t callback, unsigned count, uint32_t prologue) {
+    return object(p, callback) && READ(p + 0x20) == count && READ(p + 0xc) <= 1
+        && READ(callback) == prologue;
+}
+static int extra_menu_layout(unsigned mode) {
+    uint32_t p, child, children;
+    if ((mode != 0x400 && mode != 0x1200 && mode != LAB && mode != JOURNAL)
+        || READ(MODE + 4) || READ(0x8005cca8) != 2) return 0;
+    p = READ(0x8005ccbc);
+    if (!object(p, 0x80020b58) || READ(p + 0x20) != 1 || READ(p + 0xc) > 1) return 0;
+    p = lab_child(p);
+    uint32_t owner = mode == 0x400 ? 0x800831f0 : mode == 0x1200 ? 0x80083ad8 : 0x80082f48;
+    if (!object(p, owner) || READ(p + 0x20) != 1 || READ(p + 0xc) > 1) return 0;
+    p = lab_child(p);
+    if (mode == 0x1200)
+        return live_page(p, 0x80085540, 19, 0x27bdffe0) ? SHINKA_CARD_ALBUM : 0;
+    if (mode == 0x400) {
+        /* The folder owner sleeps in lifecycle 2 while its editor runs. */
+        if (!object(p, 0x80089e98) || READ(p + 0x20) != 27
+            || READ(p + 0xc) > 2 || READ(0x80089e98) != 0x27bdffe0) return 0;
+        child = lab_child(p);
+        if (live_page(child, 0x80086574, 53, 0x27bdffe0))
+            /* Native 800857a0..800857b4 toggles this explanation flag.
+             * The earlier +0x68 field is animated and cannot identify it. */
+            return READ(child + 0x43c) == 1 ? SHINKA_FOLDER_EXPLAIN : SHINKA_FOLDER_EDIT;
+        return READ(p + 0xc) <= 1 ? SHINKA_FOLDER_SELECT : 0;
+    }
+    if (READ(0x80055d28) != 13 || !live_page(p, 0x8008ed0c, 3, 0x27bdff40)) return 0;
+    children = READ(p + 0x24);
+    if (children < 0x80090000 || children > 0x801ffff4 || (children & 3)) return 0;
+    child = READ(children + 4);
+    if (live_page(child, 0x800842f4, 7, 0x27bdffc8)) return SHINKA_LAB_CHART;
+    if (live_page(child, 0x800885ec, 24, 0x27bdffe0)) {
+        children = READ(child + 0x24);
+        if (children < 0x80090000 || children > 0x801fffa0 || (children & 3)) return 0;
+        if (live_page(READ(children + 21*4), 0x8008e8d0, 28, 0x27bdff80)) return SHINKA_LAB_TECHNIQUES;
+        if (live_page(READ(children + 23*4), 0x8008c960, 23, 0x27bdff30)) return SHINKA_LAB_LOAD;
+    }
+    return SHINKA_LAB;
+}
 int shinka_menu_status_layout(void) {
+    unsigned mode = READ(MODE);
+    if (mode != STATUS) return extra_menu_layout(mode);
     uint32_t p = status_page(), children;
     if (!p) return SHINKA_STATUS_NONE;
     if (map_page(p)) return SHINKA_STATUS_MAP;
+    if (live_page(p, 0x80084a98, 40, 0x27bdffd0)) return SHINKA_STATUS_FOLDERS;
     if (object(p, 0x80091d18) && READ(p + 0x20) == 53 && READ(p + 0xc) <= 1
         && READ(0x80091d18) == 0x27bdffd8 && READ(0x80091d1c) == 0xafb10014)
         return SHINKA_STATUS_ITEMS;

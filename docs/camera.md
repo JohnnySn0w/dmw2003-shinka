@@ -22,9 +22,11 @@ view between 4:3 and 16:9 (keyboard default E). R2/RT toggles speedup (R).
 See [trigger controls](controller-support.md#trigger-shortcuts).
 Battle controls apply to ordinary battles (mode `0x600`);
 the field preference applies to modes `0x200..0x2ff`, the gym (`0xa00`), shops
-(`0xf00`), and the expanded Start root, Items, Sort, Map, Techniques and character Status in the Status overlay (`0x1000`)
-while their menu tasks are active. The lab, card battles, other Status children,
-movies and rewards retain their original view. In battle 16:9,
+(`0xf00`), and the expanded Start root, Items, Sort, Map, Techniques, character
+Status and Card Folders in the Status overlay (`0x1000`). Card Album (`0x1200`),
+Edit Folder (`0x400`) and the Digimon Lab (`0xd00`/`0xd01`) also support the field
+preference while their verified menu tasks are active. Card battles, movies and
+rewards retain their original view. In battle 16:9,
 enemy health, battle commands/submenus and bottom dialogue stay aligned on the
 left; player health/MP and the miniature portrait move to the right. The bottom
 dialogue panel spans between the outer edges of both health panels. Its text and
@@ -414,3 +416,55 @@ the guest cursor and pan state unchanged. Captures and state snapshots are in
 horizontal pan value in both framebuffer bands, unchanged sprite dimensions/UVs,
 tooltip alignment and invalid-owner rejection. Other server maps and travel
 routes were not separately verified in this pass.
+
+### Card Folders and Digimon Lab — 2026-09-15
+
+The field widescreen preference now includes the Card Folders entry menu, Card
+Album, folder selection/editing, and the portable Lab's action/partner menus,
+switching display, evolution chart, form selection and technique loading.
+Backgrounds use the same fixed-pitch tiling as the other widened menus. Card
+frames, artwork and selection highlights move by matching column offsets rather
+than stretching the cards. Lab summaries stay left and action/list groups move
+right. The chart keeps its connected node geometry centered, with title and page
+controls at the edges. Folder-name entry retains a centered native-size keyboard
+on the wide background.
+
+The live owner checks distinguish these overlays:
+
+| Screen | Mode | Callback / children |
+| --- | --- | --- |
+| Card Folders entry | `0x1000` | `0x80084a98` / 40 |
+| Card Album | `0x1200` | `0x80085540` / 19 |
+| Folder selector | `0x400` | `0x80089e98` / 27 |
+| Folder grid | `0x400` | Selector child 0, `0x80086574` / 53 |
+| Lab root | `0xd00` / `0xd01` | `0x8008ed0c` / 3 |
+| Lab chart | Lab root child 1 | `0x800842f4` / 7 |
+| Form technique overview | `0x800885ec` child 21 | `0x8008e8d0` / 28 |
+| Technique loading table | `0x800885ec` child 23 | `0x8008c960` / 23 |
+
+The folder selector sleeps in lifecycle 2 while its editor runs; the editor's
+own live identity is required before applying its layout. The card-description
+flag is editor `+0x43c`, toggled by original instructions at
+`0x800857a0..0x800857b4`. It is separate from the animated `+0x68` field.
+Description glyphs include a one-pixel baseline variation, so their whole text
+band shares an anchor. The Lab's technique table similarly moves as a complete
+unit; its footer expands while prose and MP cost use opposite edges.
+
+Copied-save captures and packet/task snapshots remain local under
+`output/folders-lab-wide-01/`. Checks cover album browsing, folder selection,
+first/last grid-column highlighting, the sort prompt, explanation on/off, folder-name
+entry, partner selection, switching display, chart hints, form technique lists
+and the load confirmation popup. Matched state captures verify 320px and 426px
+presentation for the grid, album, partner menu, chart and technique overview.
+Native tests cover owner-chain reuse, language/transition guards, the sleeping
+folder parent, distinct nested Lab slots, background strip joins, card/cursor
+spacing, ribbon continuity, glyph baselines and unchanged 4:3 packets. All 17
+native suites pass. This is English-layout coverage with the copied progressed
+save; it does not certify every card, partner, physical-lab entry or language.
+
+The portable Lab returns through native Status row 4 before its root constructor
+restores DIGIVOLUTIONS (row 6). Presentation now recognizes the existing
+`0x53484c42` return marker during that interval. All 54 sampled captures across
+the chart → partner chooser → Lab actions → Start root sequence stayed 426px
+wide after this correction. The two Card Folder return steps likewise retained
+426px in their sampled captures.

@@ -482,6 +482,58 @@ int main(void) {
             shinka_lab_selection_reset();CHECK(shinka_menu_status_layout()==kind);
         }
     }
+    /* New overlay layouts follow live ownership, including the sleeping
+     * folder selector while its grid editor is active. */
+    for(int kind=SHINKA_CARD_ALBUM;kind<=SHINKA_LAB_TECHNIQUES;++kind) {
+        memset(ram,0,sizeof(ram));
+        unsigned mode=kind==SHINKA_CARD_ALBUM ? 0x1200 : kind<=SHINKA_FOLDER_EDIT ? 0x400 : 0xd01;
+        uint32_t owner=0x80100000,overlay=0x80101000,page=0x80102000,child=0x80104000,detail=0x80105000;
+        uint32_t callbacks[]={0x80020b58,mode==0x1200 ? 0x80083ad8 : mode==0x400 ? 0x800831f0 : 0x80082f48,
+            mode==0x1200 ? 0x80085540 : mode==0x400 ? 0x80089e98 : 0x8008ed0c};
+        uint32_t objects[]={owner,overlay,page};
+        unsigned counts[]={1,1,mode==0x1200 ? 19u : mode==0x400 ? 27u : 3u};
+        W(0x8004b3f8,mode);W(0x8005cca8,2);W(0x80055d28,13);W(0x8005ccbc,owner);
+        for(int i=0;i<3;++i) {
+            W(objects[i]+0x28,0x80014274);W(objects[i]+0x48,callbacks[i]);
+            W(objects[i]+0xc,1);W(objects[i]+0x20,counts[i]);W(objects[i]+0x24,objects[i]+0x100);
+            if(i<2) W(objects[i]+0x100,objects[i+1]);
+        }
+        W(callbacks[2],mode==0xd01 ? 0x27bdff40 : 0x27bdffe0);
+        if(kind==SHINKA_FOLDER_EDIT || kind>=SHINKA_LAB_CHART) {
+            unsigned callback=kind==SHINKA_FOLDER_EDIT ? 0x80086574 : kind==SHINKA_LAB_CHART ? 0x800842f4 : 0x800885ec;
+            W(page+0x100+(kind==SHINKA_FOLDER_EDIT ? 0 : 4),child);
+            W(child+0x28,0x80014274);W(child+0x48,callback);W(child+0xc,1);
+            W(child+0x20,kind==SHINKA_FOLDER_EDIT ? 53 : kind==SHINKA_LAB_CHART ? 7 : 24);
+            W(callback,kind==SHINKA_LAB_CHART ? 0x27bdffc8 : 0x27bdffe0);
+            if(kind==SHINKA_FOLDER_EDIT) W(page+0xc,2);
+            if(kind==SHINKA_LAB_TECHNIQUES) {
+                W(child+0x24,child+0x100);W(child+0x100+21*4,detail);
+                W(detail+0x28,0x80014274);W(detail+0x48,0x8008e8d0);W(detail+0xc,1);W(detail+0x20,28);
+                W(0x8008e8d0,0x27bdff80);
+            }
+        }
+        writes=0;CHECK(shinka_menu_status_layout()==kind && !writes);
+        if(kind==SHINKA_FOLDER_EDIT) {
+            W(child+0x43c,1);CHECK(shinka_menu_status_layout()==SHINKA_FOLDER_EXPLAIN);
+            W(child+0x43c,0);CHECK(shinka_menu_status_layout()==SHINKA_FOLDER_EDIT);
+            W(child+0xc,2);CHECK(!shinka_menu_status_layout());W(child+0xc,1);
+        }
+        if(kind==SHINKA_LAB_TECHNIQUES) {
+            W(child+0x100+21*4,0);W(child+0x100+23*4,detail);
+            W(detail+0x48,0x8008c960);W(detail+0x20,23);W(0x8008c960,0x27bdff30);
+            CHECK(shinka_menu_status_layout()==SHINKA_LAB_LOAD);
+            W(child+0x100+23*4,0);W(child+0x100+21*4,detail);
+            W(detail+0x48,0x8008e8d0);W(detail+0x20,28);
+        }
+        shinka_lab_selection_reset();CHECK(shinka_menu_status_layout()==kind);
+        W(0x8005cca8,3);CHECK(!shinka_menu_status_layout());W(0x8005cca8,2);
+        W(0x8004b3fc,0x200);CHECK(!shinka_menu_status_layout());W(0x8004b3fc,0);
+        for(int i=0;i<3;++i) {
+            W(objects[i]+0x48,0);CHECK(!shinka_menu_status_layout());W(objects[i]+0x48,callbacks[i]);
+            if(i<2) {W(objects[i]+0x24,0x801fffff);CHECK(!shinka_menu_status_layout());W(objects[i]+0x24,objects[i]+0x100);}
+        }
+        W(callbacks[2],0);CHECK(!shinka_menu_status_layout());
+    }
     puts("Full lab actions, partner retention, legacy restoration, root return and menu input checks passed.");
     return 0;
 }

@@ -6,6 +6,7 @@
 #define CHECK(c) do { if (!(c)) { fprintf(stderr,"line %d: %s\n",__LINE__,#c); exit(1); } } while (0)
 static uint32_t mode;
 static uint32_t previous_mode, language = 2, destination = 5;
+static uint32_t return_marker;
 static int started = 1, options[3], frontend;
 static int root_menu;
 static int items_menu;
@@ -18,6 +19,7 @@ int psx_mod_game_started(void) { return started; }
 uint32_t psx_mod_read_word(uint32_t addr) {
     if (addr == 0x8004b3f8) return mode;
     if (addr == 0x8004b400) return previous_mode;
+    if (addr == 0x8004b404) return return_marker;
     if (addr == 0x8005cca8) return language;
     CHECK(addr == 0x8005ccf0); return destination;
 }
@@ -163,10 +165,20 @@ int main(void) {
     options[2]=0;CHECK(!shinka_view_wide_requested());shinka_view_tick();CHECK(!frontend);
     options[2]=1;
     for(unsigned row=0;row<8;++row) {
-        destination=row;shinka_view_tick();CHECK(frontend==(row<=4));
+        destination=row;shinka_view_tick();CHECK(frontend==(row<=6));
     }
     destination=0;language=3;shinka_view_tick();CHECK(!frontend);language=2;
     previous_mode=0x600;shinka_view_tick();CHECK(!frontend); /* stale row after a state load */
+    for(int card=0;card<2;++card) {
+        previous_mode=card ? 0x1200 : 0xd01;destination=card ? 5 : 6;
+        shinka_view_tick();CHECK(frontend); /* return from card overlay / portable lab */
+        destination=7;shinka_view_tick();CHECK(!frontend);
+    }
+    destination=0;
+    previous_mode=0xd01;destination=4;return_marker=0x53484c42;
+    shinka_view_tick();CHECK(frontend);
+    return_marker=0;shinka_view_tick();CHECK(!frontend);
+    destination=0;
     previous_mode=0x21d;started=0;shinka_view_tick();CHECK(!frontend);started=1;
     mode=0xd00;CHECK(!shinka_view_wide_requested()); /* unrelated overlay */
     mode=0x1000;previous_mode=0;destination=2;
@@ -185,7 +197,7 @@ int main(void) {
     }
     for(int scenario=0;scenario<5;++scenario) {
         uint32_t wipe[]={0x66808080,0x003400c0,0x3dd75f40,0x00400040};
-        mode=scenario==0 ? 0xd00 : 0x1000;destination=scenario==1 ? 5 : 0;
+        mode=scenario==0 ? 0xd00 : 0x1000;destination=scenario==1 ? 7 : 0;
         if(scenario==2) wipe[2]^=1;
         if(scenario==3) wipe[2]=0x3dd65f40;
         options[2]=scenario==4 ? 0 : 1;shinka_view_tick();
@@ -373,6 +385,62 @@ int main(void) {
         uint32_t original[]={0x64808080,0x00770078,0x7dea9690,0x00160028};
         CHECK(!shinka_menu_wide_rect(original,4,0,band,0,band,319,band+239,margin));
         CHECK(original[1]==0x00770078 && original[3]==0x00160028);
+    }
+    for(int margin=1;margin<=160;++margin) for(int band=0;band<=256;band+=256) {
+        const unsigned backgrounds[]={0x3ae91a28,0x3b2b00a8,0x3b6b0078,0x3f6b0060,0x3fab0030,0x3feb0000,0x7d28ba30,0x7d68bb00,0x7d2a3814};
+        for(int layer=0;layer<9;++layer) {
+            mode=layer<3 ? 0x400 : layer<6 ? 0x1200 : 0xd01;
+            items_menu=layer<3 ? SHINKA_FOLDER_SELECT : layer<6 ? SHINKA_CARD_ALBUM : SHINKA_LAB;
+            options[2]=1;shinka_view_tick();CHECK(frontend);
+            int end=-margin;
+            for(int x=0;x<384;x+=48) {
+                uint32_t tile[]={0x64808080,(unsigned)x,backgrounds[layer],0x00300030};
+                int width=shinka_menu_wide_rect(tile,4,0,band,0,band,319,band+239,margin);
+                CHECK((int16_t)tile[1]==end && width>0);end+=width;
+                CHECK(tile[2]==backgrounds[layer] && tile[3]==0x00300030);
+            }
+        }
+        mode=0x400;items_menu=SHINKA_FOLDER_EDIT;shinka_view_tick();
+        for(int col=0;col<9;++col) {
+            uint32_t card[]={0x64808080,0x003a0010u+(unsigned)col*32,0x40300000,0x00200020};
+            uint32_t cursor[]={0x64808080,0x0038000fu+(unsigned)col*32,0x3baa7400,0x00230024};
+            shinka_menu_wide_rect(card,4,0,band,0,band,319,band+239,margin);
+            shinka_menu_wide_rect(cursor,4,0,band,0,band,319,band+239,margin);
+            CHECK((int16_t)card[1]-(int16_t)cursor[1]==1);
+            CHECK((int16_t)card[1]==16+col*32+(col-4)*margin/4);
+        }
+        items_menu=SHINKA_FOLDER_EXPLAIN;shinka_view_tick();
+        uint32_t prose1[]={0x64808080,0x00170088,0x3a170000,0x000c0008};
+        uint32_t prose2[]={0x64808080,0x0018008f,0x3a170000,0x000c0008}; /* descender baseline */
+        shinka_menu_wide_rect(prose1,4,0,band,0,band,319,band+239,margin);
+        shinka_menu_wide_rect(prose2,4,0,band,0,band,319,band+239,margin);
+        CHECK((int16_t)prose2[1]-(int16_t)prose1[1]==7); /* explanation crosses x=140 intact */
+        items_menu=SHINKA_FOLDER_SELECT;shinka_view_tick();
+        int end=123+margin;
+        for(int x=123;x<=347;x+=32) {
+            uint32_t ribbon[]={0x64808080,0x001c0000u|(unsigned)x,0x39a80084,0x00190020};
+            CHECK(!shinka_menu_wide_rect(ribbon,4,0,band,0,band,319,band+239,margin));
+            CHECK((int16_t)ribbon[1]==end);end+=32;
+        }
+        mode=0xd01;items_menu=SHINKA_LAB;shinka_view_tick();
+        uint32_t translucent[]={0x66808080,0x009c00d5,0x27572ad4,0x00140020};
+        shinka_menu_wide_rect(translucent,4,0,band,0,band,319,band+239,margin);
+        CHECK((int16_t)translucent[1]==213+margin && translucent[3]==0x00140020);
+        items_menu=SHINKA_LAB_LOAD;shinka_view_tick();
+        uint32_t tech1[]={0x64808080,0x005e0088,0x3a170000,0x000c0008};
+        uint32_t tech2[]={0x64808080,0x005e008f,0x3a170000,0x000c0008};
+        shinka_menu_wide_rect(tech1,4,0,band,0,band,319,band+239,margin);
+        shinka_menu_wide_rect(tech2,4,0,band,0,band,319,band+239,margin);
+        CHECK((int16_t)tech1[1]==136+margin && (int16_t)tech2[1]-(int16_t)tech1[1]==7);
+        uint32_t mp[]={0x64808080,0x00d10109,0x3a170000,0x000c0008};
+        shinka_menu_wide_rect(mp,4,0,band,0,band,319,band+239,margin);CHECK((int16_t)mp[1]==265+margin);
+        items_menu=SHINKA_LAB_CHART;shinka_view_tick();
+        uint32_t node[]={0x64808080,0x00320014,0x7ca84000,0x00200020};
+        shinka_menu_wide_rect(node,4,0,band,0,band,319,band+239,margin);
+        CHECK(node[1]==0x00320014); /* chart connectors and nodes stay in one coordinate system */
+        options[2]=0;shinka_view_tick();
+        uint32_t panel[]={0x64808080,0x00130000,0x7cabb800,0x00350028};
+        CHECK(!shinka_menu_wide_rect(panel,4,0,band,0,band,319,band+239,margin));CHECK(panel[1]==0x00130000);
     }
     mode=0x1000;items_menu=SHINKA_STATUS_MAP;options[2]=1;shinka_view_tick();CHECK(frontend);
     for(int band=0;band<=256;band+=256) for(map_pan=-72;map_pan<=0;++map_pan) {

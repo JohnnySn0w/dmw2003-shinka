@@ -4,7 +4,7 @@
 
 int shinka_menu_wide_mode(unsigned mode) {
     return mode == 0xa00 || mode == 0xf00
-        || (mode == 0x1000 && (shinka_menu_root_active() || shinka_menu_status_layout()));
+        || (mode == 0x1000 && shinka_menu_root_active()) || shinka_menu_status_layout();
 }
 
 static int stretch_x(int x, int margin) {
@@ -22,10 +22,14 @@ static int ribbon_x(int x, int start) {
 
 static int backdrop_tile(uint32_t* words, unsigned mode, int x, int margin) {
     if (words[3] != 0x00300030) return 0;
-    int status = mode == 0x1000 || (mode >= 0x200 && mode < 0x300);
     uint32_t uv = words[2];
-    if (status ? (uv != 0x7da81060 && uv != 0x7deb1090 && uv != 0x7da93000)
-               : (uv != 0x7ca7b850 && uv != 0x7ce65828 && uv != 0x7ce75858)) return 0;
+    int match = mode == 0x400 ? (uv == 0x3ae91a28 || uv == 0x3b2b00a8 || uv == 0x3b6b0078)
+        : mode == 0x1200 ? (uv == 0x3f6b0060 || uv == 0x3fab0030 || uv == 0x3feb0000)
+        : (mode == 0xd00 || mode == 0xd01) ? (uv == 0x7d28ba30 || uv == 0x7d68bb00 || uv == 0x7d2a3814)
+        : (mode == 0x1000 || (mode >= 0x200 && mode < 0x300))
+            ? (uv == 0x7da81060 || uv == 0x7deb1090 || uv == 0x7da93000)
+            : (uv == 0x7ca7b850 || uv == 0x7ce65828 || uv == 0x7ce75858);
+    if (!match) return 0;
     /* Quantize the repeating grid's pitch once, not each moving tile's edges.
      * At 16:9 every 48px tile is 64px wide. Independently rounded edges made
      * some tiles 63px wide and changed their texel sampling as they scrolled.
@@ -47,11 +51,12 @@ int shinka_menu_wide_rect(uint32_t* words, int count, int offset_x, int offset_y
     unsigned mode = psx_mod_read_word(0x8004b3f8u), clut;
     int x, y, w, h, anchor = 0, dest_x, dest_w = 0;
     int root = ((mode >= 0x200 && mode < 0x300) || mode == 0x1000) && shinka_menu_root_active();
-    int status = mode == 0x1000 && !root ? shinka_menu_status_layout() : SHINKA_STATUS_NONE;
+    int status = !root ? shinka_menu_status_layout() : SHINKA_STATUS_NONE;
+    int extra = status >= SHINKA_CARD_ALBUM;
     int layout = root || status || mode == 0xa00 || mode == 0xf00;
-    int transition = (mode == 0x1000 || (mode >= 0x200 && mode < 0x300))
+    int transition = (mode == 0x1000 || mode == 0x400 || mode == 0x1200 || mode == 0xd00 || mode == 0xd01 || (mode >= 0x200 && mode < 0x300))
         && shinka_view_wide_requested();
-    int backdrop = layout || (mode == 0x1000 && transition);
+    int backdrop = layout || transition;
     unsigned op = words[0] >> 24;
     if ((!backdrop && !transition) || !shinka_view_wide_active()
         || margin <= 0 || margin > 160 || count != 4 || (op != 0x64 && op != 0x66)
@@ -60,7 +65,7 @@ int shinka_menu_wide_rect(uint32_t* words, int count, int offset_x, int offset_y
     x = (int16_t)words[1]; y = (int16_t)(words[1] >> 16);
     w = words[3] & 65535; h = words[3] >> 16; clut = words[2] >> 16;
     if (x < -128 || x > 448 || y < -128 || y > 368 || w < 1 || w > 320 || h < 1 || h > 240) return 0;
-    if (op == 0x66) {
+    if (op == 0x66 && (!extra || words[3] == 0x00400040)) {
         /* The native menu wipe is five columns of animated 64px tiles, not a
          * full-screen flat rectangle. Preserve its palette animation and UVs
          * while letting the mask reach both widescreen edges. */
@@ -78,7 +83,72 @@ int shinka_menu_wide_rect(uint32_t* words, int count, int offset_x, int offset_y
      * repainting the margins through its palette fade, but don't treat a
      * half-constructed or unrelated task as the Items layout. */
     if (!layout) return 0;
-    if ((root || (status && status != SHINKA_STATUS_MAP)) && clut == 0x2697 && y == 13) {
+    if (extra) {
+        if (status == SHINKA_LAB_CHART) {
+            /* Preserve the chart's node/line geometry as one centered unit.
+             * Its title, page indicator and shoulder prompts use the edges. */
+            dest_x = x;
+            if (y < 47) dest_x += x >= 200 ? margin : -margin;
+            else if (y >= 196) dest_x += x >= 200 ? margin : x < 40 ? -margin : 0;
+        } else if (status == SHINKA_LAB_LOAD) {
+            if (clut == 0x7cab && y == 191) {
+                dest_x = stretch_x(x, margin);
+                dest_w = stretch_x(x+w, margin)-dest_x;
+            } else if (y >= 191) dest_x = x + (y >= 208 && x >= 265 ? margin : -margin);
+            else dest_x = x + ((y >= 65 || x >= 140) ? margin : -margin);
+        } else if (status == SHINKA_LAB || status == SHINKA_LAB_TECHNIQUES) {
+            if (status == SHINKA_LAB_TECHNIQUES && y >= 100) {
+                /* Expand the bridge between stats and techniques, keeping
+                 * each stat pair and each technique line at native size. */
+                if (clut == 0x7cab && x == 168 && w == 40) {
+                    dest_x = x - margin; dest_w = w + 2*margin;
+                } else dest_x = x + (x >= (clut == 0x7cab ? 208 : 174) ? margin : -margin);
+            } else dest_x = x + (x >= 140 ? margin : -margin);
+        } else if (status == SHINKA_CARD_ALBUM) {
+            if (y >= 50 && y < 150) {
+                int col = (x - 32) / 42;
+                if (col < 0) col = 0;
+                if (col > 5) col = 5;
+                dest_x = x + (2*col - 5)*margin/5;
+            } else if (clut == 0x3deb && y >= 154 && x >= 74) {
+                dest_x = stretch_x(x, margin);
+                dest_w = stretch_x(x+w, margin)-dest_x;
+            } else {
+                anchor = y < 50 ? (x < 190 ? 0 : 320)
+                    : x >= 259 ? 320 : y >= 179 ? 74 : x >= 130 ? 130 : 0;
+                dest_x = x + stretch_x(anchor, margin)-anchor;
+            }
+        } else { /* Folder selection / editing / card sorting. */
+            int grid = status == SHINKA_FOLDER_EDIT || status == SHINKA_FOLDER_EXPLAIN;
+            if (status == SHINKA_FOLDER_EXPLAIN && clut == 0x3a6a) {
+                dest_x = stretch_x(x, margin);
+                dest_w = stretch_x(x+w, margin)-dest_x;
+            } else if (status == SHINKA_FOLDER_EXPLAIN && clut == 0x3a17 && y >= 23 && y < 40 && x >= 74)
+                dest_x = x + stretch_x(74, margin)-74;
+            else if (status == SHINKA_FOLDER_EXPLAIN && clut == 0x3aab && y == 36)
+                dest_x = x + stretch_x(259, margin)-259;
+            else if (clut == 0x39a8 && y == 28) dest_x = x + margin;
+            else if (grid && y >= 186 && x >= 144)
+                dest_x = x + margin; /* contiguous name/help panel in the last grid row */
+            else if (grid && y >= 56 && y < 220) {
+                int col = (x - 15)/32;
+                if (col < 0) col = 0;
+                if (col > 8) col = 8;
+                dest_x = x + (col - 4)*margin/4;
+            } else if (clut == 0x3a68 || clut == 0x3de9) {
+                dest_x = stretch_x(x, margin);
+                dest_w = stretch_x(x+w, margin)-dest_x;
+            } else if ((status == SHINKA_FOLDER_SELECT && y >= 99 && ((y-99)%45) <= 2)
+                || (grid && y >= 40 && y <= 41)) {
+                int start = grid ? 22 : 29;
+                int group = (x-start)/35;
+                if (group < 0) group = 0;
+                if (group > 5) group = 5;
+                anchor = start+group*35;
+                dest_x = x + stretch_x(anchor, margin)-anchor;
+            } else dest_x = x + (x >= 140 ? margin : -margin);
+        }
+    } else if ((root || (status && status != SHINKA_STATUS_MAP)) && clut == 0x2697 && y == 13) {
         /* Party selection inside character Status reuses the Start/Items
          * ribbon, not the taller detail-page header. Transform every strip
          * together before any page's left/right column anchoring. */
@@ -105,7 +175,7 @@ int shinka_menu_wide_rect(uint32_t* words, int count, int offset_x, int offset_y
             int reveal = margin < 36 ? margin : 36;
             dest_x = x - shinka_menu_map_pan() * reveal / 36 - reveal;
         }
-    } else if (status >= SHINKA_STATUS_CHARACTER) {
+    } else if (status >= SHINKA_STATUS_CHARACTER && status <= SHINKA_STATUS_CHARACTER_TECHNIQUES) {
         int techniques = status == SHINKA_STATUS_CHARACTER_TECHNIQUES;
         int digivolve = status == SHINKA_STATUS_DIGIVOLVE || techniques;
         int form_y = techniques ? 63 : 97;
@@ -145,7 +215,8 @@ int shinka_menu_wide_rect(uint32_t* words, int count, int offset_x, int offset_y
             dest_x = x + ((x >= 160 || (y < 37 && x >= 148)) ? margin : -margin);
         else dest_x = x + (x >= 148 ? margin : -margin);
     } else if (mode == 0x1000) {
-        if (clut == 0x7dea && y != 18 && (status != SHINKA_STATUS_TECHNIQUES || y >= 194)) {
+        if (clut == 0x7dea && y != 18 && (status != SHINKA_STATUS_TECHNIQUES || y >= 194)
+            && (status != SHINKA_STATUS_FOLDERS || y >= 194)) {
             /* List/description panels still meet their exact screen edges. */
             dest_x = stretch_x(x, margin);
             dest_w = stretch_x(x + w, margin) - dest_x;

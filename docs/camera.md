@@ -17,7 +17,10 @@ SETTINGS provides independent view and battle zoom controls:
   effective field of view; it does not move the scripted camera backwards.
 
 They can be combined. Defaults retain 4:3 and 100%. Changes persist in the
-existing mod state. Battle controls apply to ordinary battles (mode `0x600`);
+existing mod state. L2/LT toggles the current supported scene's field or battle
+view between 4:3 and 16:9 (keyboard default E). R2/RT toggles speedup (R).
+See [trigger controls](controller-support.md#trigger-shortcuts).
+Battle controls apply to ordinary battles (mode `0x600`);
 the field preference applies to modes `0x200..0x2ff`, the gym (`0xa00`), shops
 (`0xf00`), and the expanded Start root, Items, Sort, Map, Techniques and character Status in the Status overlay (`0x1000`)
 while their menu tasks are active. The lab, card battles, other Status children,

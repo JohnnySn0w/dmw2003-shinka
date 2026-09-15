@@ -25,6 +25,32 @@ For a controller requiring an SDL mapping file:
 
 The launcher resolves the file and supplies it to SDL before initialization, restoring the caller's environment afterward. Without this option, existing SDL environment settings remain untouched. The pinned SDL source contains this mapping-file path; actual unknown-controller behavior remains a hardware test.
 
+## Trigger shortcuts
+
+- **L2 / LT:** toggle 4:3 ↔ 16:9 for the current supported scene. Battles update
+  the Battle preference; fields, supported menus and the map update Field.
+  The choice persists and is reflected in SETTINGS. Unsupported scenes report
+  that the shortcut is unavailable instead of changing a hidden preference.
+- **R2 / RT:** toggle speedup on/off using the existing manual speed limit
+  (4× by default). Tab remains hold-to-speedup; holding Tab still accelerates
+  when the trigger toggle is off.
+
+These use the mapped PlayStation inputs, so the default keyboard equivalents
+are **E** and **R**. One press causes one change; holding does not repeat.
+They operate while the game window has focus. Focus loss and savestate/host-menu
+resume clear toggled speedup and require released triggers before rearming.
+Speedup is session-only. Shortcuts are disabled for headless/replay/netplay
+contexts. Native trigger input is still passed to the game; this does not
+establish that every original scene leaves those buttons unused.
+
+The 2026-09-15 live map check exercised mapped pad input through the local
+diagnostic sampler: L2 switched both directions and R2 changed measured guest
+cadence from approximately 50 to 135 frames/second and back on the test laptop.
+The 4× speed limit is a ceiling, not a guaranteed rate. The native shortcut
+regression covers long holds, simultaneous triggers, independent release,
+disabled contexts and reset while held. Physical trigger operation still needs
+the user's controller check.
+
 ## Steam Input path
 
 The intended optional path is to launch the executable through Steam with a gamepad layout and have SDL read the resulting gamepad. Keep the game configuration/disc arguments from the launch script when configuring a non-Steam shortcut. Steam launch behavior is not yet validated or packaged. Do not force-disable native backends globally: device selection must distinguish the physical device from a Steam virtual device and avoid duplicate input.

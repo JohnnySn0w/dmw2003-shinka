@@ -219,6 +219,32 @@ int main(void) {
         }
     }
     root_menu=0;items_menu=1;shinka_view_tick();CHECK(frontend);
+    /* Captured Choose Digimon packets use 0x2697, unlike the 0x7dea
+     * character-detail header. The old column split tore these nine strips. */
+    for(int band=0;band<=256;band+=256) for(int margin=1;margin<=160;++margin) {
+        items_menu=SHINKA_STATUS_CHARACTER_SELECT;options[2]=1;shinka_view_tick();
+        int end=144+margin;
+        for(int tile=0;tile<9;++tile) {
+            uint32_t strip[]={0x64808080,0x000d0000u|(unsigned)(34+tile*32),
+                tile ? 0x26978d20u : 0x26975fd4u,0x00190020};
+            int span=shinka_menu_wide_rect(strip,4,0,band,0,band,319,band+239,margin);
+            CHECK((int16_t)strip[1]==end && span>0 && (tile || span==32));
+            CHECK(strip[2]==(tile ? 0x26978d20u : 0x26975fd4u) && strip[3]==0x00190020);
+            end+=span;
+            options[2]=0;shinka_view_tick();
+            strip[1]=0x000d0000u|(unsigned)(34+tile*32);
+            CHECK(!shinka_menu_wide_rect(strip,4,0,band,0,band,319,band+239,margin));
+            CHECK(strip[1]==(0x000d0000u|(unsigned)(34+tile*32)));
+            options[2]=1;shinka_view_tick();
+        }
+        CHECK(end==322+margin);
+        uint32_t title[]={0x64808080,0x00130099,0x3a1715c0,0x000c0008};
+        uint32_t portrait[]={0x64808080,0x00130067,0x26975f80,0x002c002c};
+        shinka_menu_wide_rect(title,4,0,band,0,band,319,band+239,margin);
+        shinka_menu_wide_rect(portrait,4,0,band,0,band,319,band+239,margin);
+        CHECK((int16_t)title[1]==177+margin && (int16_t)portrait[1]==103-margin);
+    }
+    items_menu=SHINKA_STATUS_ITEMS;shinka_view_tick();
     for(int band=0;band<=256;band+=256) for(int margin=1;margin<=160;++margin) {
         const unsigned backgrounds[]={0x7da81060,0x7deb1090,0x7da93000};
         int ribbon_end=144+margin;

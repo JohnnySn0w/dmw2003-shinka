@@ -78,15 +78,19 @@ int shinka_menu_wide_rect(uint32_t* words, int count, int offset_x, int offset_y
      * repainting the margins through its palette fade, but don't treat a
      * half-constructed or unrelated task as the Items layout. */
     if (!layout) return 0;
-    if (root) {
+    if ((root || (status && status != SHINKA_STATUS_MAP)) && clut == 0x2697 && y == 13) {
+        /* Party selection inside character Status reuses the Start/Items
+         * ribbon, not the taller detail-page header. Transform every strip
+         * together before any page's left/right column anchoring. */
+        int start = root ? 116 : 144;
+        dest_x = ribbon_x(x, start) + margin;
+        dest_w = ribbon_x(x + w, start) + margin - dest_x;
+    } else if (root) {
         /* The root UI has its own panel palette and resident white/yellow font
          * palettes. Field tiles, NPCs, shadows and dialogue use other palettes. */
         if (clut != 0x2697 && clut != 0x3a17 && clut != 0x3417
             && !(clut == 0x3817 && y >= 13 && y < 32)) return 0;
-        if (clut == 0x2697 && y == 13) {
-            dest_x = ribbon_x(x, 116) + margin;
-            dest_w = ribbon_x(x + w, 116) + margin - dest_x;
-        } else dest_x = x + (x >= 140 ? margin : -margin);
+        dest_x = x + (x >= 140 ? margin : -margin);
     } else if (status == SHINKA_STATUS_MAP) {
         if (clut == 0x7e2b || clut == 0x3a17 || clut == 0x3417) {
             /* The location/travel tooltip is screen-relative. Keep its text
@@ -114,7 +118,10 @@ int shinka_menu_wide_rect(uint32_t* words, int count, int offset_x, int offset_y
             dest_x = x <= 64 ? x + 124 + margin : 188 + margin + (x - 64) * 164 / 288;
             int end = x + w;
             dest_w = (end <= 64 ? end + 124 + margin : 188 + margin + (end - 64) * 164 / 288) - dest_x;
-        } else if (clut == 0x7dea && y == 194 && (!digivolve || techniques)) {
+        } else if (status == SHINKA_STATUS_CHARACTER_SELECT && clut == 0x3a17
+            && y >= 19 && y < 32 && x >= 150)
+            dest_x = x + margin + 24; /* Choose Digimon clears the 32px cap. */
+        else if (clut == 0x7dea && y == 194 && (!digivolve || techniques)) {
             dest_x = stretch_x(x, margin);
             dest_w = stretch_x(x + w, margin) - dest_x;
         } else if (digivolve && clut == 0x7dea
@@ -142,9 +149,6 @@ int shinka_menu_wide_rect(uint32_t* words, int count, int offset_x, int offset_y
             /* List/description panels still meet their exact screen edges. */
             dest_x = stretch_x(x, margin);
             dest_w = stretch_x(x + w, margin) - dest_x;
-        } else if (clut == 0x2697 && y == 13) {
-            dest_x = ribbon_x(x, 144) + margin;
-            dest_w = ribbon_x(x + w, 144) + margin - dest_x;
         } else if (clut == 0x3a17 && y >= 19 && y < 32 && x >= 150)
             dest_x = x + margin + 24; /* title clears the intact angled cap */
         else if (y >= 194 && w == 12 && h == 12 && (words[2] & 65535) == 0x3c54

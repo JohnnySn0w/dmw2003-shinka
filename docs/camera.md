@@ -378,6 +378,19 @@ The 16 native suites pass, including owner reuse/invalid links, column alignment
 footer placement, joined panel strips and unchanged 4:3 packets in both framebuffer
 bands. This does not establish coverage of every partner, equipment item or language.
 
+The subsequent party-selection ribbon correction covers **Choose Digimon**.
+Its nine 32px strips use palette `0x2697` at y=13 (cap UV `0x5fd4`, body
+`0x8d20`), while the detail page uses the taller `0x7dea` header. Applying the
+detail page's column anchoring to those strips split the ribbon behind the party.
+The shared Start/Items ribbon transform now handles this variant before column
+anchoring; its text also clears the intact angled cap. The party portraits retain
+their left alignment. Copied-save captures in `output/status-ribbon-01/` reproduce
+the original split and verify the correction, return from the summary, return to
+the Start root, and live 4:3/16:9 switching. Native tests cover joined strip edges,
+cap width, texture preservation, text/portrait separation and unchanged 4:3
+packets in both framebuffer bands across all supported margins. All 17 native
+suites pass with this correction.
+
 ### Map — 2026-09-15
 
 The native map artwork is 392 pixels wide, so its full width fits inside the

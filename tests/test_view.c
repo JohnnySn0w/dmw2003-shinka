@@ -5,10 +5,12 @@
 #include "menu_wide.h"
 #define CHECK(c) do { if (!(c)) { fprintf(stderr,"line %d: %s\n",__LINE__,#c); exit(1); } } while (0)
 static uint32_t mode;
-static uint32_t previous_mode, language = 2, destination = 2;
+static uint32_t previous_mode, language = 2, destination = 5;
 static int started = 1, options[3], frontend;
 static int root_menu;
 static int items_menu;
+static int map_pan;
+int shinka_menu_map_pan(void) { return map_pan; }
 int shinka_menu_root_active(void) { return root_menu; }
 int shinka_menu_items_active(void) { return items_menu; }
 int shinka_menu_status_layout(void) { return items_menu; }
@@ -161,7 +163,7 @@ int main(void) {
     options[2]=0;CHECK(!shinka_view_wide_requested());shinka_view_tick();CHECK(!frontend);
     options[2]=1;
     for(unsigned row=0;row<8;++row) {
-        destination=row;shinka_view_tick();CHECK(frontend==(row==0 || row==1 || row==3 || row==4));
+        destination=row;shinka_view_tick();CHECK(frontend==(row<=4));
     }
     destination=0;language=3;shinka_view_tick();CHECK(!frontend);language=2;
     previous_mode=0x600;shinka_view_tick();CHECK(!frontend); /* stale row after a state load */
@@ -183,7 +185,7 @@ int main(void) {
     }
     for(int scenario=0;scenario<5;++scenario) {
         uint32_t wipe[]={0x66808080,0x003400c0,0x3dd75f40,0x00400040};
-        mode=scenario==0 ? 0xd00 : 0x1000;destination=scenario==1 ? 2 : 0;
+        mode=scenario==0 ? 0xd00 : 0x1000;destination=scenario==1 ? 5 : 0;
         if(scenario==2) wipe[2]^=1;
         if(scenario==3) wipe[2]=0x3dd65f40;
         options[2]=scenario==4 ? 0 : 1;shinka_view_tick();
@@ -346,6 +348,26 @@ int main(void) {
         CHECK(!shinka_menu_wide_rect(original,4,0,band,0,band,319,band+239,margin));
         CHECK(original[1]==0x00770078 && original[3]==0x00160028);
     }
+    mode=0x1000;items_menu=SHINKA_STATUS_MAP;options[2]=1;shinka_view_tick();CHECK(frontend);
+    for(int band=0;band<=256;band+=256) for(map_pan=-72;map_pan<=0;++map_pan) {
+        /* Captured map strips, paired icon layers and free cursor. At 16:9
+         * every world point is independent of the native camera position. */
+        const unsigned palettes[]={0x40140000,0x40540000,0x7f3b6000,0x7d7088d8,0x7eb058d8,0x7d722020};
+        for(unsigned i=0;i<sizeof(palettes)/sizeof(*palettes);++i) {
+            uint32_t sprite[]={0x64808080,0x00600000u|(uint16_t)(100+map_pan),palettes[i],0x00180018};
+            CHECK(!shinka_menu_wide_rect(sprite,4,0,band,0,band,319,band+239,53));
+            CHECK((int16_t)sprite[1]==64);
+            CHECK(sprite[2]==palettes[i] && sprite[3]==0x00180018);
+        }
+        uint32_t tooltip[]={0x64808080,0x00140009,0x7e2b40b0,0x00280008};
+        uint32_t text[]={0x64808080,0x001a0010,0x3a170000,0x000c0008};
+        shinka_menu_wide_rect(tooltip,4,0,band,0,band,319,band+239,53);
+        shinka_menu_wide_rect(text,4,0,band,0,band,319,band+239,53);
+        CHECK((int16_t)tooltip[1]==9-53 && (int16_t)text[1]==16-53);
+    }
+    options[2]=0;shinka_view_tick();
+    { uint32_t sprite[]={0x64808080,0x00600064,0x7eb058d8,0x00180018};
+      CHECK(!shinka_menu_wide_rect(sprite,4,0,0,0,0,319,239,53));CHECK(sprite[1]==0x00600064); }
     items_menu=SHINKA_STATUS_ITEMS;options[2]=0;shinka_view_tick();
     CHECK(!frontend);
     { uint32_t glyph[]={0x64808080,0x002500bc,0x3a170000,0x000c0008};

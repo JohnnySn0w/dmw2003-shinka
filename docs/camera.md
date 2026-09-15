@@ -10,7 +10,7 @@ SETTINGS provides independent view and battle zoom controls:
   submission. Unready or unsupported tiles can still leave incomplete edges.
   Small interiors can have authored black space outside their artwork. This is
   a preview, not a complete field widescreen conversion. It also widens the
-  shared gym/shop interfaces, Items, Sort, Techniques and character Status, and anchors both expanded Start-menu
+  shared gym/shop interfaces, Items, Sort, Map, Techniques and character Status, and anchors both expanded Start-menu
   roots to the edges of the wider canvas.
 - **Battle zoom:** 100%, 90%, or 80% projected size. At 80%, the same viewport
   covers approximately 25% more world span along each axis. This changes the
@@ -19,9 +19,9 @@ SETTINGS provides independent view and battle zoom controls:
 They can be combined. Defaults retain 4:3 and 100%. Changes persist in the
 existing mod state. Battle controls apply to ordinary battles (mode `0x600`);
 the field preference applies to modes `0x200..0x2ff`, the gym (`0xa00`), shops
-(`0xf00`), and the expanded Start root, Items, Sort, Techniques and character Status in the Status overlay (`0x1000`)
-while their menu tasks are active. The lab, card battles, other Status children (including the
-map), movies and rewards retain their original view. In battle 16:9,
+(`0xf00`), and the expanded Start root, Items, Sort, Map, Techniques and character Status in the Status overlay (`0x1000`)
+while their menu tasks are active. The lab, card battles, other Status children,
+movies and rewards retain their original view. In battle 16:9,
 enemy health, battle commands/submenus and bottom dialogue stay aligned on the
 left; player health/MP and the miniature portrait move to the right. The bottom
 dialogue panel spans between the outer edges of both health panels. Its text and
@@ -374,3 +374,27 @@ An additional 65 captures span field mode `0x24a` into the Status overlay
 The 16 native suites pass, including owner reuse/invalid links, column alignment,
 footer placement, joined panel strips and unchanged 4:3 packets in both framebuffer
 bands. This does not establish coverage of every partner, equipment item or language.
+
+### Map — 2026-09-15
+
+The native map artwork is 392 pixels wide, so its full width fits inside the
+426-pixel field view without stretching. The compositor centers that artwork
+and cancels the native horizontal camera pan for the map, icons, selection
+animation and free cursor together. Vertical scrolling remains native. The
+location/travel tooltip stays at the left screen inset, and the shared moving
+backdrop fills the narrow outer margins.
+
+This is a rendering change: cursor coordinates, snapping, visited flags and
+travel eligibility retain their native state. The live owner guard recognizes
+the one-child map controller (`0x8009913c`), validates its callback prologue and
+accepts only its known horizontal pan range, -72 through 0. Row 2 also joins the
+field-to-menu aspect guard. The original 4:3 option remains unchanged.
+
+Copied-save OpenGL checks cover both horizontal extremes, multiple animated
+icon selections, unavailable travel from North Badland W and successful travel
+from Central Park to Asuka's bridge entrance. Live 320/426-pixel switching leaves
+the guest cursor and pan state unchanged. Captures and state snapshots are in
+`output/map-wide-01/` (ignored). All 16 native suites pass, including every native
+horizontal pan value in both framebuffer bands, unchanged sprite dimensions/UVs,
+tooltip alignment and invalid-owner rejection. Other server maps and travel
+routes were not separately verified in this pass.

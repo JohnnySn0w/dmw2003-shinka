@@ -51,7 +51,7 @@ static uint32_t lab_child(uint32_t p) {
     return children >= 0x80090000u && children <= 0x801ffffcu && !(children & 3)
         ? READ(children) : 0;
 }
-int shinka_menu_status_layout(void) {
+static uint32_t status_page(void) {
     uint32_t p, children;
     if (READ(MODE) != STATUS || READ(MODE + 4)
         || READ(0x8005cca8) != 2 /* verified English layout */
@@ -68,6 +68,22 @@ int shinka_menu_status_layout(void) {
     children = READ(p + 0x24);
     if (children < 0x80090000 || children > 0x801ffff8 || (children & 3)) return 0;
     p = READ(children + 4);
+    return p;
+}
+static int map_page(uint32_t p) {
+    if (!object(p, 0x8009913c) || READ(p + 0x20) != 1 || READ(p + 0xc) > 1
+        || READ(0x8009913c) != 0x27bdffe0 || READ(0x80099140) != 0xafb10014) return 0;
+    int pan = (int32_t)READ(p + 0x90);
+    return pan >= -72 && pan <= 0;
+}
+int shinka_menu_map_pan(void) {
+    uint32_t p = status_page();
+    return map_page(p) ? (int32_t)READ(p + 0x90) : 0;
+}
+int shinka_menu_status_layout(void) {
+    uint32_t p = status_page(), children;
+    if (!p) return SHINKA_STATUS_NONE;
+    if (map_page(p)) return SHINKA_STATUS_MAP;
     if (object(p, 0x80091d18) && READ(p + 0x20) == 53 && READ(p + 0xc) <= 1
         && READ(0x80091d18) == 0x27bdffd8 && READ(0x80091d1c) == 0xafb10014)
         return SHINKA_STATUS_ITEMS;

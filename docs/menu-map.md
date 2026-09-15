@@ -9,6 +9,11 @@ Status root or play its closing animation. The original destination title card
 and loading sequence remain. Triangle without confirming closes
 the map normally.
 
+With **Screen view → Field → 16:9 test**, the map shows its full native width
+without stretching the artwork or icons. Cursor snapping and travel checks are
+unchanged; vertical scrolling remains. See [camera coverage](camera.md) for
+implementation and verification details.
+
 The initial travel network connects these Asuka locations:
 
 | Map icon | Arrival |

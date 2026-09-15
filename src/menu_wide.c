@@ -87,6 +87,20 @@ int shinka_menu_wide_rect(uint32_t* words, int count, int offset_x, int offset_y
             dest_x = ribbon_x(x, 116) + margin;
             dest_w = ribbon_x(x + w, 116) + margin - dest_x;
         } else dest_x = x + (x >= 140 ? margin : -margin);
+    } else if (status == SHINKA_STATUS_MAP) {
+        if (clut == 0x7e2b || clut == 0x3a17 || clut == 0x3417) {
+            /* The location/travel tooltip is screen-relative. Keep its text
+             * and all border strips together at their original left inset. */
+            dest_x = x - margin;
+        } else {
+            /* Native map artwork is 392px wide. At 16:9 it fits without
+             * stretching. Undo the guest's 0..-72 horizontal camera pan for
+             * artwork, icons, selection pulses and free cursor alike. The
+             * guest still owns snapping, visitation and travel eligibility.
+             * Smaller margins reveal proportionally more of the map. */
+            int reveal = margin < 36 ? margin : 36;
+            dest_x = x - shinka_menu_map_pan() * reveal / 36 - reveal;
+        }
     } else if (status >= SHINKA_STATUS_CHARACTER) {
         int techniques = status == SHINKA_STATUS_CHARACTER_TECHNIQUES;
         int digivolve = status == SHINKA_STATUS_DIGIVOLVE || techniques;

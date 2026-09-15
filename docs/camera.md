@@ -10,7 +10,7 @@ SETTINGS provides independent view and battle zoom controls:
   submission. Unready or unsupported tiles can still leave incomplete edges.
   Small interiors can have authored black space outside their artwork. This is
   a preview, not a complete field widescreen conversion. It also widens the
-  shared gym/shop interfaces, Items, Sort and Techniques, and anchors both expanded Start-menu
+  shared gym/shop interfaces, Items, Sort, Techniques and character Status, and anchors both expanded Start-menu
   roots to the edges of the wider canvas.
 - **Battle zoom:** 100%, 90%, or 80% projected size. At 80%, the same viewport
   covers approximately 25% more world span along each axis. This changes the
@@ -19,7 +19,7 @@ SETTINGS provides independent view and battle zoom controls:
 They can be combined. Defaults retain 4:3 and 100%. Changes persist in the
 existing mod state. Battle controls apply to ordinary battles (mode `0x600`);
 the field preference applies to modes `0x200..0x2ff`, the gym (`0xa00`), shops
-(`0xf00`), and the expanded Start root, Items, Sort and Techniques in the Status overlay (`0x1000`)
+(`0xf00`), and the expanded Start root, Items, Sort, Techniques and character Status in the Status overlay (`0x1000`)
 while their menu tasks are active. The lab, card battles, other Status children (including the
 map), movies and rewards retain their original view. In battle 16:9,
 enemy health, battle commands/submenus and bottom dialogue stay aligned on the
@@ -346,3 +346,31 @@ Native regressions cover first/second child-slot
 isolation, malformed task chains, callback reuse, language/signature guards,
 list-tab and cursor alignment, party-card anchors, and MP/description separation
 in both framebuffer bands at every supported margin.
+
+### Character Status — 2026-09-15
+
+The STATUS entry now stays wide through party selection, the stat summary,
+equipment selection/comparison, digivolution selection, its action popup and
+technique explanations. Stat numbers, names and cursors retain their original
+size. Equipment rows stay together even below the usual description boundary;
+the technique description and MP cost use opposite edges of a full-width panel.
+The compact top header and fixed-pitch scrolling backdrop follow the shared
+menu treatment. The native 4:3 option remains available.
+
+The owner check recognizes `0x8008e744` with 68 children. Its last child is the
+36-child digivolution controller (`0x8008b3c8`), which moves the stat block up
+34 pixels when showing technique explanations. Both form selection and nested
+techniques occupy root phase 21, so the renderer also validates this child,
+its parent link and native slide range. It does not infer the page from old
+text flags, which can remain set while their containing panel is hidden.
+The field-to-overlay presentation guard includes row 4 while the verified
+drawing rules still require live owners and the English layout signature.
+
+Copied-save OpenGL checks cover Patamon and Angemon, the evolution action popup,
+technique descriptions, equipment comparison, party selection and cancellation.
+Captures at 426x240 and 320x240 are in `output/status-details-wide-01/` (ignored).
+An additional 65 captures span field mode `0x24a` into the Status overlay
+`0x1000`; all retain the 426-pixel viewport during that entry.
+The 16 native suites pass, including owner reuse/invalid links, column alignment,
+footer placement, joined panel strips and unchanged 4:3 packets in both framebuffer
+bands. This does not establish coverage of every partner, equipment item or language.

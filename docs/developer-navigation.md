@@ -1,5 +1,16 @@
 # Developer navigation and test fixtures
 
+## Silent GPU captures
+
+Set `SHINKA_DIAGNOSTIC_HIDDEN=1` for a diagnostic process to create a hidden
+window with the normal renderer. Unlike `--headless`, this supplies the OpenGL
+native-wide surface used by the debug `screenshot` command. Omit `--headless`
+and use a copied `--memcard-dir` and a separate `--debug-port` as usual.
+Set `SDL_AUDIODRIVER=dummy` for that process to keep it silent while preserving
+audio timing. Set these variables only for the diagnostic launch; unset them
+afterwards. Stop the diagnostic when finished to release its CPU/GPU resources.
+Normal launches remain visible and use the selected audio device.
+
 ## Runtime controller inspection
 
 The [object-map tool](runtime-objects.md) reads one RAM snapshot and reports

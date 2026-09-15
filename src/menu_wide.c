@@ -87,6 +87,42 @@ int shinka_menu_wide_rect(uint32_t* words, int count, int offset_x, int offset_y
             dest_x = ribbon_x(x, 116) + margin;
             dest_w = ribbon_x(x + w, 116) + margin - dest_x;
         } else dest_x = x + (x >= 140 ? margin : -margin);
+    } else if (status >= SHINKA_STATUS_CHARACTER) {
+        int techniques = status == SHINKA_STATUS_CHARACTER_TECHNIQUES;
+        int digivolve = status == SHINKA_STATUS_DIGIVOLVE || techniques;
+        int form_y = techniques ? 63 : 97;
+        int footer = y >= 194 && (status == SHINKA_STATUS_EQUIPMENT
+            || status == SHINKA_STATUS_CHARACTER_SELECT || techniques);
+        if (clut == 0x7dea && y == 13) {
+            /* This header has a 44px leading tile, unlike the Start ribbon.
+             * Keep its body beside the party instead of exposing its long
+             * formerly occluded tail across the middle of the wide screen. */
+            dest_x = x <= 64 ? x + 124 + margin : 188 + margin + (x - 64) * 164 / 288;
+            int end = x + w;
+            dest_w = (end <= 64 ? end + 124 + margin : 188 + margin + (end - 64) * 164 / 288) - dest_x;
+        } else if (clut == 0x7dea && y == 194 && (!digivolve || techniques)) {
+            dest_x = stretch_x(x, margin);
+            dest_w = stretch_x(x + w, margin) - dest_x;
+        } else if (digivolve && clut == 0x7dea
+            && ((x == 200 && w == 40 && h == 22 && y >= 63 && y <= 97
+                    && (words[2] & 65535) == 0x9690)
+                || (x == 120 && w == 40 && ((words[2] & 65535) == 0x9690
+                    || (words[2] & 65535) == 0x9890 || (words[2] & 65535) == 0xac90)))) {
+            /* Extend the plain bridge/fill strips. The form tab, stat glyphs,
+             * Skill LV divider and technique list keep their native widths. */
+            dest_x = x - margin;
+            dest_w = w + 2 * margin;
+        } else if (techniques && clut == 0x3a17 && y == 212 && x >= 266)
+            dest_x = x + stretch_x(303, margin) - 303;
+        else if (footer) dest_x = x - margin;
+        else if (status == SHINKA_STATUS_EQUIPMENT)
+            dest_x = x + ((x >= 148 || (y >= 54 && x >= 112)) ? margin : -margin);
+        else if (digivolve && ((clut == 0x7dea && (words[2] & 65535) == 0x80a8)
+            || (clut == 0x3a17 && y >= form_y + 7 && y < form_y + 19)))
+            dest_x = x + (x >= 226 ? margin : -margin);
+        else if (digivolve)
+            dest_x = x + ((x >= 160 || (y < 37 && x >= 148)) ? margin : -margin);
+        else dest_x = x + (x >= 148 ? margin : -margin);
     } else if (mode == 0x1000) {
         if (clut == 0x7dea && y != 18 && (status != SHINKA_STATUS_TECHNIQUES || y >= 194)) {
             /* List/description panels still meet their exact screen edges. */

@@ -11,7 +11,7 @@ int shinka_view_wide_requested(void) {
     int field = started && ((mode >= 0x200 && mode < 0x300) || shinka_menu_wide_mode(mode));
     if (started && mode == 0x1000 && !field) {
         /* The resident Start handler stores its destination row before loading
-         * STSTATUS. Rows 0/1/3 are Items/Sort/Techniques. Use that guest state for presentation
+         * STSTATUS. Rows 0/1/3/4 are Items/Sort/Techniques/Status. Use that guest state for presentation
          * while the overlay constructs/destroys its tasks, however long it
          * takes. Drawing patches still require the verified live task chain.
          * No host latch can leak across state loads or delay a 4:3 setting. */
@@ -19,7 +19,7 @@ int shinka_view_wide_requested(void) {
         unsigned row = psx_mod_read_word(0x8005ccf0u);
         field = previous >= 0x200 && previous < 0x300
             && psx_mod_read_word(0x8005cca8u) == 2
-            && (row == 0 || row == 1 || row == 3);
+            && (row == 0 || row == 1 || row == 3 || row == 4);
     }
     return (battle && shinka_view_get(0) == 1)
         || (field && shinka_view_get(2) == 1);

@@ -428,12 +428,26 @@ int main(void) {
         W(0x80091d1c,0);CHECK(!shinka_menu_items_active());W(0x80091d1c,0xafb10014);
         W(root+0x104,0);CHECK(!shinka_menu_items_active());W(root+0x104,items);
         shinka_lab_selection_reset();CHECK(shinka_menu_items_active()); /* load follows live owners */
-        for(int kind=SHINKA_STATUS_SORT;kind<=SHINKA_STATUS_TECHNIQUES;++kind) {
-            uint32_t callback=kind==SHINKA_STATUS_SORT ? 0x800980b0 : 0x80096380;
-            unsigned count=kind==SHINKA_STATUS_SORT ? 35 : 45;
+        for(int kind=SHINKA_STATUS_SORT;kind<=SHINKA_STATUS_CHARACTER_TECHNIQUES;++kind) {
+            uint32_t callback=kind==SHINKA_STATUS_SORT ? 0x800980b0
+                : kind==SHINKA_STATUS_TECHNIQUES ? 0x80096380 : 0x8008e744;
+            unsigned count=kind==SHINKA_STATUS_SORT ? 35 : kind==SHINKA_STATUS_TECHNIQUES ? 45 : 68;
             W(items+0x48,callback);W(items+0x20,count);
+            W(items+0x10,kind==SHINKA_STATUS_CHARACTER_SELECT ? 11 : kind>=SHINKA_STATUS_DIGIVOLVE ? 21 : 15);
+            W(items+0x74,kind==SHINKA_STATUS_EQUIPMENT ? 1 : 0);
+            const uint32_t detail=0x80160000;
+            W(items+0x100+67*4,detail);
+            W(detail+0x28,0x80014274);W(detail+0x48,0x8008b3c8);
+            W(detail+0xc,1);W(detail+0x20,36);W(detail+0x50,items);
+            W(0x8008b3c8,0x27bdffe0);W(0x8008b3cc,0xafb10014);
+            W(detail+0x8c,kind==SHINKA_STATUS_CHARACTER_TECHNIQUES ? (uint32_t)-34 : 0);
             W(callback,0x27bdffd0);W(callback+4,0xafb3001c);
             writes=0;CHECK(shinka_menu_status_layout()==kind);CHECK(!writes);
+            if(kind==SHINKA_STATUS_DIGIVOLVE || kind==SHINKA_STATUS_CHARACTER_TECHNIQUES) {
+                W(detail+0x48,0);CHECK(!shinka_menu_status_layout());W(detail+0x48,0x8008b3c8);
+                W(items+0x24,0x801ffef4);CHECK(!shinka_menu_status_layout());W(items+0x24,items+0x100);
+                W(detail+0x50,items+4);CHECK(!shinka_menu_status_layout());W(detail+0x50,items);
+            }
             CHECK(!shinka_menu_items_active());
             for(int i=0;i<4;++i) {
                 W(objects[i]+0xc,2);CHECK(!shinka_menu_status_layout());W(objects[i]+0xc,1);

@@ -161,7 +161,7 @@ int main(void) {
     options[2]=0;CHECK(!shinka_view_wide_requested());shinka_view_tick();CHECK(!frontend);
     options[2]=1;
     for(unsigned row=0;row<8;++row) {
-        destination=row;shinka_view_tick();CHECK(frontend==(row==0 || row==1 || row==3));
+        destination=row;shinka_view_tick();CHECK(frontend==(row==0 || row==1 || row==3 || row==4));
     }
     destination=0;language=3;shinka_view_tick();CHECK(!frontend);language=2;
     previous_mode=0x600;shinka_view_tick();CHECK(!frontend); /* stale row after a state load */
@@ -288,6 +288,63 @@ int main(void) {
             CHECK((int16_t)cost[1]+9==(int16_t)edge[1]); /* last glyph stays inside the border */
             CHECK((int16_t)prose[1]==294-margin);
         }
+    }
+    for(int band=0;band<=256;band+=256) for(int margin=1;margin<=160;++margin) {
+        /* Captured Status layouts: the summary's last equipment row occupies
+         * the same lower band as the selector's full-width description.
+         * Digivolution numbers extend past x=148; equipment tabs start at120. */
+        const int cases[][4]={
+            {SHINKA_STATUS_CHARACTER,193,207,1},
+            {SHINKA_STATUS_CHARACTER,58,213,-1},
+            {SHINKA_STATUS_CHARACTER_SELECT,170,199,-1},
+            {SHINKA_STATUS_CHARACTER_SELECT,160,212,-1},
+            {SHINKA_STATUS_DIGIVOLVE,153,125,-1},
+            {SHINKA_STATUS_DIGIVOLVE,182,212,1},
+            {SHINKA_STATUS_DIGIVOLVE,117,104,-1},
+            {SHINKA_STATUS_DIGIVOLVE,236,104,1},
+            {SHINKA_STATUS_CHARACTER_TECHNIQUES,153,93,-1},
+            {SHINKA_STATUS_CHARACTER_TECHNIQUES,182,178,1},
+            {SHINKA_STATUS_CHARACTER_TECHNIQUES,170,199,-1},
+            {SHINKA_STATUS_CHARACTER_TECHNIQUES,117,70,-1},
+            {SHINKA_STATUS_CHARACTER_TECHNIQUES,236,70,1},
+            {SHINKA_STATUS_EQUIPMENT,120,58,1},
+            {SHINKA_STATUS_EQUIPMENT,116,20,-1},
+            {SHINKA_STATUS_EQUIPMENT,170,199,-1}
+        };
+        mode=0x1000;root_menu=0;options[2]=1;
+        for(unsigned i=0;i<sizeof(cases)/sizeof(*cases);++i) {
+            items_menu=cases[i][0];shinka_view_tick();CHECK(frontend);
+            uint32_t glyph[]={0x64808080,((unsigned)cases[i][2]<<16)|(unsigned)cases[i][1],
+                0x3a170000,0x000c0008};
+            CHECK(!shinka_menu_wide_rect(glyph,4,0,band,0,band,319,band+239,margin));
+            CHECK((int16_t)glyph[1]==cases[i][1]+cases[i][3]*margin);
+            CHECK(glyph[2]==0x3a170000 && glyph[3]==0x000c0008);
+        }
+        items_menu=SHINKA_STATUS_DIGIVOLVE;shinka_view_tick();
+        uint32_t fill[]={0x64808080,0x00770078,0x7dea9690,0x00160028};
+        uint32_t border[]={0x64808080,0x007700a0,0x7dea80c8,0x006c0018};
+        int width=shinka_menu_wide_rect(fill,4,0,band,0,band,319,band+239,margin);
+        CHECK(!shinka_menu_wide_rect(border,4,0,band,0,band,319,band+239,margin));
+        CHECK(width==40+2*margin && (int16_t)fill[1]+width==(int16_t)border[1]);
+        CHECK(fill[2]==0x7dea9690 && fill[3]==0x00160028);
+        for(int y=63;y<=97;++y) {
+            uint32_t bridge[]={0x64808080,((unsigned)y<<16)|200,0x7dea9690,0x00160028};
+            CHECK(shinka_menu_wide_rect(bridge,4,0,band,0,band,319,band+239,margin)==40+2*margin);
+            CHECK((int16_t)bridge[1]==200-margin && bridge[3]==0x00160028);
+        }
+        /* Compact Status header pieces share their endpoints and retain UVs. */
+        int end=144+margin;
+        for(int x=20;x<352;x=x==20 ? 64 : x+32) {
+            uint32_t header[]={0x64808080,0x000d0000u|(unsigned)x,0x7deac62c,
+                0x00270000u|(x==20 ? 44u : 32u)};
+            int span=shinka_menu_wide_rect(header,4,0,band,0,band,319,band+239,margin);
+            CHECK((int16_t)header[1]==end && span>0);end+=span;
+        }
+        CHECK(end==352+margin);
+        options[2]=0;shinka_view_tick();
+        uint32_t original[]={0x64808080,0x00770078,0x7dea9690,0x00160028};
+        CHECK(!shinka_menu_wide_rect(original,4,0,band,0,band,319,band+239,margin));
+        CHECK(original[1]==0x00770078 && original[3]==0x00160028);
     }
     items_menu=SHINKA_STATUS_ITEMS;options[2]=0;shinka_view_tick();
     CHECK(!frontend);

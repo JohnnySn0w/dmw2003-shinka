@@ -71,7 +71,7 @@ int shinka_menu_status_layout(void) {
     if (object(p, 0x80091d18) && READ(p + 0x20) == 53 && READ(p + 0xc) <= 1
         && READ(0x80091d18) == 0x27bdffd8 && READ(0x80091d1c) == 0xafb10014)
         return SHINKA_STATUS_ITEMS;
-    /* All three pages occupy child slot 1. Slot 0 is null while a page is open
+    /* These pages occupy child slot 1. Slot 0 is null while a page is open
      * and becomes the Start root on return. Recognize callback and layout
      * together, not the last selected row. */
     if (object(p, 0x800980b0) && READ(p + 0x20) == 35 && READ(p + 0xc) <= 1
@@ -80,6 +80,30 @@ int shinka_menu_status_layout(void) {
     if (object(p, 0x80096380) && READ(p + 0x20) == 45 && READ(p + 0xc) <= 1
         && READ(0x80096380) == 0x27bdffd0 && READ(0x80096384) == 0xafb3001c)
         return SHINKA_STATUS_TECHNIQUES;
+    if (object(p, 0x8008e744) && READ(p + 0x20) == 68 && READ(p + 0xc) <= 1
+        && READ(0x8008e744) == 0x27bdffd0 && READ(0x8008e748) == 0xafb3001c) {
+        if (READ(p + 0x10) <= 12) return SHINKA_STATUS_CHARACTER_SELECT;
+        /* The two actions share this owner. Its action index survives while
+         * their nested selectors are open, including equipment comparison. */
+        if (READ(p + 0x10) >= 18 && READ(p + 0x10) <= 23) {
+            if (READ(p + 0x74) == 1) return SHINKA_STATUS_EQUIPMENT;
+            /* Child 67 owns the form/action/technique pages. Its native slide
+             * moves the detail block from 0 to -34 when opening techniques
+             * (8008a8f4), then back on return. Root phase 21 covers all three;
+             * a text object's flags can remain set while its parent hides it. */
+            children = READ(p + 0x24);
+            if (children < 0x80090000 || children > 0x801ffef0 || (children & 3)) return 0;
+            uint32_t detail = READ(children + 67 * 4);
+            if (!object(detail, 0x8008b3c8) || READ(detail + 0x20) != 36
+                || READ(detail + 0xc) > 1 || READ(detail + 0x50) != p
+                || READ(0x8008b3c8) != 0x27bdffe0 || READ(0x8008b3cc) != 0xafb10014) return 0;
+            int slide = (int32_t)READ(detail + 0x8c);
+            if (slide < -34 || slide > 0) return 0;
+            return slide < 0
+                ? SHINKA_STATUS_CHARACTER_TECHNIQUES : SHINKA_STATUS_DIGIVOLVE;
+        }
+        return SHINKA_STATUS_CHARACTER;
+    }
     return SHINKA_STATUS_NONE;
 }
 int shinka_menu_items_active(void) { return shinka_menu_status_layout() == SHINKA_STATUS_ITEMS; }

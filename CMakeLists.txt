@@ -65,6 +65,7 @@ string(REPLACE "${_view_headless}"
     _frontend_text "${_frontend_text}")
 set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/src/view_frontend.inc")
 include("${CMAKE_CURRENT_SOURCE_DIR}/tools/minimize_pause.cmake")
+include("${CMAKE_CURRENT_SOURCE_DIR}/tools/hidden_diagnostic.cmake")
 file(CONFIGURE OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/shinka-runtime/main.cpp"
     CONTENT "${_frontend_text}" @ONLY)
 get_target_property(_runtime_sources shinka SOURCES)

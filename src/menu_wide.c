@@ -134,9 +134,14 @@ static int layout_rect(uint32_t* words, int count, int offset_x, int offset_y,
                 if (col < 0) col = 0;
                 if (col > 8) col = 8;
                 dest_x = x + (col - 4)*margin/4;
-            } else if (clut == 0x3a68 || clut == 0x3de9) {
+            } else if (clut == 0x3a68 || clut == 0x3de9
+                || (status == SHINKA_FOLDER_SELECT && clut == 0x3d69)) {
                 dest_x = stretch_x(x, margin);
                 dest_w = stretch_x(x+w, margin)-dest_x;
+            } else if (status == SHINKA_FOLDER_SELECT && clut == 0x3a17
+                && y >= 83 && y <= 175 && (y-83)%45 <= 1) {
+                /* Folder names keep a native-size inset from the expanded frame. */
+                dest_x = x + stretch_x(29, margin)-29 + 4;
             } else if ((status == SHINKA_FOLDER_SELECT && y >= 99 && ((y-99)%45) <= 2)
                 || (grid && y >= 40 && y <= 41)) {
                 int start = grid ? 22 : 29;
@@ -187,9 +192,9 @@ static int layout_rect(uint32_t* words, int count, int offset_x, int offset_y,
             dest_x = x <= 64 ? x + 124 + margin : 188 + margin + (x - 64) * 164 / 288;
             int end = x + w;
             dest_w = (end <= 64 ? end + 124 + margin : 188 + margin + (end - 64) * 164 / 288) - dest_x;
-        } else if (status == SHINKA_STATUS_CHARACTER_SELECT && clut == 0x3a17
-            && y >= 19 && y < 32 && x >= 150)
-            dest_x = x + margin + 24; /* Choose Digimon clears the 32px cap. */
+        } else if (clut == 0x3a17 && x >= 150 && y >= 19
+            && y < (status == SHINKA_STATUS_CHARACTER ? 46 : 32))
+            dest_x = x + margin + 24; /* Both action rows and cursor clear the cap. */
         else if (clut == 0x7dea && y == 194 && (!digivolve || techniques)) {
             dest_x = stretch_x(x, margin);
             dest_w = stretch_x(x + w, margin) - dest_x;
@@ -207,6 +212,9 @@ static int layout_rect(uint32_t* words, int count, int offset_x, int offset_y,
         else if (footer) dest_x = x - margin;
         else if (status == SHINKA_STATUS_EQUIPMENT)
             dest_x = x + ((x >= 148 || (y >= 54 && x >= 112)) ? margin : -margin);
+        else if (digivolve && ((clut == 0x7de9 && y == form_y-29)
+            || (clut == 0x3a17 && y >= form_y-20 && y <= form_y-19)))
+            dest_x = x + margin; /* Base-partner tab belongs to the form list. */
         else if (digivolve && ((clut == 0x7dea && (words[2] & 65535) == 0x80a8)
             || (clut == 0x3a17 && y >= form_y + 7 && y < form_y + 19)))
             dest_x = x + (x >= 226 ? margin : -margin);

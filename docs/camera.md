@@ -502,3 +502,24 @@ reuse, state-reset invalidation, pending-mode ownership and fade coverage.
 All 17 Shinka native suites (plus the dependency example), 189 Python tests and
 Python lint pass. This covers the shared axis-aligned menu animation builders;
 it does not certify every NPC-specific overlay or rotated/world primitive.
+
+### September 15: Status details and folder-selection alignment
+
+Both rows of the Status action prompt, their cursor, and the equipment/form
+selection prompts now share a 24-native-pixel inset past the shortened ribbon's
+diagonal cap. The base-partner tab in Choose Digivolve moves with the form list:
+its frame, name and cursor use one right-hand anchor. The stat-sheet name below
+retains its separate left anchor.
+
+The folder selector's white outline uses palette `0x3d69`, distinct from the
+dark folder panels. Its connected strips now use the same continuous expansion
+as the panels instead of splitting at the generic left/right threshold. Folder
+names follow the expanded panel's left edge with a four-pixel inset. These rules
+also apply to the unscaled geometry captured for native menu animations.
+
+Copied-profile captures cover both Status action choices, Choose Digivolve,
+and folder 2 selected with 4:3/16:9 comparisons, plus Change Which One in
+widescreen. Regressions
+cover both framebuffer bands, margins 1–160, prompt/cursor movement, partner-tab
+attachment, and shared outline endpoints. Captures remain local under
+`output/folders-lab-wide-01/fixed-*`.

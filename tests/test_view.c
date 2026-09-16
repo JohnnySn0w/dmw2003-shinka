@@ -420,6 +420,24 @@ int main(void) {
             CHECK(glyph[2]==0x3a170000 && glyph[3]==0x000c0008);
         }
         items_menu=SHINKA_STATUS_DIGIVOLVE;shinka_view_tick();
+        /* The base-partner tab, label and cursor must join the right list. */
+        for(int x=74;x<=162;x+=22) {
+            uint32_t tab[]={0x64808080,0x00440000u|(unsigned)x,0x7de96024,0x001c0018};
+            shinka_menu_wide_rect(tab,4,0,band,0,band,319,band+239,margin);
+            CHECK((int16_t)tab[1]==x+margin);
+        }
+        uint32_t name[]={0x64808080,0x004d005f,0x3a171e28,0x000c0008};
+        shinka_menu_wide_rect(name,4,0,band,0,band,319,band+239,margin);
+        CHECK((int16_t)name[1]==95+margin);
+        for(int page=SHINKA_STATUS_CHARACTER;page<=SHINKA_STATUS_CHARACTER_SELECT;++page) {
+            items_menu=page;shinka_view_tick();
+            for(int y=19;y< (page==SHINKA_STATUS_CHARACTER ? 46 : 32);++y) {
+                uint32_t prompt[]={0x64808080,((unsigned)y<<16)|152,0x3a171218,0x000c0008};
+                shinka_menu_wide_rect(prompt,4,0,band,0,band,319,band+239,margin);
+                CHECK((int16_t)prompt[1]==152+margin+24);
+            }
+        }
+        items_menu=SHINKA_STATUS_DIGIVOLVE;shinka_view_tick();
         uint32_t fill[]={0x64808080,0x00770078,0x7dea9690,0x00160028};
         uint32_t border[]={0x64808080,0x007700a0,0x7dea80c8,0x006c0018};
         int width=shinka_menu_wide_rect(fill,4,0,band,0,band,319,band+239,margin);
@@ -475,6 +493,20 @@ int main(void) {
         shinka_menu_wide_rect(prose2,4,0,band,0,band,319,band+239,margin);
         CHECK((int16_t)prose2[1]-(int16_t)prose1[1]==7); /* explanation crosses x=140 intact */
         items_menu=SHINKA_FOLDER_SELECT;shinka_view_tick();
+        /* The white outline uses a different palette from the dark panel. */
+        int highlight_end=0;
+        for(int x=23;x<199;x=x==23 ? 43 : x+32) {
+            int w=x==23 ? 20 : x==171 ? 28 : 32;
+            uint32_t piece[]={0x64808080,0x007d0000u|(unsigned)x,0x3d69732c,0x00270000u|(unsigned)w};
+            int span=shinka_menu_wide_rect(piece,4,0,band,0,band,319,band+239,margin);
+            if(x!=23) CHECK((int16_t)piece[1]==highlight_end);
+            highlight_end=(int16_t)piece[1]+span;
+        }
+        for(int y=83;y<=173;y+=45) {
+            uint32_t name[]={0x64808080,((unsigned)y<<16)|29,0x3a1715d8,0x000c0008};
+            shinka_menu_wide_rect(name,4,0,band,0,band,319,band+239,margin);
+            CHECK((int16_t)name[1]==29*(320+2*margin)/320-margin+4);
+        }
         int end=123+margin;
         for(int x=123;x<=347;x+=32) {
             uint32_t ribbon[]={0x64808080,0x001c0000u|(unsigned)x,0x39a80084,0x00190020};

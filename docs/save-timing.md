@@ -149,6 +149,40 @@ length, so changing this policy does not reinterpret an old in-flight request.
 Read and write generation require their distinct exact instruction sites; tests
 also ensure applying either hook leaves the other wrapper untouched.
 
+## September 15: transfer-driven save/load bar
+
+The STGMCARD progress widget (`0x80083c50`) was an estimate, not a byte
+counter: its active phase adds `4096/duration` to the horizontal scale each
+frame, caps at `0xf33` (about 95%), and uses a separate completion phase after
+the controller accepts the result. With faster transfers, loading could finish
+while this estimate still showed only about a quarter of the bar.
+
+`src/card_progress.c` now updates that scale from the resident wrapper's
+acknowledged-byte count at `0x80048a50`. It handles the `0x26c4`-byte save body
+(rounded to `0x2700` for the card); saving also includes its already-written
+256-byte header. The bar reserves the final 5% for native completion. Directory
+scans and other card operations retain their original animation.
+
+The hook checks the exact read/write caller, live controller and child widget,
+phase, payload length and overlay instructions before changing only the widget's
+scale and increment. No transfer result, checksum, completion flag, retry or disk
+flush changes. The progress comes from guest RAM, including after state restores;
+there is no host-side counter to go stale. This improves feedback, not physical
+transfer speed.
+
+Copied-profile replays reached LOADED and Saved. Sampled load progress followed
+1152/9984 bytes at about 11%, 4224/9984 at 40%, and 9344/9984 at 89% of the
+visible bar, then completed through the original controller. Saving covered
+its header and all 78 body sectors without restarting the bar between them.
+Reopening that card in another process through Continue loaded a byte-for-byte
+match of its complete body and returned to Asuka Inn; the card hash stayed
+unchanged during loading. Replaying the previously prepared invalid-integrity
+card still produced the native MEMORY CARD error instead of LOADED.
+Local screenshots, widget values and transaction traces are retained under
+`output/card-animation/`. Native regressions check sector-by-sector progress,
+unrelated callers, stale objects, malformed counters and completion/error phases;
+only the two presentation words may change.
+
 ## Reproduction tooling
 
 With a diagnostic runtime using copied cards and its localhost debug server,

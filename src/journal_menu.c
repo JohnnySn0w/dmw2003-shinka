@@ -20,6 +20,7 @@ static int lab_selected_rookie = -1, lab_choosing;
 extern void shinka_chart_selection_reset(void);
 void shinka_lab_selection_reset(void) {
     wide_menu_root = 0; wide_menu_mode = 0;
+    shinka_menu_animation_reset();
     shinka_chart_selection_reset();
     lab_selected_rookie = -1; lab_choosing = 0;
     lab_selection_root = lab_selection_menu = 0;
@@ -53,7 +54,9 @@ static uint32_t lab_child(uint32_t p) {
 }
 static uint32_t status_page(void) {
     uint32_t p, children;
-    if (READ(MODE) != STATUS || READ(MODE + 4)
+    /* A queued destination does not end this overlay's render lifetime. Its
+     * verified owner chain still supplies panels during the closing frames. */
+    if (READ(MODE) != STATUS
         || READ(0x8005cca8) != 2 /* verified English layout */
         || READ(0x80099894) != 0x27bdffa8) return 0;
     /* Follow the live owner chain, not a RAM scan or a pointer retained across
@@ -87,7 +90,7 @@ static int live_page(uint32_t p, uint32_t callback, unsigned count, uint32_t pro
 static int extra_menu_layout(unsigned mode) {
     uint32_t p, child, children;
     if ((mode != 0x400 && mode != 0x1200 && mode != LAB && mode != JOURNAL)
-        || READ(MODE + 4) || READ(0x8005cca8) != 2) return 0;
+        || READ(0x8005cca8) != 2) return 0;
     p = READ(0x8005ccbc);
     if (!object(p, 0x80020b58) || READ(p + 0x20) != 1 || READ(p + 0xc) > 1) return 0;
     p = lab_child(p);

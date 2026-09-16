@@ -468,3 +468,37 @@ restores DIGIVOLUTIONS (row 6). Presentation now recognizes the existing
 the chart → partner chooser → Lab actions → Start root sequence stayed 426px
 wide after this correction. The two Card Folder return steps likewise retained
 426px in their sampled captures.
+
+### Menu entry and exit animations — 2026-09-15
+
+The native menu builders switch from `SPRT` rectangles (`0x64`) to textured
+`POLY_FT4` quads (`0x2c`) while scaling panels open or closed. The original
+widescreen pass only handled the rectangles, so animated panels briefly used
+their 4:3 placement. Position-based classification of an already shrunken panel
+would also choose the wrong column.
+
+The resident sprite and text builders now attach host metadata after completing
+each animated packet (`0x8001f53c`, `0x80019e34`, including the text alias body).
+It records the unscaled rectangle, native horizontal scale, pivot and verified
+menu layout. The renderer applies the same layout used by stationary rectangles
+and scales around the widened pivot. Translated icons retain their own centres;
+resized panels and the shortened ribbon use the corresponding wide screen edge.
+Native timing, vertical motion, textures, colours and guest packet RAM stay intact.
+
+Metadata is bounded to 4096 recent commands with a direct source-word index,
+compares all nine packet words before use, and clears on state restoration.
+Capturing layout while building also allows already-built closing packets to
+outlive their menu owner. Queuing another mode no longer disables a still-valid
+Status/card/Lab owner chain; callback, language and lifecycle guards remain.
+The shop/card full-screen semitransparent fade now covers the wide margins too.
+
+Copied-profile OpenGL replays cover Status selection entry/exit, both Start root
+views, card-folder return, Lab partner/action transitions, Leomon's training
+menu and a shop exit. Sampled wide sequences stayed 426px; the original-view
+Status replay stayed 320px. Local frames and packet traces are under
+`output/folders-lab-wide-01/`. Native regressions exercise collapsed through
+fully-open geometry in both framebuffer bands, a translated icon pivot, packet
+reuse, state-reset invalidation, pending-mode ownership and fade coverage.
+All 17 Shinka native suites (plus the dependency example), 189 Python tests and
+Python lint pass. This covers the shared axis-aligned menu animation builders;
+it does not certify every NPC-specific overlay or rotated/world primitive.

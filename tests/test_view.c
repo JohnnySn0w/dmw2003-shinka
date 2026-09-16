@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include "view.h"
 #include "battle_hud.h"
 #include "menu_wide.h"
@@ -25,6 +26,64 @@ uint32_t psx_mod_read_word(uint32_t addr) {
 }
 int shinka_view_get(int option) { return options[option]; }
 void shinka_view_frontend(int wide) { frontend = wide; }
+static int floor_scale(int x, int scale) {
+    /* Independent floating-point reference for the guest's arithmetic shift. */
+    double value = (double)x * scale / 4096;
+    int result = (int)value;
+    return result > value ? result - 1 : result;
+}
+static void animation_tests(void) {
+    /* Native ribbon, left party tile, right list tile, full-width footer.
+     * Endpoints are captured native geometry and known 16:9 destinations. */
+    static const struct { int x,y,w,h,pivot,wide_x,wide_w; unsigned uv; int root; } cases[] = {
+        {34,13,32,25,320,169,32,0x26975fd4,1},
+        {0,17,24,42,0,-53,24,0x2697b700,1},
+        {168,40,40,22,320,221,40,0x26976300,1},
+        {0,194,40,38,0,-53,53,0x7deab368,0},
+        {108,120,32,32,124,55,32,0x7f6b2000,0},
+    };
+    mode=0x1000;options[2]=1;previous_mode=0x21d;destination=4;
+    shinka_view_tick();
+    for(unsigned c=0;c<sizeof(cases)/sizeof(*cases);++c) for(int band=0;band<=256;band+=256)
+    for(int scale=0;scale<=4096;scale+=128) {
+        int x=cases[c].x,y=cases[c].y,w=cases[c].w,h=cases[c].h,p=cases[c].pivot;
+        root_menu=cases[c].root;items_menu=root_menu ? 0 : SHINKA_STATUS_ITEMS;
+        uint32_t rect[]={0x64808080,(uint16_t)x|((uint32_t)y<<16),cases[c].uv,w|((uint32_t)h<<16)};
+        uint32_t quad[]={0x2c808080,0,rect[2],0,0x0006001f,0,0x00250000,0,0x0025001f};
+        for(int i=0;i<4;++i) quad[1+i*2]=(uint16_t)(p+floor_scale(x+(i&1?w:0)-p,scale))
+            | ((uint32_t)(y+(i&2?h:0))<<16);
+        uint32_t original[9];memcpy(original,quad,sizeof(quad));
+        shinka_menu_animation_tag(0x801d0004,quad,rect,p,scale);
+        /* The owner can finish its close phase after building the packet. */
+        root_menu=0;items_menu=0;
+        shinka_menu_wide_quad(quad,9,0x1d0004,0,band,0,band,319,band+239,53);
+        for(int i=0;i<4;++i) {
+            int pivot=p==0 ? -53 : p==320 ? 373 : 71;
+            int expected=pivot+floor_scale(cases[c].wide_x+(i&1?cases[c].wide_w:0)-pivot,scale);
+            CHECK((int16_t)quad[1+i*2]==expected);
+            CHECK((quad[1+i*2]>>16)==(original[1+i*2]>>16));
+            CHECK(quad[2+i*2]==original[2+i*2]);
+        }
+        memcpy(quad,original,sizeof(quad));quad[2]^=1;
+        shinka_menu_wide_quad(quad,9,0x1d0004,0,band,0,band,319,band+239,53);
+        CHECK(quad[1]==original[1]); /* packet storage reused by another draw */
+        shinka_menu_animation_reset();memcpy(quad,original,sizeof(quad));
+        shinka_menu_wide_quad(quad,9,0x1d0004,0,band,0,band,319,band+239,53);
+        CHECK(!memcmp(quad,original,sizeof(quad))); /* state-load invalidation */
+    }
+    root_menu=0;items_menu=0;
+    for(int band=0;band<=256;band+=256) for(int wide=0;wide<=1;++wide) {
+        mode=0xf00;options[2]=wide;shinka_view_tick();
+        uint32_t fade[]={0x2a555555,0,320,0x01000000,0x01000140};
+        shinka_menu_wide_quad(fade,5,0,0,band,0,band,319,band+239,53);
+        CHECK((int16_t)fade[1]==(wide ? -53 : 0));
+        CHECK((int16_t)fade[2]==(wide ? 373 : 320));
+        CHECK(fade[0]==0x2a555555 && fade[3]>>16==256);
+        uint32_t partial[]={0x2a555555,0,319,0x01000000,0x0100013f};
+        shinka_menu_wide_quad(partial,5,0,0,band,0,band,319,band+239,53);
+        CHECK(!partial[1] && partial[2]==319);
+    }
+}
 int main(void) {
     const uint32_t modes[] = {0, 0x1ff, 0x200, 0x202, 0x21d, 0x2ff, 0x300,
         0x600, 0x700, 0xa00, 0xa01, 0xc00, 0xc01, 0xd00, 0xd01, 0xe00, 0xf00, 0xf01, 0x1000, 0x1400};
@@ -558,6 +617,7 @@ int main(void) {
             0,0,319,239,scenario==2 ? 0 : 53);
         CHECK(sprite[1]==(scenario==3 ? 0x006DFFF0u : 0x006D0025u));
     }
+    animation_tests();
     puts("Field preview, battle projection, scene isolation and independent settings passed.");
     return 0;
 }

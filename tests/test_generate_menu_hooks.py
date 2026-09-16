@@ -3,7 +3,22 @@ import unittest
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'tools'))
-from generate_menu_hooks import card_transfer_hooks, shard
+from generate_menu_hooks import card_transfer_hooks, menu_animation_hooks, shard
+
+
+class MenuAnimationHookTests(unittest.TestCase):
+    def test_requires_exact_completed_packets_including_text_alias(self):
+        for number, site, callback, count in (
+            ('03', '    PGXP_STORE(0xA449000Eu, _pgxa, cpu->gpr[9]); }  /* 0x80019E34: 0xA449000E */',
+             'shinka_menu_text_quad', 2),
+            ('05', '    PGXP_STORE(0xA6680000u, _pgxa, cpu->gpr[8]); }  /* 0x8001F53C: 0xA6680000 */',
+             'shinka_menu_sprite_quad', 1),
+        ):
+            for source in ('', site*(count+1), site.replace('PGXP_STORE', 'OTHER')*count):
+                with self.assertRaises(ValueError):
+                    menu_animation_hooks(source, number)
+            result = menu_animation_hooks((site+'\n/* next instruction */\n')*count, number)
+            self.assertEqual(result.count(site+'\n    '+callback+'(cpu);'), count)
 
 
 class CardTransferHookTests(unittest.TestCase):

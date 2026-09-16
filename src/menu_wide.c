@@ -1,6 +1,7 @@
 #include "menu_wide.h"
 #include "view.h"
 #include "mod_plugins.h"
+#include <string.h>
 
 int shinka_menu_wide_mode(unsigned mode) {
     return mode == 0xa00 || mode == 0xf00
@@ -46,12 +47,10 @@ static int backdrop_tile(uint32_t* words, unsigned mode, int x, int margin) {
  * panel/background artwork; translate glyphs and icons as intact columns.
  * This edits the host packet only. Returned width uses the renderer's separate
  * destination span, preserving the original texture rectangle and UVs. */
-int shinka_menu_wide_rect(uint32_t* words, int count, int offset_x, int offset_y,
-    int left, int top, int right, int bottom, int margin) {
-    unsigned mode = psx_mod_read_word(0x8004b3f8u), clut;
+static int layout_rect(uint32_t* words, int count, int offset_x, int offset_y,
+    int left, int top, int right, int bottom, int margin, unsigned mode, int root, int status) {
+    unsigned clut;
     int x, y, w, h, anchor = 0, dest_x, dest_w = 0;
-    int root = ((mode >= 0x200 && mode < 0x300) || mode == 0x1000) && shinka_menu_root_active();
-    int status = !root ? shinka_menu_status_layout() : SHINKA_STATUS_NONE;
     int extra = status >= SHINKA_CARD_ALBUM;
     int layout = root || status || mode == 0xa00 || mode == 0xf00;
     int transition = (mode == 0x1000 || mode == 0x400 || mode == 0x1200 || mode == 0xd00 || mode == 0xd01 || (mode >= 0x200 && mode < 0x300))
@@ -256,4 +255,105 @@ int shinka_menu_wide_rect(uint32_t* words, int count, int offset_x, int offset_y
     }
     words[1] = (words[1] & 0xffff0000u) | (uint16_t)dest_x;
     return dest_w;
+}
+
+int shinka_menu_wide_rect(uint32_t* words, int count, int offset_x, int offset_y,
+    int left, int top, int right, int bottom, int margin) {
+    unsigned mode = psx_mod_read_word(0x8004b3f8u);
+    int root = ((mode >= 0x200 && mode < 0x300) || mode == 0x1000) && shinka_menu_root_active();
+    return layout_rect(words, count, offset_x, offset_y, left, top, right, bottom,
+        margin, mode, root, root ? 0 : shinka_menu_status_layout());
+}
+
+/* Animated menus use POLY_FT4 instead of SPRT. Record the unscaled rectangle
+ * while the native builder still has it; classifying the shrunken coordinates
+ * would send pieces to different columns. Tags describe transient commands,
+ * never modify guest RAM, and are checked against all nine submitted words.
+ * The two packet buffers coexist, so do not clear tags on every present. */
+typedef struct {
+    uint32_t source, command[9], rect[4], mode;
+    int pivot, scale, root, status;
+} MenuAnimation;
+static MenuAnimation animations[4096];
+/* Direct packet-word lookup avoids hash collisions between the two frame
+ * buffers. The bounded ring owns at most 4096 recently built commands. */
+static uint16_t animation_index[0x200000 / 4];
+static unsigned animation_next;
+
+void shinka_menu_animation_reset(void) {
+    memset(animation_index, 0, sizeof(animation_index));
+    memset(animations, 0, sizeof(animations)); animation_next = 0;
+}
+
+void shinka_menu_animation_tag(uint32_t source, const uint32_t* command,
+    const uint32_t* rect, int pivot, int scale) {
+    unsigned mode = psx_mod_read_word(0x8004b3f8u);
+    if (!shinka_view_wide_requested() || (command[0] >> 24 != 0x2c && command[0] >> 24 != 0x2e)
+        || scale < 0 || scale > 4096 || pivot < -128 || pivot > 448) return;
+    source &= 0x1fffffu;
+    if (!source || (source & 3)) return;
+    unsigned slot = animation_index[source >> 2];
+    if (!slot) {
+        slot = animation_next++ % 4096 + 1;
+        uint32_t previous = animations[slot - 1].source;
+        if (previous && animation_index[previous >> 2] == slot) animation_index[previous >> 2] = 0;
+        animation_index[source >> 2] = (uint16_t)slot;
+    }
+    MenuAnimation* a = &animations[slot - 1];
+    a->source = source; a->mode = mode; a->pivot = pivot; a->scale = scale;
+    a->root = shinka_menu_root_active();
+    a->status = a->root ? 0 : shinka_menu_status_layout();
+    memcpy(a->command, command, sizeof(a->command));
+    memcpy(a->rect, rect, sizeof(a->rect));
+}
+
+static int scaled_x(int x, int scale) {
+    int n = x * scale;
+    return n >= 0 ? n / 4096 : -((-n + 4095) / 4096);
+}
+
+void shinka_menu_wide_quad(uint32_t* words, int count, uint32_t source,
+    int offset_x, int offset_y, int left, int top, int right, int bottom, int margin) {
+    if ((count != 9 && count != 5) || !shinka_view_wide_active() || margin <= 0 || margin > 160
+        || offset_x || (offset_y != 0 && offset_y != 256)
+        || left || right != 319 || top != offset_y || bottom != top + 239) return;
+    if (count == 5) {
+        unsigned mode = psx_mod_read_word(0x8004b3f8u);
+        /* The shop/card overlay fades with a full-screen semitransparent
+         * POLY_F4. Keep the fade covering the same width as its panels. */
+        if (words[0] >> 24 != 0x2a || words[1] || words[2] != 320
+            || words[3] != 0x01000000u || words[4] != 0x01000140u
+            || (mode != 0x1000 && mode != 0x400 && mode != 0x1200
+                && mode != 0xd00 && mode != 0xd01 && mode != 0xa00 && mode != 0xf00)) return;
+        for (int i = 1; i <= 4; ++i)
+            words[i] = (words[i] & 0xffff0000u) | (uint16_t)(i & 1 ? -margin : 320 + margin);
+        return;
+    }
+    source &= 0x1fffffu;
+    unsigned slot = animation_index[source >> 2];
+    if (!slot) return;
+    MenuAnimation* a = &animations[slot - 1];
+    if (!source || a->source != source || a->mode != psx_mod_read_word(0x8004b3f8u)
+        || memcmp(a->command, words, sizeof(a->command))) return;
+    uint32_t rect[4]; memcpy(rect, a->rect, sizeof(rect));
+    int width = layout_rect(rect, 4, offset_x, offset_y, left, top, right, bottom,
+        margin, a->mode, a->root, a->status);
+    if (!width && rect[1] == a->rect[1]) return;
+    int original = (int16_t)a->rect[1], w = a->rect[3] & 65535;
+    int dest = (int16_t)rect[1];
+    if (!width) width = w;
+    int ribbon = (a->rect[1] >> 16) == 13 && (a->rect[2] >> 16 == 0x2697 || a->rect[2] >> 16 == 0x7dea);
+    /* A translated icon scales around its own translated centre. Resized
+     * panels (including the ribbon's intact leading cap) use the wide edge. */
+    int pivot = width == w && !ribbon ? a->pivot + dest - original : stretch_x(a->pivot, margin);
+    for (int i = 0; i < 4; ++i) {
+        int old_x = original + (i & 1 ? w : 0);
+        int new_x = dest + (i & 1 ? width : 0);
+        /* Apply the same native fixed-point animation around the wide pivot.
+         * A delta retains the guest's rounding and any vertical motion. */
+        int dx = pivot - a->pivot + scaled_x(new_x - pivot, a->scale)
+            - scaled_x(old_x - a->pivot, a->scale);
+        unsigned pos = 1 + i*2;
+        words[pos] = (words[pos] & 0xffff0000u) | (uint16_t)((int16_t)words[pos] + dx);
+    }
 }

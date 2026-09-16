@@ -13,4 +13,9 @@ int shinka_menu_map_pan(void);
 int shinka_menu_wide_mode(unsigned mode);
 int shinka_menu_wide_rect(uint32_t* words, int count, int offset_x, int offset_y,
     int left, int top, int right, int bottom, int margin);
+void shinka_menu_animation_reset(void);
+void shinka_menu_animation_tag(uint32_t source, const uint32_t* command,
+    const uint32_t* rect, int pivot, int scale);
+void shinka_menu_wide_quad(uint32_t* words, int count, uint32_t source,
+    int offset_x, int offset_y, int left, int top, int right, int bottom, int margin);
 #endif

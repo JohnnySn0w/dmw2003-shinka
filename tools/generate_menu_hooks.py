@@ -29,6 +29,10 @@ def shard(code, number):
             raise ValueError(f'Review entry {address}: expected one real CPS entry')
         code = code.replace(needle, needle + f'\n    {callback}(cpu);')
         declarations.append(f'extern void {callback}(CPUState*);')
+    if number in ('03', '05'):
+        code = menu_animation_hooks(code, number)
+        declarations.append('extern void shinka_menu_text_quad(CPUState*);'
+                            if number == '03' else 'extern void shinka_menu_sprite_quad(CPUState*);')
     if number == '04':
         needle = '    debug_server_log_call_entry(0x8001D504u);'
         if code.count(needle) != 1:
@@ -69,6 +73,19 @@ def shard(code, number):
             code = code.replace(old, new)
     return code.replace('#include "SLES_039.36_decls.h"',
                         '#include "SLES_039.36_decls.h"\n' + '\n'.join(declarations))
+
+
+def menu_animation_hooks(code, number):
+    # Capture after the final CLUT store, in both the primary text body and its
+    # overlapping alias. Generated CPS may resume inside either body.
+    site, callback, expected = (
+        ('    PGXP_STORE(0xA449000Eu, _pgxa, cpu->gpr[9]); }  /* 0x80019E34: 0xA449000E */',
+         'shinka_menu_text_quad', 2) if number == '03' else
+        ('    PGXP_STORE(0xA6680000u, _pgxa, cpu->gpr[8]); }  /* 0x8001F53C: 0xA6680000 */',
+         'shinka_menu_sprite_quad', 1))
+    if code.count(site) != expected:
+        raise ValueError('Review resident animated menu packet completion sites')
+    return code.replace(site, site + f'\n    {callback}(cpu);')
 
 
 def card_transfer_hooks(code, *, write=False):

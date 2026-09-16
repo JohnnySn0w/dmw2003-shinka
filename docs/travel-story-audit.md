@@ -471,8 +471,8 @@ W's callback at module offsets `0x40..0x88` resumes event `0x4f8` when flag
 `2` and `4` in byte `0x8004b3e3`. Both arrival and departure now reject that
 pending combination with **Finish the local encounter**, including rechecks at
 the deferred transition. The event's character identity has not been established.
-North Badland N remains excluded: its separate story-16/flag-`0x40a2` event needs
-its own audit. Original transport predicates remain untouched.
+Bullet Valley was excluded from this first pass; its separate event is audited
+in the follow-up below. Original transport predicates remain untouched.
 
 Validation used a copied save profile at story 20. Developer positioning placed
 the party on native exit triggers; Cross then exercised Oasis → W → E and the
@@ -488,6 +488,43 @@ commit paths. All 17 native suites passed. Diagnostic artifacts remain local in
 `output/west-travel-01/`; the owner's original cards were not modified by these
 tests. Coverage is specific to these routes and fixtures, not a naturally earned
 replay of every allowed story phase or completion of the pending encounter.
+
+## Bullet Valley follow-up — 2026-09-15
+
+Bullet Valley (`0x24c`, map icon 17) now uses the native West entrance at
+`(168, 1020)` field units, scaled by 256. `WSTAG565.PRO` record `0x914` is the
+unconditional action-1 transition to Bullet Valley; the reverse record at `WSTAG575.PRO`
+`0x984` returns to W at `(1496, 260)`. All 645/650 annotated words in the two
+modules matched the owner's extracted files. The previous audit called this
+field North Badland N; the native map icon and `ESASKMAP.BIN` text entry 17
+identify it as Bullet Valley.
+
+Its entry callback at module offsets `0x34..0x6c` starts event `0x1a6` only
+when the story word is 16 and flag `0x40a2` is clear. Its completion callback
+at `0xf0..0x118` sets that flag through the original setter. Class-0x40 storage
+places it at `0x8004b3f2`, mask 4. Map arrivals retain this entry callback;
+departures in story 16 wait for the completion bit. Exact visitation and the
+existing server/story boundaries still apply. No new transport or story flag
+is granted by travel.
+
+A copied story-20 save exercised both ordinary transitions using developer
+positioning on the exit regions followed by normal direction/Cross input.
+A controlled story-16 fixture cleared only the relevant completion bit and
+entered through W. The original Numemon conversation completed and changed
+the byte from `0x42` to `0x46`, with the story still 16. A separate arrival
+through the actual player map also ran and completed that scene normally.
+After completion, a map round trip to Central Park and back retained the checked
+story/quest bytes. The landing survived a save-state reload, and ordinary
+movement worked afterward. A pending-conversation fixture rejected Cross on
+the map; restoring the fixture's completion byte released travel immediately.
+These fixtures prove the entry predicate and completion behavior, not a full
+naturally earned playthrough of the preceding Byakko route.
+
+Policy regressions cover stories 15/16/17, all low-three-bit combinations,
+exact visits, native coordinates, and revoked visits/completion on both
+current and legacy deferred travel. Private captures and fixture records are
+under `output/north-travel-01/`; the owner's original memory cards were not used
+for writes.
 
 ## Priorities for the existing network
 

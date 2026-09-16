@@ -19,6 +19,7 @@ extern int shinka_journal_enabled(void);
 #define ZANBAMON_REMOVED 0x8004b3b6u /* flag 0x1c09, bit 1 */
 #define SUZAKU_INTRO_COMPLETE 0x8004b3dfu /* flag 0x400a, bit 2 */
 #define BADLAND_ENCOUNTER 0x8004b3e3u /* flags 0x4029 started, 0x402a complete */
+#define BULLET_SCENE_COMPLETE 0x8004b3f2u /* flag 0x40a2, bit 2 */
 
 struct arrival { uint32_t stage, x, y; };
 
@@ -40,6 +41,7 @@ static const struct { uint32_t icon, stage, x, y; } destinations[] = {
     {26, 0x249, 84211, 84884},   /* Pelche Oasis */
     {29, 0x24a, 128*256, 376*256}, /* North Badland W, native Oasis entry */
     {27, 0x24b, 144*256, 208*256}, /* North Badland E, native western entry */
+    {17, 0x24c, 168*256, 1020*256}, /* Bullet Valley, native North Badland W entry */
 };
 static int object(uint32_t p, uint32_t callback) {
     return p >= 0x80090000u && p <= 0x801eff00u && !(p & 3)
@@ -82,6 +84,10 @@ static int source(uint32_t stage) {
     return 0;
 }
 static const char* departure(uint32_t stage, uint32_t story) {
+    /* WSTAG575 starts event 0x1a6 on entry at story 16 while 0x40a2 is
+     * clear. Arrival uses the native entry path; departure waits for it. */
+    if (stage == 0x24c && story == 16 && !(B(BULLET_SCENE_COMPLETE) & 4))
+        return "Finish the local conversation";
     /* WSTAG565 resumes event 0x4f8 while 0x4029 is set and 0x402a
      * is clear. Preserve its local completion sequence. */
     if (stage == 0x24a && (B(BADLAND_ENCOUNTER) & 6) == 2)

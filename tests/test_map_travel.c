@@ -154,17 +154,42 @@ static void story_policy(void) {
     }
 }
 static void badland_policy(void) {
-    const unsigned stages[]={0x24a,0x24b},icons[]={29,27};
-    for(unsigned i=0;i<2;++i) {
+    const unsigned stages[]={0x24a,0x24b,0x24c},icons[]={29,27,17};
+    const unsigned x[]={128,144,168},y[]={376,208,1020};
+    for(unsigned i=0;i<3;++i) {
         fresh();watching=0;target(icons[i]);watching=1;
         select_icon();shinka_map_present();CHECK(R(RETURN)==stages[i]);
-        CHECK(R(RETURN+4)==(i ? 144u : 128u)*256);
-        CHECK(R(RETURN+8)==(i ? 208u : 376u)*256);
+        CHECK(R(RETURN+4)==x[i]*256);
+        CHECK(R(RETURN+8)==y[i]*256);
         fresh();watching=0;W(RETURN,stages[i]);watching=1;
         select_icon();shinka_map_present();CHECK(R(RETURN)==0x21d);
         fresh();watching=0;target(icons[i]);
         psx_mod_write_byte(0x8004b3c9,(uint8_t)(0xffu & ~(1u << (stages[i]&7))));
         watching=1;writes=0;select_icon();CHECK(!writes); // exact landing visit
+    }
+    /* Bullet Valley's story-16 entry owns its conversation. Returning to the
+     * native landing can run it; departures cannot skip its completion. */
+    for(unsigned story=15;story<=17;++story) for(unsigned flags=0;flags<8;++flags)
+        for(unsigned from=0;from<2;++from) {
+        fresh();watching=0;W(0x8004b370,story);psx_mod_write_byte(0x8004b3f2,(uint8_t)flags);
+        if(from) W(RETURN,0x24c);else target(17);
+        watching=1;writes=0;select_icon();
+        if(from && story==16 && !(flags&4)) CHECK(!writes && !R(PARENT+0x78));
+        else {shinka_map_present();CHECK(R(RETURN)==(from ? 0x21du : 0x24cu));}
+        CHECK(psx_mod_read_byte(0x8004b3f2)==flags);
+    }
+    for(unsigned legacy=0;legacy<2;++legacy) {
+        fresh();watching=0;W(RETURN,0x24c);W(0x8004b370,16);
+        psx_mod_write_byte(0x8004b3f2,4);watching=1;
+        if(legacy) {legacy_request();root_close();} else select_icon();
+        watching=0;psx_mod_write_byte(0x8004b3f2,0);watching=1;
+        if(legacy) transition();else shinka_map_present();
+        CHECK(R(RETURN)==0x24c && !gpu_count && !R(PARENT+0x78));
+        fresh();watching=0;target(17);watching=1;
+        if(legacy) {legacy_request();W(PARENT+0x7c,17);root_close();} else select_icon();
+        watching=0;psx_mod_write_byte(0x8004b3c9,0xef);watching=1;
+        if(legacy) transition();else shinka_map_present();
+        CHECK(R(RETURN)==0x249 && !gpu_count && !R(PARENT+0x78));
     }
     for(unsigned flags=0;flags<8;++flags) for(unsigned from=0;from<2;++from) {
         fresh();watching=0;psx_mod_write_byte(0x8004b3e3,(uint8_t)flags);
@@ -403,7 +428,7 @@ int main(void) {
     cpu.gpr[31]=0x800997ec;cpu.gpr[16]=PARENT;shinka_map_frame(&cpu);CHECK(writes==0);
     /* Every exposed icon must lead to its own area according to the original map. */
     {
-        const unsigned icons[]={20,30,22,21,15,26,32,43,44,46,42,29,27};
+        const unsigned icons[]={20,30,22,21,15,26,32,43,44,46,42,29,27,17};
         for(unsigned i=0;i<sizeof(icons)/sizeof(icons[0]);++i) {
             fresh();watching=0;W(RETURN,0x200);W(0x8004b370,24);
             W(MAP+0x184,icons[i]);W(MAP+0xa8+(icons[i]-1)*4,1);watching=1;

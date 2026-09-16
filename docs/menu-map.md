@@ -31,6 +31,7 @@ The initial travel network connects these Asuka locations:
 | Pelche Oasis | Path near the waterfront |
 | North Badland W | Native entrance from Pelche Oasis |
 | North Badland E | Native entrance from North Badland W |
+| Bullet Valley | Native entrance from North Badland W; preserves its story-16 entry conversation |
 
 The exact arrival area must already be visited in the loaded game. One icon can
 represent several rooms, so having the icon visible is insufficient. If you are
@@ -48,6 +49,11 @@ accepts story word values 1–36 for this initial network; this is a conservativ
 validation boundary, not a claim that every later value denotes post-game.
 Broader campaign coverage, additional arrival points and post-game routes remain
 work to do. Existing map navigation and visibility rules are preserved.
+
+Bullet Valley runs its original entry conversation when story 16 requires it.
+Departures show **Finish the local conversation** until the game records its
+completion. Travel never sets that completion flag itself. As with the other
+landings, Bullet Valley must have been visited; seeing a neighboring Badland icon is not enough.
 
 After the Seiryu badge, travel out of Seiryu shows **Use the city exit** until
 Teddy's Wind Prairie conversation finishes. Returning to Seiryu remains allowed.

@@ -530,3 +530,34 @@ The pulse follow-up captures under `output/folders-lab-wide-01/folder-pulse-*`
 include all 16 palette states across repeated cycles. The outline regressions
 now cover every state on all three folder rows, including the diagonal join
 and far-right strip, while preserving texture coordinates and name spacing.
+
+### September 15: Card editing and evolution-tree details
+
+The folder editor keeps its nine-column grid compact and centered inside the
+widescreen background. Its last-row name/help panel uses the same coordinates
+as the cards, including the top border at y=185. The editor's folder name has
+the same four-pixel inset as the folder selector. The card picker has a separate
+layout, identified by the live editor's child 52 (`0x800888b0`): its list,
+cursor, name panel and description stay together instead of being treated as
+independent card columns. The native staggered row-entry animation is retained.
+
+In the Lab's form-technique overview, the plain strip at x=136 expands between
+the stats and techniques. The x=168 strip contains the divider and moves with
+the technique list rather than stretching away from it. Evolution-chart hints
+stay centered as complete lines; only the exact shoulder-label baselines and
+arrow textures anchor to the edges. Both arrows use all four pulse palettes
+(`0x7d29` through `0x7de9`, stride 64).
+
+The chart owner sleeps in lifecycle 2 during L1/R1 page turns. That verified
+owner now retains the chart layout instead of falling back to the general Lab
+layout and detaching the title cap. New chart titles encode the native blue
+Cross glyph (`01 1b`) before “Hints”. Existing savestates containing an already
+built title refresh it when the chart is reopened.
+
+Copied-profile checks cover the compact editor, picker entry/exit, form-technique
+overview, page turns, and Kumamon's two-line Kyubimon/partner-level hint. Local
+captures and packet traces remain under `output/folders-lab-wide-01/`.
+Regressions cover compact spacing, picker ownership, ribbon and shoulder
+attachment, hint text across the old split threshold, and the technique-divider
+join over both framebuffer bands and margins 1–160. This remains an English
+layout check with the progressed save, not certification of every language.

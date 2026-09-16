@@ -95,8 +95,16 @@ static int layout_rect(uint32_t* words, int count, int offset_x, int offset_y,
             /* Preserve the chart's node/line geometry as one centered unit.
              * Its title, page indicator and shoulder prompts use the edges. */
             dest_x = x;
-            if (y < 47) dest_x += x >= 200 ? margin : -margin;
-            else if (y >= 196) dest_x += x >= 200 ? margin : x < 40 ? -margin : 0;
+            if (y < 47) {
+                /* Identify the two ribbons by their texture strips so each
+                 * cap stays attached to its own header during animation. */
+                unsigned uv = words[2] & 65535;
+                int page = clut == 0x7cab ? (uv == 0x59ec || uv == 0x3594) : x >= 240;
+                dest_x += page ? margin : -margin;
+            } else if ((clut == 0x3a17 && y == 196 && (x <= 47 || x >= 278))
+                || (clut >= 0x7d29 && clut <= 0x7de9 && (clut-0x7d29)%64 == 0
+                    && y == 201 && ((words[2] & 65535) == 0x5868 || (words[2] & 65535) == 0xed00)))
+                dest_x += x >= 200 ? margin : -margin;
         } else if (status == SHINKA_LAB_LOAD) {
             if (clut == 0x7cab && y == 191) {
                 dest_x = stretch_x(x, margin);
@@ -107,9 +115,9 @@ static int layout_rect(uint32_t* words, int count, int offset_x, int offset_y,
             if (status == SHINKA_LAB_TECHNIQUES && y >= 100) {
                 /* Expand the bridge between stats and techniques, keeping
                  * each stat pair and each technique line at native size. */
-                if (clut == 0x7cab && x == 168 && w == 40) {
+                if (clut == 0x7cab && x == 136 && w == 32) {
                     dest_x = x - margin; dest_w = w + 2*margin;
-                } else dest_x = x + (x >= (clut == 0x7cab ? 208 : 174) ? margin : -margin);
+                } else dest_x = x + (x >= (clut == 0x7cab ? 168 : 174) ? margin : -margin);
             } else dest_x = x + (x >= 140 ? margin : -margin);
         } else if (status == SHINKA_CARD_ALBUM) {
             if (y >= 50 && y < 150) {
@@ -125,6 +133,10 @@ static int layout_rect(uint32_t* words, int count, int offset_x, int offset_y,
                     : x >= 259 ? 320 : y >= 179 ? 74 : x >= 130 ? 130 : 0;
                 dest_x = x + stretch_x(anchor, margin)-anchor;
             }
+        } else if (status == SHINKA_FOLDER_CARDS) {
+            /* The card picker is a list, not nine independently placed grid
+             * columns. Its frame, text, cursor and descriptions move as one. */
+            dest_x = x;
         } else { /* Folder selection / editing / card sorting. */
             int grid = status == SHINKA_FOLDER_EDIT || status == SHINKA_FOLDER_EXPLAIN;
             if (status == SHINKA_FOLDER_EXPLAIN && clut == 0x3a6a) {
@@ -135,14 +147,11 @@ static int layout_rect(uint32_t* words, int count, int offset_x, int offset_y,
             else if (status == SHINKA_FOLDER_EXPLAIN && clut == 0x3aab && y == 36)
                 dest_x = x + stretch_x(259, margin)-259;
             else if (clut == 0x39a8 && y == 28) dest_x = x + margin;
-            else if (grid && y >= 186 && x >= 144)
-                dest_x = x + margin; /* contiguous name/help panel in the last grid row */
-            else if (grid && y >= 56 && y < 220) {
-                int col = (x - 15)/32;
-                if (col < 0) col = 0;
-                if (col > 8) col = 8;
-                dest_x = x + (col - 4)*margin/4;
-            } else if (clut == 0x3a68 || clut == 0x3de9
+            else if (grid && y >= 56)
+                dest_x = x; /* compact cards, cursor and last-row help panel */
+            else if (grid && clut == 0x3a17 && y >= 23 && y <= 24 && x < 140)
+                dest_x = x + stretch_x(22, margin)-22 + 4;
+            else if (clut == 0x3a68 || clut == 0x3de9
                 || (status == SHINKA_FOLDER_SELECT && folder_outline(clut, words[2] & 65535))) {
                 dest_x = stretch_x(x, margin);
                 dest_w = stretch_x(x+w, margin)-dest_x;

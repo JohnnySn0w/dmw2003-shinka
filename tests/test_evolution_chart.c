@@ -153,6 +153,7 @@ int main(void) {
     /* Preserve the stock title's text substitution opcode and slot. */
     CHECK(psx_mod_read_byte(cpu.gpr[5]) == 2 && psx_mod_read_byte(cpu.gpr[5] + 1) == 5
         && psx_mod_read_byte(cpu.gpr[5] + 2) == 1 && cpu.gpr[6] == 0xffffffffu);
+    CHECK(psx_mod_read_byte(cpu.gpr[5] + 9) == 1 && psx_mod_read_byte(cpu.gpr[5] + 10) == 0x1b);
     cpu.gpr[31] = 0x800850bc; cpu.gpr[5] = names;
     watch = 1; shinka_chart_text(&cpu); decode(cpu.gpr[5], text);
     CHECK(strcmp(text, "Unknown digivolution") == 0);

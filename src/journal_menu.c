@@ -104,17 +104,25 @@ static int extra_menu_layout(unsigned mode) {
         if (!object(p, 0x80089e98) || READ(p + 0x20) != 27
             || READ(p + 0xc) > 2 || READ(0x80089e98) != 0x27bdffe0) return 0;
         child = lab_child(p);
-        if (live_page(child, 0x80086574, 53, 0x27bdffe0))
+        if (live_page(child, 0x80086574, 53, 0x27bdffe0)) {
+            children = READ(child + 0x24);
+            if (children >= 0x80090000 && children <= 0x801fff2c && !(children & 3)
+                && live_page(READ(children + 52*4), 0x800888b0, 0, 0x27bdffe0))
+                return SHINKA_FOLDER_CARDS;
             /* Native 800857a0..800857b4 toggles this explanation flag.
              * The earlier +0x68 field is animated and cannot identify it. */
             return READ(child + 0x43c) == 1 ? SHINKA_FOLDER_EXPLAIN : SHINKA_FOLDER_EDIT;
+        }
         return READ(p + 0xc) <= 1 ? SHINKA_FOLDER_SELECT : 0;
     }
     if (READ(0x80055d28) != 13 || !live_page(p, 0x8008ed0c, 3, 0x27bdff40)) return 0;
     children = READ(p + 0x24);
     if (children < 0x80090000 || children > 0x801ffff4 || (children & 3)) return 0;
     child = READ(children + 4);
-    if (live_page(child, 0x800842f4, 7, 0x27bdffc8)) return SHINKA_LAB_CHART;
+    /* Page turns sleep the chart owner (lifecycle 2) while its children keep
+     * drawing the title and shoulder prompts. Keep that same layout active. */
+    if (object(child, 0x800842f4) && READ(child + 0x20) == 7
+        && READ(child + 0xc) <= 2 && READ(0x800842f4) == 0x27bdffc8) return SHINKA_LAB_CHART;
     if (live_page(child, 0x800885ec, 24, 0x27bdffe0)) {
         children = READ(child + 0x24);
         if (children < 0x80090000 || children > 0x801fffa0 || (children & 3)) return 0;

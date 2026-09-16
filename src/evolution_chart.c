@@ -243,6 +243,10 @@ static uint32_t encode_hint(const char* text) {
             /* The stock title substitutes the selected partner's name here. */
             psx_mod_write_byte(scratch + n++, 2); psx_mod_write_byte(scratch + n++, 5);
             psx_mod_write_byte(scratch + n++, 1); text += 2;
+        } else if (c == 1) {
+            /* Native extended-font glyph (the title uses the Cross button). */
+            psx_mod_write_byte(scratch + n++, 1);
+            psx_mod_write_byte(scratch + n++, (uint8_t)*text++);
         } else if (c == ' ' || c == '.' || c == '-' || c == '?' || c == ':') {
             psx_mod_write_byte(scratch + n++, 1);
             psx_mod_write_byte(scratch + n++, c == ' ' ? 1 : c == '.' ? 5 : c == '-' ? 13 : c == ':' ? 7 : 9);
@@ -275,7 +279,7 @@ void shinka_chart_text(CPUState* cpu) {
     if (ra == 0x800846cc) {
         /* Initial title setup precedes the native page-number widget. */
         restore_chart_place(p);
-        text = encode_hint("\x02\x05\x01 - X: Hints");
+        text = encode_hint("\x02\x05\x01 - \x01\x1b: Hints");
         if (text) { cpu->gpr[5] = text; cpu->gpr[6] = 0xffffffffu; }
         return;
     }

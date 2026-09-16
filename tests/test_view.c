@@ -484,7 +484,22 @@ int main(void) {
             shinka_menu_wide_rect(card,4,0,band,0,band,319,band+239,margin);
             shinka_menu_wide_rect(cursor,4,0,band,0,band,319,band+239,margin);
             CHECK((int16_t)card[1]-(int16_t)cursor[1]==1);
-            CHECK((int16_t)card[1]==16+col*32+(col-4)*margin/4);
+            CHECK((int16_t)card[1]==16+col*32);
+        }
+        /* Last-row footer strips and glyphs retain their shared native span. */
+        for(int y=185;y<=218;++y) for(int x=144;x<=304;x+=8) {
+            uint32_t footer[]={0x64808080,((unsigned)y<<16)|(unsigned)x,0x3a681400,0x000c0008};
+            CHECK(!shinka_menu_wide_rect(footer,4,0,band,0,band,319,band+239,margin));
+            CHECK((int16_t)footer[1]==x);
+        }
+        uint32_t folder_name[]={0x64808080,0x00180016,0x3a1715d8,0x000c0008};
+        shinka_menu_wide_rect(folder_name,4,0,band,0,band,319,band+239,margin);
+        CHECK((int16_t)folder_name[1]==22*(320+2*margin)/320-margin+4);
+        items_menu=SHINKA_FOLDER_CARDS;shinka_view_tick();
+        for(int y=23;y<220;y+=11) for(int x=74;x<=320;x+=7) {
+            uint32_t list[]={0x64808080,((unsigned)y<<16)|(unsigned)x,0x3a170000,0x000c0008};
+            CHECK(!shinka_menu_wide_rect(list,4,0,band,0,band,319,band+239,margin));
+            CHECK((int16_t)list[1]==x);
         }
         items_menu=SHINKA_FOLDER_EXPLAIN;shinka_view_tick();
         uint32_t prose1[]={0x64808080,0x00170088,0x3a170000,0x000c0008};
@@ -540,9 +555,36 @@ int main(void) {
         uint32_t mp[]={0x64808080,0x00d10109,0x3a170000,0x000c0008};
         shinka_menu_wide_rect(mp,4,0,band,0,band,319,band+239,margin);CHECK((int16_t)mp[1]==265+margin);
         items_menu=SHINKA_LAB_CHART;shinka_view_tick();
+        const unsigned shoulder_x[]={40,47,278,285};
+        for(unsigned palette=0x7d29;palette<=0x7de9;palette+=64) for(int side=0;side<2;++side) {
+            int x=side ? 272 : 23;
+            uint32_t arrow[]={0x64808080,0x00c90000u|(unsigned)x,
+                (palette<<16)|(side ? 0x5868u : 0xed00u),0x00100024};
+            shinka_menu_wide_rect(arrow,4,0,band,0,band,319,band+239,margin);
+            CHECK((int16_t)arrow[1]==x+(side ? margin : -margin));
+        }
+        for(unsigned i=0;i<4;++i) {
+            uint32_t glyph[]={0x64808080,0x00c40000u|shoulder_x[i],0x3a170000,0x000c0008};
+            shinka_menu_wide_rect(glyph,4,0,band,0,band,319,band+239,margin);
+            CHECK((int16_t)glyph[1]==(int)shoulder_x[i]+(i<2 ? -margin : margin));
+        }
+        for(int x=0;x<=320;x+=8) {
+            uint32_t cap[]={0x64808080,0x00110000u|(unsigned)x,0x7cabc188,0x001e0014};
+            shinka_menu_wide_rect(cap,4,0,band,0,band,319,band+239,margin);
+            CHECK((int16_t)cap[1]==x-margin);
+            uint32_t hint[]={0x64808080,0x00cf0000u|(unsigned)x,0x3a170000,0x000c0008};
+            shinka_menu_wide_rect(hint,4,0,band,0,band,319,band+239,margin);
+            CHECK((int16_t)hint[1]==x);
+        }
         uint32_t node[]={0x64808080,0x00320014,0x7ca84000,0x00200020};
         shinka_menu_wide_rect(node,4,0,band,0,band,319,band+239,margin);
         CHECK(node[1]==0x00320014); /* chart connectors and nodes stay in one coordinate system */
+        items_menu=SHINKA_LAB_TECHNIQUES;shinka_view_tick();
+        uint32_t bridge[]={0x64808080,0x00640088,0x7cab007c,0x00820020};
+        uint32_t divider[]={0x64808080,0x006400a8,0x7cab0028,0x00820028};
+        CHECK(shinka_menu_wide_rect(bridge,4,0,band,0,band,319,band+239,margin)==32+2*margin);
+        shinka_menu_wide_rect(divider,4,0,band,0,band,319,band+239,margin);
+        CHECK((int16_t)bridge[1]+32+2*margin==(int16_t)divider[1]);
         options[2]=0;shinka_view_tick();
         uint32_t panel[]={0x64808080,0x00130000,0x7cabb800,0x00350028};
         CHECK(!shinka_menu_wide_rect(panel,4,0,band,0,band,319,band+239,margin));CHECK(panel[1]==0x00130000);

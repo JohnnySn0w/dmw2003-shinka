@@ -514,9 +514,22 @@ int main(void) {
             }
         }
         writes=0;CHECK(shinka_menu_status_layout()==kind && !writes);
+        if(kind==SHINKA_LAB_CHART) {
+            W(child+0xc,2);CHECK(shinka_menu_status_layout()==SHINKA_LAB_CHART);
+            W(child+0xc,3);CHECK(shinka_menu_status_layout()==SHINKA_LAB);
+            W(child+0xc,1);
+        }
         if(kind==SHINKA_FOLDER_EDIT) {
             W(child+0x43c,1);CHECK(shinka_menu_status_layout()==SHINKA_FOLDER_EXPLAIN);
             W(child+0x43c,0);CHECK(shinka_menu_status_layout()==SHINKA_FOLDER_EDIT);
+            W(child+0x24,child+0x100);W(child+0x100+52*4,detail);
+            W(detail+0x28,0x80014274);W(detail+0x48,0x800888b0);W(detail+0xc,1);
+            W(detail+0x20,0);W(0x800888b0,0x27bdffe0);
+            CHECK(shinka_menu_status_layout()==SHINKA_FOLDER_CARDS);
+            W(0x800888b0,0);CHECK(shinka_menu_status_layout()==SHINKA_FOLDER_EDIT);W(0x800888b0,0x27bdffe0);
+            W(detail+0xc,2);CHECK(shinka_menu_status_layout()==SHINKA_FOLDER_EDIT);W(detail+0xc,1);
+            W(child+0x24,0x801ffff0);CHECK(shinka_menu_status_layout()==SHINKA_FOLDER_EDIT);
+            W(child+0x24,0);
             W(child+0xc,2);CHECK(!shinka_menu_status_layout());W(child+0xc,1);
         }
         if(kind==SHINKA_LAB_TECHNIQUES) {

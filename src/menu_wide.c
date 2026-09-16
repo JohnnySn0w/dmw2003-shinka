@@ -113,11 +113,12 @@ static int layout_rect(uint32_t* words, int count, int offset_x, int offset_y,
             else dest_x = x + ((y >= 65 || x >= 140) ? margin : -margin);
         } else if (status == SHINKA_LAB || status == SHINKA_LAB_TECHNIQUES) {
             if (status == SHINKA_LAB_TECHNIQUES && y >= 100) {
-                /* Expand the bridge between stats and techniques, keeping
-                 * each stat pair and each technique line at native size. */
-                if (clut == 0x7cab && x == 136 && w == 32) {
+                /* Keep the stats and their divider at native width. Extra
+                 * space belongs inside the technique pane, not between its
+                 * text and the stats. The Skill LV header stays at the right. */
+                if (clut == 0x7cab && x == 208 && w == 28) {
                     dest_x = x - margin; dest_w = w + 2*margin;
-                } else dest_x = x + (x >= (clut == 0x7cab ? 168 : 174) ? margin : -margin);
+                } else dest_x = x + (x >= 230 && (clut == 0x7cab || y < 122) ? margin : -margin);
             } else dest_x = x + (x >= 140 ? margin : -margin);
         } else if (status == SHINKA_CARD_ALBUM) {
             if (y >= 50 && y < 150) {
@@ -215,6 +216,13 @@ static int layout_rect(uint32_t* words, int count, int offset_x, int offset_y,
         else if (clut == 0x7dea && y == 194 && (!digivolve || techniques)) {
             dest_x = stretch_x(x, margin);
             dest_w = stretch_x(x + w, margin) - dest_x;
+        } else if (digivolve && y >= form_y + 22 && !footer) {
+            /* Same compact stat column in Status > See Digivolve. Extend the
+             * technique background after its intact divider; move whole text
+             * lines with that divider, leaving the upper form list alone. */
+            if (clut == 0x7dea && x == 184 && w == 36) {
+                dest_x = x - margin; dest_w = w + 2*margin;
+            } else dest_x = x + (clut == 0x7dea && x >= 220 ? margin : -margin);
         } else if (digivolve && clut == 0x7dea
             && ((x == 200 && w == 40 && h == 22 && y >= 63 && y <= 97
                     && (words[2] & 65535) == 0x9690)

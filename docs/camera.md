@@ -586,3 +586,18 @@ Regressions cover compact spacing, picker ownership, ribbon and shoulder
 attachment, hint text across the old split threshold, and the technique-divider
 join over both framebuffer bands and margins 1–160. This remains an English
 layout check with the progressed save, not certification of every language.
+
+### September 16: Compact evolution stats
+
+The Lab's Change Digivolve Type and Load Technique panels, and Status's See
+Digivolve panel, now retain the native width of the stats column. This replaces
+the September 15 expansion between the stats and technique list. The divider
+and complete technique lines move with the stats; extra width goes into the
+plain technique background, while the Skill LV header stays at the right.
+
+Matched 4:3/16:9 captures from a copied progressed save are under
+`output/lab-detail-02/`, alongside the locked-portrait animation checks described
+in [the evolution journal](evolution-journal.md#locked-portrait-and-cursor-rendering).
+Geometry regressions check native stat-strip widths, divider joins, technique
+text and expanded background endpoints in both framebuffer bands over margins
+1–160. All 19 native test targets pass, including the dependency example.

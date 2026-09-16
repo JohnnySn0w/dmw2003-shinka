@@ -237,3 +237,25 @@ Guilmon's existing eight known forms supplied a later-page check without any
 ownership edits: page 2, column 2, row 3 reopened on the same form, with **2/4**
 shown in the native page widget. Pages 3–4 have native regression coverage;
 they were not represented by that party's naturally known forms.
+
+### Locked portrait and cursor rendering
+
+The native chart draws each anonymous node before drawing its selection cursor.
+The discovery hook previously drew sprite `0x3f` again in the portrait pass.
+That 36×36 composite covered the cursor's bottom-right corner and included an
+eight-pixel tree connector that did not belong inside the hint portrait.
+
+Locked grid entries now leave the existing anonymous node in place. Hint entries
+use only its 32×32 interior, inside the same native frame as unlocked portraits.
+A small guest sprite resource supplies the empty grid draw and cropped hint draw;
+it is reconstructed when a restored savestate lacks its marker. The game's
+texture, palette, cursor timing and ownership records remain unchanged.
+
+The September 16 copied-profile check captured 40 consecutive display frames
+and their GPU packets. All four cursor palettes (`0x7e29`, `0x7e69`, `0x7ea9`,
+`0x7ee9`) appeared; every frame retained yellow pixels in all four corners.
+Wide screenshots and upper/lower hint checks accompany the native display
+sequence under `output/lab-detail-02/`. The contact sheet is
+`locked-verified-contact.png`; frame numbers, palettes and corner checks are in
+`locked-verified-cycle.json`. Native regressions cover both hint call sites,
+the empty grid draw, known-form preservation and resource recovery after reload.

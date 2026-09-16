@@ -179,6 +179,33 @@ void shinka_chart_resource(CPUState* cpu) {
     if (cpu->gpr[4] == 0x02c50001 && hidden_icon(cpu, 1)) cpu->gpr[4] = 0x02c50000;
 }
 
+static uint32_t portrait_scratch;
+
+static uint32_t hidden_portrait_sheet(void) {
+    /* The chart already draws anonymous node 0x3f underneath its cursor.
+     * Redrawing that 36x36 composite over the cursor hides its bottom/right
+     * corners and brings an 8px connector into the hint portrait. Supply an
+     * empty sprite for the grid and only the anonymous tile's 32x32 interior
+     * for the hint's existing portrait frame. This is a native sprite resource,
+     * not new VRAM artwork; its palette and texture still belong to the game. */
+    if (!portrait_scratch || R(portrait_scratch + 80) != 0x5049434fu) {
+        uint32_t p = psx_mod_alloc_guest_memory(96, 4);
+        if (!p) return 0;
+        portrait_scratch = p;
+        for (unsigned i = 0; i < 96; i += 4) W(p + i, 0);
+        W(p, 32); W(p + 4, 16); /* texture records and sprite IDs */
+        W(p + 8, 48); W(p + 12, 56);
+        psx_mod_write_byte(p + 17, 1); /* IDs 0 (empty), 1 (portrait) */
+        const uint16_t texture[7] = {450, 222, 32, 32, 32, 245, 0};
+        for (unsigned i = 0; i < 7; ++i) psx_mod_write_half(p + 32 + i*2, texture[i]);
+        psx_mod_write_half(p + 52, 0xffff); /* empty sprite, no blend override */
+        psx_mod_write_half(p + 56, 1); /* one part: texture 0, offset (0,0) */
+        psx_mod_write_half(p + 60, 0xffff);
+        W(p + 80, 0x5049434fu);
+    }
+    return portrait_scratch;
+}
+
 void shinka_chart_sprite(CPUState* cpu) {
     uint32_t ra = cpu->gpr[31], p, x;
     int hidden;
@@ -187,7 +214,12 @@ void shinka_chart_sprite(CPUState* cpu) {
     p = R(cpu->gpr[29] + 0xe0);
     if (!chart(p)) return;
     hidden = hidden_icon(cpu, 0);
-    if (hidden) cpu->gpr[5] = 0x3f; /* original anonymous node */
+    if (hidden) {
+        uint32_t sheet = hidden_portrait_sheet();
+        if (!sheet) return;
+        cpu->gpr[4] = sheet;
+        cpu->gpr[5] = ra == 0x80084144 ? 0 : 1;
+    }
     /* The portrait and frame sheets occupy different VRAM pages. This local
      * draw context is reconstructed by the original renderer each frame. */
     x = hidden ? 640 : 320;

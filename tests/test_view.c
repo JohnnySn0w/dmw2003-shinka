@@ -398,11 +398,11 @@ int main(void) {
             {SHINKA_STATUS_CHARACTER_SELECT,170,199,-1},
             {SHINKA_STATUS_CHARACTER_SELECT,160,212,-1},
             {SHINKA_STATUS_DIGIVOLVE,153,125,-1},
-            {SHINKA_STATUS_DIGIVOLVE,182,212,1},
+            {SHINKA_STATUS_DIGIVOLVE,182,212,-1},
             {SHINKA_STATUS_DIGIVOLVE,117,104,-1},
             {SHINKA_STATUS_DIGIVOLVE,236,104,1},
             {SHINKA_STATUS_CHARACTER_TECHNIQUES,153,93,-1},
-            {SHINKA_STATUS_CHARACTER_TECHNIQUES,182,178,1},
+            {SHINKA_STATUS_CHARACTER_TECHNIQUES,182,178,-1},
             {SHINKA_STATUS_CHARACTER_TECHNIQUES,170,199,-1},
             {SHINKA_STATUS_CHARACTER_TECHNIQUES,117,70,-1},
             {SHINKA_STATUS_CHARACTER_TECHNIQUES,236,70,1},
@@ -442,7 +442,8 @@ int main(void) {
         uint32_t border[]={0x64808080,0x007700a0,0x7dea80c8,0x006c0018};
         int width=shinka_menu_wide_rect(fill,4,0,band,0,band,319,band+239,margin);
         CHECK(!shinka_menu_wide_rect(border,4,0,band,0,band,319,band+239,margin));
-        CHECK(width==40+2*margin && (int16_t)fill[1]+width==(int16_t)border[1]);
+        CHECK(width==0 && (int16_t)fill[1]==120-margin
+            && (int16_t)fill[1]+40==(int16_t)border[1]);
         CHECK(fill[2]==0x7dea9690 && fill[3]==0x00160028);
         for(int y=63;y<=97;++y) {
             uint32_t bridge[]={0x64808080,((unsigned)y<<16)|200,0x7dea9690,0x00160028};
@@ -582,9 +583,15 @@ int main(void) {
         items_menu=SHINKA_LAB_TECHNIQUES;shinka_view_tick();
         uint32_t bridge[]={0x64808080,0x00640088,0x7cab007c,0x00820020};
         uint32_t divider[]={0x64808080,0x006400a8,0x7cab0028,0x00820028};
-        CHECK(shinka_menu_wide_rect(bridge,4,0,band,0,band,319,band+239,margin)==32+2*margin);
+        CHECK(shinka_menu_wide_rect(bridge,4,0,band,0,band,319,band+239,margin)==0);
         shinka_menu_wide_rect(divider,4,0,band,0,band,319,band+239,margin);
-        CHECK((int16_t)bridge[1]+32+2*margin==(int16_t)divider[1]);
+        CHECK((int16_t)bridge[1]==136-margin && (int16_t)bridge[1]+32==(int16_t)divider[1]);
+        uint32_t pane[]={0x64808080,0x006400d0,0x7cab009c,0x0082001c};
+        CHECK(shinka_menu_wide_rect(pane,4,0,band,0,band,319,band+239,margin)==28+2*margin);
+        CHECK((int16_t)pane[1]==208-margin && pane[2]==0x7cab009c);
+        uint32_t skill[]={0x64808080,0x008c00b0,0x3a171e28,0x000c0008};
+        shinka_menu_wide_rect(skill,4,0,band,0,band,319,band+239,margin);
+        CHECK((int16_t)skill[1]==176-margin);
         options[2]=0;shinka_view_tick();
         uint32_t panel[]={0x64808080,0x00130000,0x7cabb800,0x00350028};
         CHECK(!shinka_menu_wide_rect(panel,4,0,band,0,band,319,band+239,margin));CHECK(panel[1]==0x00130000);

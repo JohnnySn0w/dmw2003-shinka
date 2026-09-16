@@ -19,13 +19,17 @@ uint16_t psx_mod_read_half(uint32_t a) { uint16_t v; memcpy(&v, ptr(a), 2); retu
 uint32_t psx_mod_read_word(uint32_t a) { uint32_t v; memcpy(&v, ptr(a), 4); return v; }
 static void writing(uint32_t a) {
     if (watch) CHECK((a >= panel + 0xd0 && a < panel + 0x210) || a == panel + 0xcc || a == panel + 0xc0
-        || a == panel + 0x290 || a == panel + 0x294 || (a >= 0x80400000 && a < 0x80400200));
+        || a == panel + 0x290 || a == panel + 0x294 || (a >= 0x80400000 && a < 0x80410000));
     ++writes;
 }
 void psx_mod_write_word(uint32_t a, uint32_t v) { writing(a); memcpy(ptr(a), &v, 4); }
 void psx_mod_write_half(uint32_t a, uint16_t v) { writing(a); memcpy(ptr(a), &v, 2); }
 void psx_mod_write_byte(uint32_t a, uint8_t v) { writing(a); *ptr(a) = v; }
-uint32_t psx_mod_alloc_guest_memory(uint32_t size, uint32_t alignment) { CHECK(size <= 512); return 0x80400000; }
+uint32_t psx_mod_alloc_guest_memory(uint32_t size, uint32_t alignment) {
+    static uint32_t next = 0x80400000;
+    CHECK(size <= 512 && alignment == 4);
+    uint32_t p = next; next += (size + 3) & ~3u; CHECK(next <= 0x80410000); return p;
+}
 int shinka_journal_enabled(void) { return active; }
 void shinka_chart_rebuild(uint32_t);
 void shinka_chart_frame(CPUState*);
@@ -136,8 +140,25 @@ int main(void) {
     cpu.gpr[31] = 0x80084128; cpu.gpr[4] = 0x2c50001;
     shinka_chart_resource(&cpu); CHECK(cpu.gpr[4] == 0x2c50000);
     cpu.gpr[31] = 0x80084144; cpu.gpr[5] = 19;
-    shinka_chart_sprite(&cpu); CHECK(cpu.gpr[5] == 0x3f);
+    shinka_chart_sprite(&cpu); CHECK(cpu.gpr[5] == 0);
+    uint32_t sheet = cpu.gpr[4];
+    CHECK(psx_mod_read_half(sheet + R(sheet + 8)) == 0); /* no overdraw on cursor */
+    for (unsigned i = 0; i < 2; ++i) {
+        cpu.gpr[31] = i ? 0x8008388c : 0x800837ec;
+        shinka_chart_sprite(&cpu); CHECK(cpu.gpr[4] == sheet && cpu.gpr[5] == 1);
+        uint32_t part = sheet + R(sheet + 12), texture = sheet + R(sheet);
+        CHECK(psx_mod_read_half(part) == 1); /* no tree connector */
+        CHECK(psx_mod_read_half(part + 6) == 0 && R(part + 8) == 0);
+        CHECK(psx_mod_read_half(texture) == 450 && psx_mod_read_half(texture + 2) == 222);
+        CHECK(psx_mod_read_half(texture + 4) == 32 && psx_mod_read_half(texture + 6) == 32);
+        CHECK(R(cpu.gpr[29] + 0x18) == 640 && R(cpu.gpr[29] + 0x20) == 640);
+    }
+    cpu.gpr[31] = 0x80084144;
     cpu.gpr[19] = 0; cpu.gpr[5] = 19; shinka_chart_sprite(&cpu); CHECK(cpu.gpr[5] == 19);
+    CHECK(R(cpu.gpr[29] + 0x18) == 320);
+    /* A restored state without the synthetic resource must reconstruct it. */
+    W(sheet + 80, 0); cpu.gpr[19] = 1;
+    shinka_chart_sprite(&cpu); CHECK(cpu.gpr[4] != sheet && cpu.gpr[5] == 0);
 
     /* A synthetic name table provides only an already known prerequisite. */
     const uint32_t names = 0x800c0000, string = 0x800c1000;

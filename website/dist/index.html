@@ -5,27 +5,111 @@
   <title>SHINKA — A new evolution for Digimon World 2003</title>
   <meta name="description" content="Less grinding. More exploring. Shinka brings portable digivolutions, live soundtrack switching and performance improvements to Digimon World 2003 on Windows.">
   <meta name="theme-color" content="#080e22">
-  <link rel="icon" href="media/emblem.png"><link rel="stylesheet" href="style.css">
+  <link rel="icon" href="media/emblem.png"><link rel="stylesheet" href="style.css?v=20260915-2">
 </head>
 <body>
 <a class="skip" href="#main">Skip to content</a>
-<header><a class="wordmark" href="#top" aria-label="Shinka home">SHINKA<span>進化</span></a><nav aria-label="Main navigation"><a href="#evolution">Evolution</a><a href="#sound">Listen</a><a href="#performance">Performance</a><a href="https://github.com/JohnnySn0w/dmw2003-shinka">GitHub ↗</a></nav></header>
+<header>
+  <a class="wordmark" href="#top" aria-label="Shinka home"><img src="media/emblem.png" width="28" height="28" alt="">SHINKA <span>進化</span></a>
+  <nav aria-label="Main navigation"><a href="#evolution">Features</a><a href="#sound">Soundtrack</a><a href="#world">Explore</a><a class="repo-link" href="https://github.com/JohnnySn0w/dmw2003-shinka">GitHub ↗</a></nav>
+</header>
 <main id="main">
 <section class="hero" id="top">
-  <div class="hero-copy"><p class="eyebrow">DIGIMON WORLD 2003 / WINDOWS PROJECT</p>
-  <img class="title-art" src="media/shinka-title.png" width="1536" height="975" alt="SHINKA — 進化">
-  <h1>The Digital World.<br><em>On your terms.</em></h1>
-  <p class="lede">Keep the adventure, the discovery, the ridiculously good music. Spend less of it grinding and walking back to the lab.</p>
-  <div class="actions"><a class="button" href="#evolution">Explore the changes <span>↓</span></a><a class="text-link" href="https://github.com/JohnnySn0w/dmw2003-shinka">Follow the project ↗</a></div>
-  <p class="fine">Experimental fan project · European release · Bring your own disc data</p></div>
-  <figure class="hero-scene"><img src="media/central-park.png" width="426" height="240" alt="The paths, trees and waterways of Central Park, rendered in Shinka's experimental widescreen view"><figcaption><span>BACK IN CENTRAL PARK</span><span>16:9 field preview</span></figcaption></figure>
+  <div class="hero-copy">
+    <p class="eyebrow">Digimon World 2003 / Reimagined for Windows</p>
+    <img class="title-art" src="media/shinka-title.png" width="1536" height="975" alt="Shinka — 進化, evolution" fetchpriority="high">
+    <h1>Back to the<br>Digital World.<br><em>Less grind this time.</em></h1>
+    <p class="lede">The world you remember, with more room to explore. Bring the lab along, set your own pace, and hear a familiar score in a new way.</p>
+    <div class="actions"><a class="button" href="#evolution">See what's changed <span aria-hidden="true">↓</span></a><a class="text-link" href="#project">Try Shinka</a></div>
+    <p class="fine">WINDOWS x64 · EXPERIMENTAL · OWN DISC DATA REQUIRED</p>
+  </div>
+  <div class="hero-visual">
+    <figure class="hero-scene"><div class="frame-label"><span>01 / Field view</span><span>16:9</span></div><img src="media/central-park.png" width="426" height="240" alt="Central Park's paths and waterways in Shinka's experimental widescreen view"><figcaption><span>Central Park / Field preview</span></figcaption></figure>
+    <figure class="battle-inset"><img src="media/battle.png" width="426" height="240" alt="Kumamon faces Kunemon in widescreen combat"><figcaption>Original artwork. A wider battle.</figcaption></figure>
+  </div>
 </section>
-<section class="feature" id="evolution"><div><p class="eyebrow">01 / DISCOVER</p><h2>Keep the mystery.<br>Lose the commute.</h2><p>Open the full Digimon Lab from your menu. Choose battle forms, switch partners and load techniques wherever the adventure takes you.</p><p>Locked forms offer a nudge in the right direction. A reason to experiment, without turning every evolution into a spreadsheet.</p><a class="prose-link" href="https://github.com/JohnnySn0w/dmw2003-shinka/blob/main/docs/evolution-journal.md">How the hints work ↗</a></div><figure class="capture"><img id="evolution-demo" src="media/evolution-hint.png" data-still="media/evolution-hint.png" data-gif="media/evolution.gif" width="320" height="240" loading="lazy" alt="The portable evolution chart opens a locked node's directional training hint"><figcaption>The full lab, with discovery intact. Recorded menu views, condensed into a GIF.</figcaption><div class="capture-controls"><button type="button" data-toggle="evolution-demo" aria-pressed="false">Play evolution GIF</button></div></figure></section>
-<section class="feature" id="settings"><figure class="capture"><img id="settings-demo" src="media/settings.png" data-still="media/settings.png" data-gif="media/settings.gif" width="426" height="240" loading="lazy" alt="Shinka Settings with EXP, DV EXP, encounters, soundtrack, screen view, zoom and battle motion"><figcaption>Real settings screens. Use left and right in-game; changes are saved as you make them.</figcaption><div class="capture-controls"><button type="button" data-toggle="settings-demo" aria-pressed="false">Play settings GIF</button></div></figure><div><p class="eyebrow">02 / SET YOUR PACE</p><h2>A little less grind.<br>Or a lot.</h2><p>Turn normal and DV experience up to 4×. Choose fixed 10-point DV awards. Dial random encounters anywhere from off to double the original rate.</p><p>Speed up idle and action poses separately, up to 2×, while the battle camera keeps its own pace. Story fights still happen, and progression caps still apply.</p><a class="prose-link" href="https://github.com/JohnnySn0w/dmw2003-shinka/blob/main/docs/field-menu.md">Explore the settings ↗</a></div></section>
-<section class="wide-section sound-feature" id="sound"><div class="section-intro"><p class="eyebrow">03 / SAME SONG. NEW TEXTURE.</p><h2>Four ways to hear<br>a familiar world.</h2><p>The original score is the starting point. Keep its sound, try a DS-inspired blend, bring in sampled instruments, or give the melody an oscillator-chip character. Switch mid-song from SETTINGS.</p></div><figure class="capture sound-capture"><video id="soundtrack" controls playsinline preload="none" poster="media/settings.png" width="852" height="480" aria-label="Audible gameplay recording switching through Original, DS, Sampled and Chip"><source src="media/soundtracks.mp4" type="video/mp4"><track kind="captions" src="media/soundtracks.vtt" srclang="en" label="Soundtrack changes" default>Your browser cannot play this video. <a href="media/soundtracks.mp4">Download the audible demonstration.</a></video><figcaption>Central Park · 28-second continuous recording · Press play to listen. The song is never restarted during the switches. <a class="prose-link" href="media/soundtracks.mp4">Download clip</a>.</figcaption></figure><div class="video-chapters" aria-label="Jump to a soundtrack setting"><button type="button" data-time="0">01 / Original</button><button type="button" data-time="7.38">02 / DS</button><button type="button" data-time="14.42">03 / Sampled</button><button type="button" data-time="21.44">04 / Chip</button></div><p class="media-status" id="sound-status" aria-live="polite">Sound starts only when you press play or choose a section.</p><p class="footnote">Alternate palettes use a locally built music pack covering 42 banks. Arrangements and melody balance are still being refined; this excerpt does not represent every track. Effects and unrecognized banks keep their original sound. <a href="https://github.com/JohnnySn0w/dmw2003-shinka/blob/main/docs/music-listening-guide.md">Per-track listening notes ↗</a></p></section>
-<section class="wide-section" id="performance"><div class="section-intro"><p class="eyebrow">04 / LESS TIME WAITING</p><h2>The loading bar<br>was only the surface.</h2><p>Repeated file setup made the original save routine wait between tiny requests. Shinka groups those requests while keeping sector checks, disk flushes and completion handling. Battle work targets the routines actually consuming CPU time.</p></div><div class="metrics"><article class="metric"><strong>31.4%</strong><h3>Less CPU time per battle frame</h3><p>14.13 → 9.69 ms in the tested idle battle, with the optional native geometry unit enabled. Both runs held about 50 updates per second.</p></article><article class="metric"><strong>25 → 6 s</strong><h3>Tested save-body loading</h3><p>25.02 → 6.11 seconds to the last observed data sector. The loaded body matched the original byte for byte.</p></article><article class="metric"><strong>29 → 8 s</strong><h3>Tested save-file writing</h3><p>28.72 → 7.63 seconds to the last observed file-sector write. A controlled replay produced an identical full memory card.</p></article></div><p class="footnote">Short, matched local tests; not a full-game benchmark. Card timings exclude confirmation input and are not total menu-to-world waits. <a href="https://github.com/JohnnySn0w/dmw2003-shinka/blob/main/docs/performance.md">Battle measurements ↗</a> · <a href="https://github.com/JohnnySn0w/dmw2003-shinka/blob/main/docs/save-timing.md">Save measurements and checks ↗</a></p><figure class="capture wide-shot"><img src="media/battle.png" width="426" height="240" loading="lazy" alt="Kumamon faces Kunemon in a widescreen battle, with status panels at the sides"><figcaption>Original battle artwork, more room for the view. The performance change does not require speeding up game time.</figcaption></figure></section>
-<section class="wide-section" id="world"><div class="section-intro"><p class="eyebrow">05 / ROOM TO EXPLORE</p><h2>A wider view.<br>A shorter walk back.</h2></div><div class="grid-three"><article class="small-feature"><h3>Widescreen, scene by scene</h3><p>Independent battle and field aspect ratios, plus battle zoom. Field widescreen draws extra preloaded scenery, with map edges and object visibility still under investigation.</p></article><article class="small-feature"><h3>The map becomes a route home</h3><p>Press X on supported, visited icons to travel through the original area loader. Eleven Asuka-server stops are covered so far, with checks for the story scenes audited around them.</p></article><article class="small-feature"><h3>Let the laptop breathe</h3><p>Minimizing suspends offline gameplay; restoring resumes it. A default-off debug history buffer also avoids a 128 MiB allocation. Ordinary focus changes keep the game running.</p></article></div></section>
-<section class="wide-section" id="project"><div class="section-intro"><p class="eyebrow">06 / STILL EVOLVING</p><h2>Built in the open.<br>Tested one scene at a time.</h2><p>Shinka is an experimental Windows project combining locally translated game code with a PSX runtime and interpreter fallback. It is playable in tested areas; it is still a long way from complete campaign coverage.</p></div><div class="badge-line"><span class="badge">Windows x64</span><span class="badge">European SLES-03936</span><span class="badge">Experimental</span><span class="badge">Own disc data required</span></div><details><summary>How do I try it?</summary><p>Follow the <a class="prose-link" href="https://github.com/JohnnySn0w/dmw2003-shinka/blob/main/docs/windows-baseline.md">Windows build guide</a> with your own supported disc dump and the required build tools. There is no standalone game download here. Existing DuckStation cards can be copied into a separate save profile.</p></details><details><summary>What still needs work?</summary><p>Later-game compatibility, additional safe travel destinations, field widescreen coverage, soundtrack balance and long movie playback. Higher-resolution combat models remain an offline research prototype. Controller testing does not yet cover every device.</p></details><details><summary>What do the tests cover?</summary><p>Public checks exercise the Python tooling with synthetic data. Native regression suites and recorded gameplay checks provide separate evidence. Neither a green badge nor a working checkpoint establishes full-game compatibility. <a class="prose-link" href="https://github.com/JohnnySn0w/dmw2003-shinka/blob/main/docs/testing.md">Read the testing guide.</a></p></details><div class="actions"><a class="button" href="https://github.com/JohnnySn0w/dmw2003-shinka">Explore the repository ↗</a><a class="text-link" href="https://github.com/JohnnySn0w/dmw2003-shinka/tree/main/docs">Read the development notes ↗</a></div></section>
-</main><footer><a class="wordmark" href="#top">SHINKA<span>進化</span></a><p>An experimental fan project for Digimon World 2003.</p><a href="https://github.com/JohnnySn0w/dmw2003-shinka">Project source ↗</a></footer>
-<script src="app.js" defer></script>
-</body></html>
+<div class="index-strip" aria-label="Feature shortcuts"><a href="#evolution"><span>01</span>Portable lab</a><a href="#settings"><span>02</span>Your pace</a><a href="#sound"><span>03</span>Four soundtracks</a><a href="#performance"><span>04</span>Less waiting</a><a href="#world"><span>05</span>A wider world</a></div>
+<section class="feature paper" id="evolution">
+  <div class="feature-copy"><p class="eyebrow">01 / Discover</p><h2>Keep the mystery.<br>Lose the commute.</h2>
+    <p>The Digimon Lab now travels with you. Open <strong>DIGIVOLUTIONS</strong> from the menu to switch partners, choose your battle forms, and load techniques.</p>
+    <p>Locked forms give you a direction to train in, without revealing every number. Follow a hint, experiment with your team, and make the discovery yourself.</p>
+    <a class="prose-link" href="https://github.com/JohnnySn0w/dmw2003-shinka/blob/main/docs/evolution-journal.md">Inside the evolution hints ↗</a>
+  </div>
+  <figure class="capture"><div class="frame-label"><span>Digimon Lab / Evolution chart</span><span>In your menu</span></div>
+    <img id="evolution-demo" src="media/evolution-hint.png" data-still="media/evolution-hint.png" data-gif="media/evolution.gif" width="320" height="240" loading="lazy" alt="Guilmon's evolution tree with a directional hint for a locked form">
+    <figcaption>Discover the next form without a trip back to town. September 11 menu recording; the GIF condenses several views.</figcaption>
+    <div class="capture-controls"><button type="button" data-toggle="evolution-demo" aria-pressed="false">Play evolution GIF</button></div>
+  </figure>
+</section>
+<section class="feature" id="settings">
+  <figure class="capture"><div class="frame-label"><span>Settings / Your playthrough</span><span>Saved as you go</span></div>
+    <img id="settings-demo" src="media/settings.png" data-still="media/settings.png" data-gif="media/settings.gif" width="426" height="240" loading="lazy" alt="Shinka Settings showing EXP, DV EXP, encounters, soundtrack, screen view, zoom and battle motion">
+    <figcaption>Adjust from the game menu. These are demonstration values, not the defaults.</figcaption>
+    <div class="capture-controls"><button type="button" data-toggle="settings-demo" aria-pressed="false">Play settings GIF</button></div>
+  </figure>
+  <div class="feature-copy"><p class="eyebrow">02 / Set your pace</p><h2>More adventure.<br>Fewer laps.</h2>
+    <p>Keep the original pace or make room for a shorter playthrough. Normal experience, digivolution experience, and random encounters each have their own control.</p>
+    <ul class="detail-list"><li><strong>1–4×</strong><span>Normal and DV experience, with an optional fixed 10-point DV award.</span></li><li><strong>0–200%</strong><span>Random encounters. Scripted battles keep their original triggers.</span></li><li><strong>1–2×</strong><span>Separate idle and action pose speeds. The battle camera keeps its own pace.</span></li></ul>
+    <a class="prose-link" href="https://github.com/JohnnySn0w/dmw2003-shinka/blob/main/docs/field-menu.md">All settings and their limits ↗</a>
+  </div>
+</section>
+<section class="wide-section sound-feature" id="sound">
+  <div class="section-intro"><p class="eyebrow">03 / Same score. New textures.</p><h2>You know the tune.<br>Pick its voice.</h2><p>Original, DS-inspired, sampled instruments, or chip sounds. Switch while the music is playing, right from SETTINGS. The song carries on.</p></div>
+  <div class="sound-layout">
+    <figure class="capture sound-capture"><div class="frame-label"><span>Listening room / Central Park</span><span>Audio included</span></div>
+      <video id="soundtrack" controls playsinline preload="none" poster="media/settings.png" width="852" height="480" aria-label="Continuous gameplay recording of Original, DS, Sampled and Chip soundtracks"><source src="media/soundtracks.mp4" type="video/mp4"><track kind="captions" src="media/soundtracks.vtt" srclang="en" label="Soundtrack changes" default>Your browser cannot play this video. <a href="media/soundtracks.mp4">Download the audible demonstration.</a></video>
+      <figcaption>One continuous 28-second recording. September 11 build.<br><a class="prose-link" href="media/soundtracks.mp4">Download the clip</a></figcaption>
+    </figure>
+    <div>
+      <div class="video-chapters" role="group" aria-label="Play a soundtrack chapter">
+        <button type="button" data-time="0" data-label="Original" aria-label="Play Original soundtrack chapter"><span class="chapter-index">01</span><span><span class="chapter-name">Original</span><span class="chapter-description">The familiar PlayStation sound.</span></span><span class="chapter-play" aria-hidden="true">▶</span></button>
+        <button type="button" data-time="7.38" data-label="DS" aria-label="Play DS soundtrack chapter"><span class="chapter-index">02</span><span><span class="chapter-name">DS-inspired</span><span class="chapter-description">A little handheld-era character.</span></span><span class="chapter-play" aria-hidden="true">▶</span></button>
+        <button type="button" data-time="14.42" data-label="Sampled" aria-label="Play Sampled soundtrack chapter"><span class="chapter-index">03</span><span><span class="chapter-name">Sampled</span><span class="chapter-description">A palette of canned instruments.</span></span><span class="chapter-play" aria-hidden="true">▶</span></button>
+        <button type="button" data-time="21.44" data-label="Chip" aria-label="Play Chip soundtrack chapter"><span class="chapter-index">04</span><span><span class="chapter-name">Chip</span><span class="chapter-description">An oscillator-driven variation.</span></span><span class="chapter-play" aria-hidden="true">▶</span></button>
+      </div>
+      <p class="media-status" id="sound-status" aria-live="polite">Choose a chapter to listen. Sound never starts automatically.</p>
+      <button class="audio-pause" id="sound-pause" type="button" hidden>Pause recording</button>
+    </div>
+  </div>
+  <p class="footnote">The alternate palettes use a locally built music pack covering 42 banks. Instrument choices and melody balance are still being refined. Effects and unrecognized banks keep their original sound. This excerpt demonstrates live switching, rather than the final mix for every track. <a href="https://github.com/JohnnySn0w/dmw2003-shinka/blob/main/docs/music-listening-guide.md">Track-by-track listening notes ↗</a></p>
+</section>
+<section class="wide-section paper" id="performance">
+  <div class="section-intro"><p class="eyebrow">04 / Less time waiting</p><h2>Back to playing.<br>Sooner.</h2><p>Faster card transfers and targeted battle optimizations cut work the game repeats. Here are the measured differences in matched local tests.</p></div>
+  <div class="metrics">
+    <article class="metric"><strong>25 → 6 s</strong><h3>Save-body loading</h3><p>25.02 → 6.11 seconds to the last observed data sector. The loaded save body matched byte for byte.</p></article>
+    <article class="metric"><strong>29 → 8 s</strong><h3>Save-file writing</h3><p>28.72 → 7.63 seconds to the last observed file-sector write. A controlled replay produced an identical full card.</p></article>
+    <article class="metric"><strong>31.4%</strong><h3>Less CPU time per battle frame</h3><p>14.13 → 9.69 ms in the tested idle battle with the optional native geometry unit. Both runs stayed near 50 updates per second.</p></article>
+  </div>
+  <div class="performance-note"><h3>And a loading bar that follows the transfer.</h3><p>The save/load bar now uses acknowledged data instead of a fixed timer, reserving its last stretch for the game's completion check. Sector checks, retries and disk flushes remain in place.</p></div>
+  <p class="footnote">These are short local comparisons, not full-game benchmarks. Card timings exclude confirmation input and are not total menu-to-world waits. <a href="https://github.com/JohnnySn0w/dmw2003-shinka/blob/main/docs/save-timing.md">Save measurements ↗</a> · <a href="https://github.com/JohnnySn0w/dmw2003-shinka/blob/main/docs/performance.md">Battle measurements ↗</a></p>
+</section>
+<section class="wide-section" id="world">
+  <div class="section-intro"><p class="eyebrow">05 / Room to explore</p><h2>Take the scenic route.<br>Or take the shortcut.</h2></div>
+  <div class="world-layout">
+    <div>
+      <figure class="capture"><div class="frame-label"><span>World map / South Badland</span><span>15 arrival points</span></div><img src="media/map-travel.png" width="426" height="240" loading="lazy" alt="The widescreen Asuka map with South Badland selected and X: Travel available"><figcaption>Snap the cursor to a supported icon, then press Cross to travel. Captured September 15.</figcaption></figure>
+      <details><summary>Where can I travel?</summary><ul class="travel-locations"><li>Asuka City bridge</li><li>Central Park</li><li>Wire Forest Entrance</li><li>Wire Forest</li><li>Seiryu City</li><li>South Station</li><li>Bulk Bridge</li><li>Tranquil Swamp</li><li>Phoenix Bay</li><li>Suzaku City</li><li>South Badland</li><li>Pelche Oasis</li><li>North Badland W</li><li>North Badland E</li><li>Bullet Valley</li></ul></details>
+    </div>
+    <div class="world-copy">
+      <div><h3>A route back to places you've visited.</h3><p>Travel uses the original area loader and checks the exact arrival area's visit flag. Audited story scenes and unfinished local encounters can keep a stop unavailable. The map tells you why.</p><a class="prose-link" href="https://github.com/JohnnySn0w/dmw2003-shinka/blob/main/docs/menu-map.md">Current destinations and restrictions ↗</a></div>
+      <div><h3>Widescreen beyond the battlefield.</h3><p>Separate field and battle settings extend the view into supported menus, the map, shops and gyms. Card folders and the portable lab also have widescreen adjustments. Field edges and menu transitions are still being tested.</p></div>
+      <div><h3>Two trigger shortcuts.</h3><p><span class="key">L2 / LT</span> toggles 4:3 and 16:9 in supported scenes.<br><span class="key">R2 / RT</span> toggles speedup. Tab still works as a hold.</p><a class="prose-link" href="https://github.com/JohnnySn0w/dmw2003-shinka/blob/main/docs/controller-support.md">Controller support and mappings ↗</a></div>
+    </div>
+  </div>
+</section>
+<section class="wide-section paper" id="project">
+  <div class="project-layout">
+    <div class="section-intro"><p class="eyebrow">06 / Still evolving</p><h2>A familiar game.<br>An open project.</h2><p>Shinka combines locally translated game code with a PSX runtime and interpreter fallback. It is playable in tested areas, with plenty of campaign coverage still ahead.</p><div class="badge-line"><span class="badge">Windows x64</span><span class="badge">European SLES-03936</span><span class="badge">Experimental</span></div><div class="actions"><a class="button" href="https://github.com/JohnnySn0w/dmw2003-shinka/blob/main/docs/windows-baseline.md">Build &amp; play <span aria-hidden="true">↗</span></a><a class="text-link" href="https://github.com/JohnnySn0w/dmw2003-shinka">Project on GitHub ↗</a></div></div>
+    <div>
+      <details open><summary>What do I need to play?</summary><p>Your own dump of the supported European release, Windows, and the tools listed in the <a class="prose-link" href="https://github.com/JohnnySn0w/dmw2003-shinka/blob/main/docs/windows-baseline.md">build guide</a>. There is no standalone game download here. Existing DuckStation memory cards can be copied into a separate save profile.</p></details>
+      <details><summary>What still needs work?</summary><p>Later-game compatibility, more safe travel destinations, field edges and menu transitions, soundtrack balance, and extended movie playback. Higher-resolution combat models remain an offline research prototype. Controller testing does not cover every device.</p></details>
+      <details><summary>Will it keep my laptop busy when minimized?</summary><p>Minimizing suspends offline gameplay; restoring resumes it. Ordinary focus changes keep the game running. A debug history buffer is also off by default, avoiding a 128 MiB allocation.</p></details>
+      <details><summary>How is it tested?</summary><p>Tooling checks, native regression suites, and recorded gameplay each cover different parts of the project. A working checkpoint is not a promise of full-game compatibility. <a class="prose-link" href="https://github.com/JohnnySn0w/dmw2003-shinka/blob/main/docs/testing.md">Read the testing guide ↗</a></p></details>
+    </div>
+  </div>
+</section>
+</main>
+<footer><a class="wordmark" href="#top"><img src="media/emblem.png" width="28" height="28" alt="">SHINKA <span>進化</span></a><p>An experimental fan project for Digimon World 2003.<br>Game imagery and music belong to their respective rights holders.</p><a href="https://github.com/JohnnySn0w/dmw2003-shinka/tree/main/docs">Development notes ↗</a><span class="edition">SHOWCASE / SEPTEMBER 2026</span></footer>
+<script src="app.js?v=20260915-2" defer></script>
+</body>
+</html>

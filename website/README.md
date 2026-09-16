@@ -4,6 +4,12 @@ A scrolling, responsive feature showcase using the user's full title artwork,
 real gameplay captures, opt-in feature GIFs and a continuous audible recording
 of Original → DS → Sampled → Chip switching in Central Park.
 
+The September 15 refresh adds alternating light/dark feature sections, a
+chapter-based listening panel with pause/resume, a current map-travel capture
+and the 15 supported arrival points. It also covers controller trigger shortcuts
+and transfer-driven memory-card progress. Older demonstration recordings are
+dated in their captions; they are not represented as the final soundtrack mix.
+
 ## Preview locally
 
 From this directory, serve the static output with Python:
@@ -19,6 +25,8 @@ paths also allow hosting under a repository subdirectory.
 ## Editing and publishing
 
 - Edit `dist/index.html`, `dist/style.css` and `dist/app.js`.
+- Bump the stylesheet/script version queries in `index.html` when changing those
+  assets so returning visitors receive matching markup and controls.
 - Keep performance claims tied to the linked measurement reports.
 - Keep recordings small and retain their provenance in [MEDIA.md](MEDIA.md).
 - Audio begins only through a user gesture. GIFs start as still images and have

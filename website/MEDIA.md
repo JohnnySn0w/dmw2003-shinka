@@ -10,6 +10,7 @@ are not AI-generated gameplay or promises of full-game compatibility.
 | `dist/media/emblem.png` | Exact copy of the existing compact app artwork, used as the website favicon. |
 | `dist/media/central-park.png` | `output/field-stream-02/complete-edge.png`, experimental 426×240 field view. |
 | `dist/media/battle.png` | `output/field-stream-02/battle.png`, the tested widescreen battle view. |
+| `dist/media/map-travel.png` | Exact copy of `output/desert-travel-01/south-map.png`, September 15 presented-frame capture of South Badland selected in the 426×240 map. Uses the private copied travel-test save profile. |
 | `dist/media/evolution-hint.png` | Fresh September 11 capture of the portable Guilmon chart's locked-form hint. |
 | `dist/media/evolution.gif` | Actual September 11 lab/chart/hint screens assembled with readable holds. A condensed sequence of views, not a real-time loading benchmark. |
 | `dist/media/settings.png`, `settings.gif` | September 11 capture of Settings and its Screen view / Battle motion subpages. GIF uses selected screens with readable holds. |

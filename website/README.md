@@ -10,6 +10,11 @@ and the 15 supported arrival points. It also covers controller trigger shortcuts
 and transfer-driven memory-card progress. Older demonstration recordings are
 dated in their captions; they are not represented as the final soundtrack mix.
 
+The copy follow-up uses direct feature descriptions and adds four widescreen
+menu captures: card editing, techniques, evolution hints and Leomon's gym.
+[SHOWCASE-PLAN.md](SHOWCASE-PLAN.md) tracks the requested recording refreshes and
+new feature demonstrations, with priorities and acceptance checks.
+
 ## Preview locally
 
 From this directory, serve the static output with Python:

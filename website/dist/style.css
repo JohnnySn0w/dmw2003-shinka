@@ -257,6 +257,7 @@ p {
 }
 .index-strip {
   display:flex;
+  flex-wrap:wrap;
   align-items:center;
   justify-content:space-between;
   gap:1.5rem;
@@ -825,6 +826,29 @@ footer>a:last-child {
 }
 .world-copy .key {
   margin-bottom:.4rem;
+}
+.screen-gallery {
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:2rem;
+}
+.screen-gallery .capture {
+  min-width:0;
+}
+.screen-gallery .capture>a {
+  display:block;
+}
+.screen-gallery figcaption {
+  font-size:.9rem;
+}
+.screen-gallery figcaption strong {
+  color:var(--ink);
+}
+@media(max-width:760px) {
+  .screen-gallery {
+    grid-template-columns:1fr;
+    gap:1.5rem;
+  }
 }
 @media(min-width:761px) and (max-width:1050px) {
   .hero h1 {

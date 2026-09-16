@@ -11,16 +11,25 @@ are not AI-generated gameplay or promises of full-game compatibility.
 | `dist/media/central-park.png` | `output/field-stream-02/complete-edge.png`, experimental 426×240 field view. |
 | `dist/media/battle.png` | `output/field-stream-02/battle.png`, the tested widescreen battle view. |
 | `dist/media/map-travel.png` | Exact copy of `output/desert-travel-01/south-map.png`, September 15 presented-frame capture of South Badland selected in the 426×240 map. Uses the private copied travel-test save profile. |
+| `dist/media/card-editor.png` | Exact copy of `output/folders-lab-wide-01/editor-fixed.png`, September 15 compact nine-column editor verification frame (426×240). |
+| `dist/media/lab-techniques.png` | Exact copy of `output/folders-lab-wide-01/lab-tech-fixed.png`, September 15 form/technique overview verification frame (426×240). |
+| `dist/media/lab-hint-wide.png` | Exact copy of `output/folders-lab-wide-01/kumamon-hint-final.png`, September 15 two-line hint and native Cross-glyph verification frame (426×240). |
+| `dist/media/gym-wide.png` | Exact copy of `output/npc-wide-01/gym-tp-wide.png`, earlier widened Leomon training-point menu verification frame (426×240). Added to the showcase September 15; not a new gameplay test. |
 | `dist/media/evolution-hint.png` | Fresh September 11 capture of the portable Guilmon chart's locked-form hint. |
 | `dist/media/evolution.gif` | Actual September 11 lab/chart/hint screens assembled with readable holds. A condensed sequence of views, not a real-time loading benchmark. |
 | `dist/media/settings.png`, `settings.gif` | September 11 capture of Settings and its Screen view / Battle motion subpages. GIF uses selected screens with readable holds. |
 | `dist/media/soundtracks.mp4` | Continuous September 11 Central Park recording: Original, DS, Sampled, Chip. 28.02 seconds, H.264 video plus AAC stereo audio. |
 | `dist/media/soundtracks.vtt` | Descriptive captions indicating the palette changes; no speech occurs in the clip. |
 
-The recordings used an isolated copied card/state profile under
+The September 11 recordings used an isolated copied card/state profile under
 `output/site-capture`, not the player's active save directory. Diagnostic source
 frames, full WAV and save data remain local. The settings pictured are demonstration
 values, not default settings.
+
+The four-image menu gallery reuses earlier copied-profile verification captures;
+it does not establish fresh animation or full-game coverage. Images were inspected
+and copied unchanged. Planned replacements and additional recordings are tracked
+in [SHOWCASE-PLAN.md](SHOWCASE-PLAN.md).
 
 The soundtrack demonstration uses the runtime's 44.1 kHz SPU output and matching
 sample-clock timestamps for screen captures. Input changes the selected palette

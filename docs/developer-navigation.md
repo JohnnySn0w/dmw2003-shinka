@@ -135,8 +135,11 @@ coordinate deltas for that step; collisions and path bends limit extrapolation.
 Cross is explicit (`press cross 4`): automatic confirmation near water can start
 fishing instead of taking an exit.
 
-Twelve built-in points include the eleven player travel destinations plus the outer
-Asuka bridge approach. Named bookmarks default to ignored
+The twelve built-in points cover the original eleven travel destinations plus
+the outer Asuka bridge approach. This developer bookmark set is separate from
+the current player destination table in `src/map_travel.c`: later Badland and
+Bullet Valley additions do not automatically become named developer points.
+Named bookmarks default to ignored
 `output/dev-nav-points.json`; `--bookmarks PATH` selects another file. Bookmarks
 store only stage, position and facing. They never restore a captured story value.
 Built-in point names cannot be overwritten. For new-area investigation,

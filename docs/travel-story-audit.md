@@ -9,11 +9,15 @@ scripted exits, temporary closures and transport unlocks. A previously visited
 area can become inaccessible later. Both departure and arrival need checks.
 
 This is an implementation scope and test plan, not a completed campaign safety
-certification. The thirteen-destination network now guards Seiryu's pending departure
+certification. The 15-destination network now guards Seiryu's pending departure
 scene, adjusts Asuka's early arrival, gates three South Sector stops behind the
 completed first arrival, and admits Phoenix Bay only after its exact surface field
 has been visited. Suzaku has event-aware arrivals and departures, and Asuka's
-Main Lobby cannot be used to teleport out during lockdown. It retains the broad story range
+Main Lobby cannot be used to teleport out during lockdown. North Badland W and
+South Badland block travel while their local encounters are pending. Bullet
+Valley preserves its native story-16 entry conversation and blocks departure
+until it completes. Noise Desert remains excluded while its event policy is
+investigated. The network retains the broad story range
 described in [map travel](menu-map.md). That range does not prove the remaining
 events below are safe.
 

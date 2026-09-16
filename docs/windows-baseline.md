@@ -1,6 +1,10 @@
 # Experimental Windows baseline
 
-Shinka now has a Windows x64 build that runs locally translated game code through the pinned PSXRecomp runtime. It is an early hybrid native/interpreter build, not a completed source reconstruction. Optional EXP modifications and an expanded field menu are available.
+Shinka's Windows x64 build runs locally translated game code through the pinned
+PSXRecomp runtime, with interpreter fallback. It is not a completed source
+reconstruction. The optional expanded menu provides the portable Digimon Lab,
+EXP/DV and encounter settings, soundtrack selection, camera options and battle
+motion controls. See [current features and limits](../README.md#what-changes).
 
 The historical movie probes below are superseded by the
 [2026-09-10 movie and scheduler measurements](performance.md). The opening now
@@ -12,7 +16,8 @@ with Start. Longer-run stutter is improved but not fully resolved. Add
 
 Requirements: Windows x64, Visual Studio 2022 with Desktop development with C++ and a Windows SDK, CMake 3.20+, Git, and Python 3.11+. The first configure downloads pinned SDL3, zlib, and libchdr dependencies. Use a normal developer terminal with access to the installed SDK.
 
-Obtain the audited candidate and its framework outside this repository:
+Run the following from the Shinka repository root. Obtain the audited candidate
+and its framework in a sibling directory:
 
 ```powershell
 git clone https://github.com/Alexbeav/digimon-world-2003-recomp.git ../audit-recomp
@@ -28,6 +33,19 @@ From the Shinka repository root:
 ```
 
 The build checks the candidate/framework commits and the disc SHA-1 before extracting the boot executable. Generated code and assets stay local. The resulting executable is `build-windows/Release/dmw2003-shinka.exe`; use the launch script so configuration, disc, and separate save paths are supplied correctly. This is not yet a standalone distributable package.
+
+To opt into the English expanded menu on the first launch, use:
+
+```powershell
+./tools/launch_windows.ps1 -DiscCue 'PATH\TO\game.cue' -EvolutionJournal -SaveDirectory 'output/player-saves'
+```
+
+This enables **DIGIVOLUTIONS** and **SETTINGS**; it does not choose boosted EXP
+or an alternate soundtrack for you. Changes made in SETTINGS persist. Omit
+`-EvolutionJournal` on later launches to keep the saved feature selection, or
+pass `-EvolutionJournal:$false` to disable it while the game is closed. Alternate
+soundtracks additionally need the [local music pack](music-live.md#local-build).
+Use `-Jobs 2` on the build script to reduce compile concurrency on a busy laptop.
 
 ### Launching the executable directly
 
@@ -53,6 +71,12 @@ same saves. These machine-specific settings and shortcuts stay outside version
 control. Without configured paths, a direct launch can fail before the disc
 picker opens while Shinka initializes its disc-dependent modifications.
 
+This is a per-machine setup, not an automatic first-run installer. A copy of
+someone else's executable or shortcut will not discover your disc or cards.
+The launch script supplies `--game`, `--disc` and `--memcard-dir` explicitly;
+prefer it when verifying a fresh checkout. Moving the disc or profile requires
+updating the shortcut arguments or these local settings.
+
 ### BIOS, controls and profiles
 
 The default build includes the framework's OpenBIOS. An optional locally supplied SCPH-1001 BIOS with MD5 `924e392ed05558ffdb115408c263dccf` can be compiled and selected by passing `-RetailBios 'PATH\TO\bios.bin'` to **both** scripts. No retail BIOS is included. The completed movie/savestate probes used that optional backend; OpenBIOS reached language selection but has not had the same full smoke test.
@@ -64,6 +88,17 @@ See [controller compatibility](controller-support.md) for the native SDL3 input 
 Optional normal EXP scaling is available through `-ExpMultiplier 1`, `2`, `3` or `4` on the launch script. See [configuration and battle comparisons](experience.md). Launch flags require the game to be closed; the expanded menu's SETTINGS entry can change normal and DV EXP rates during play.
 
 Use `-SaveDirectory 'output/profile-name'` for a separate test profile. The default remains `output/player-saves`. See [copying DuckStation cards and loading profiles](save-profiles.md).
+
+### Common first-launch issues
+
+| Symptom | Check |
+| --- | --- |
+| Double-click exits before a game window appears | Run the launch script in a terminal with your own CUE path. Check the local path setup above rather than copying the maintainer's shortcut. |
+| DIGIVOLUTIONS or SETTINGS is missing | Close the game, enable `-EvolutionJournal`, and use the supported English game. Reopen menus retained in old savestates. |
+| Continue shows an empty card | Confirm the selected save directory contains your copied `card1.mcd`. A different profile has different cards and savestates. |
+| An alternate soundtrack cannot be selected | Build and link the local music pack; SETTINGS reports **Music pack missing** when it is absent. |
+| A controller opens but input does not reach the game | Focus the game window and check saved device selection and mappings in the [controller guide](controller-support.md). |
+| Rebuilding cannot replace the executable | Close that game instance before building. Keep your normal player cards separate from diagnostic profiles. |
 
 ## Capture and compile overlays
 

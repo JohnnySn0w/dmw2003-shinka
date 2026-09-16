@@ -24,13 +24,16 @@ runtime and interpreter fallback, with optional improvements to the original gam
 | [Portable Digimon Lab](docs/evolution-journal.md) | Choose battle forms, switch partners and load techniques from the field menu. Explore the evolution chart with directional hints for locked forms. |
 | [Progression and encounters](docs/field-menu.md) | Select 1–4x normal/DV EXP or fixed 10-point DV awards, and random encounter rates from 0–200%. |
 | [Live soundtrack switching](docs/music-live.md) | Switch between Original, DS, Sampled and Chip instruments mid-song. Alternate arrangements are provisional and use a locally built pack. |
-| [Map travel](docs/menu-map.md) | Press X on thirteen supported, visited Asuka-server destinations, including North Badland W and E. Story checks protect the scenes audited so far. |
+| [Map travel](docs/menu-map.md) | Press Cross on 15 supported, visited Asuka-server destinations, including South Badland, North Badland W/E and Bullet Valley. Story checks protect the scenes audited so far. |
 | [Screen view](docs/camera.md) | Choose battle widescreen, battle zoom and an experimental field widescreen preview. The field setting also widens gym/shop interfaces, both expanded Start-menu roots, Items, Sort, Map, Techniques, character Status, Card Album/Edit Folder and the portable Digimon Lab. |
 | [Battle motion](docs/battle-animation-speed.md) | Adjust idle and action pose speeds separately, from 1–2x, while camera and script timing retain their own rates. |
-| [Faster memory-card transfers](docs/save-timing.md) | Batch repeated file requests while preserving per-sector checks, flushes and completion handling. Existing card formats remain usable. |
+| [Faster memory-card transfers](docs/save-timing.md) | Batch repeated file requests while preserving per-sector checks, flushes and completion handling. The save/load bar follows acknowledged transfer progress. Existing card formats remain usable. |
+| [Controller shortcuts](docs/controller-support.md#trigger-shortcuts) | L2/LT toggles 4:3 and 16:9 in supported scenes; R2/RT toggles speedup. Tab remains hold-to-speedup. |
 
 See the [website source and gameplay showcase](website/README.md) for captures,
-feature GIFs and an audible demonstration of all four soundtrack settings.
+feature GIFs, the current travel map and an audible, chapter-based demonstration
+of all four soundtrack settings. Recordings are dated; the older audio clip
+demonstrates switching rather than the final mix.
 The [publishing guide](docs/website-publishing.md) covers GitHub Pages and custom domains.
 
 ## Build and play
@@ -46,7 +49,14 @@ This is not yet a standalone downloadable game package.
 - [Browse the documentation](docs/README.md).
 
 Fresh configurations retain original EXP and soundtrack settings until enabled.
-Gameplay options are saved when changed through SETTINGS.
+The expanded menu is opt-in: add `-EvolutionJournal` to the launch command to
+enable DIGIVOLUTIONS and SETTINGS. Gameplay options are saved when changed
+through SETTINGS. Alternate soundtracks require a [locally built music pack](docs/music-live.md#local-build).
+
+The executable is `build-windows/Release/dmw2003-shinka.exe`. Start with the
+launch script; double-clicking requires your own disc and save paths to be
+[configured locally](docs/windows-baseline.md#launching-the-executable-directly).
+The maintainer's shortcut and absolute paths are not part of a fresh checkout.
 
 ## Performance work
 
@@ -68,6 +78,8 @@ memory-card saves/loads and savestates. **Campaign coverage remains incomplete.*
 The English expanded menu, selected map destinations and individual checkpoints
 have targeted validation; they do not establish full-game compatibility.
 
+Widescreen menus have targeted fixes for ribbons, text, card grids, selection
+pulses and Lab page turns; other languages and every transition are not covered.
 Field widescreen still has map-boundary and object-culling limitations. Longer
 movie playback can stutter. Alternate soundtrack arrangements need listening
 feedback. Controller coverage is limited. [Combat model smoothing](docs/combat-models.md)
@@ -84,7 +96,10 @@ the badge itself indicates job status. Synthetic Python tests do not require a
 disc. Native regression tests and in-game validation are separate local checks.
 
 For a bug report, include the build revision, scene, relevant settings and
-reproduction steps. Keep saves and game data out of public issues. Developers
+reproduction steps. For visual issues, include 4:3/16:9 comparisons and whether
+the problem appears during a transition or after it settles. For save issues,
+distinguish in-game memory-card operations from savestates. Keep saves, game
+data and diagnostic RAM/packet dumps out of public issues. Developers
 can use the [navigation tools](docs/developer-navigation.md) with copied profiles.
 
 ## Data and assets

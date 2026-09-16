@@ -9,6 +9,12 @@ windows exclude confirmation input and are not total menu-to-world timings.
 Per-sector checks, disk flushes and asynchronous completion remain intact.
 The September 11 sections below give the methods and data-parity checks.
 
+The [September 15 progress hook](#september-15-transfer-driven-saveload-bar)
+also replaces the save/load widget's fixed-time estimate with acknowledged-byte
+progress. It reserves the last 5% for native completion; other card operations
+retain their original animation. This presentation fix adds no transfer-speed
+claim. See [save profiles](save-profiles.md) for card locations and imports.
+
 ## September 9: original investigation
 
 The September 9, 2026 windowed test found sustained card writes during the slow

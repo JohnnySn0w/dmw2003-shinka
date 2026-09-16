@@ -10,8 +10,8 @@ SETTINGS provides independent view and battle zoom controls:
   submission. Unready or unsupported tiles can still leave incomplete edges.
   Small interiors can have authored black space outside their artwork. This is
   a preview, not a complete field widescreen conversion. It also widens the
-  shared gym/shop interfaces, Items, Sort, Map, Techniques and character Status, and anchors both expanded Start-menu
-  roots to the edges of the wider canvas.
+  shared gym/shop interfaces and the supported Status, card and Lab menus listed
+  below, and anchors both expanded Start-menu roots to the wider canvas.
 - **Battle zoom:** 100%, 90%, or 80% projected size. At 80%, the same viewport
   covers approximately 25% more world span along each axis. This changes the
   effective field of view; it does not move the scripted camera backwards.
@@ -37,6 +37,26 @@ positions and widths.
 These are experiments, not a claim that every arena or cinematic was authored
 for the expanded framing. Attack effects, arena boundaries, sky geometry and
 game-side culling need coverage across more battles.
+
+## Current screen coverage
+
+| Scene | Preference and current behavior |
+| --- | --- |
+| Ordinary battles | **Battle**; wider arena view, side-anchored HUD and full-width bottom dialogue. **Battle zoom** is independent. |
+| Overworld and interiors | **Field**; extra preloaded scenery where available. Authored map edges and object culling still limit coverage. |
+| Both expanded Start roots | **Field**; party panels and menu/ribbon anchors follow the wider canvas, including return from a submenu. |
+| Items, Sort, Map, Techniques and character Status | **Field**; supported panels, text and cursors move together. The map retains its native artwork width and cursor snapping. |
+| Card Folders, Card Album and Edit Folder | **Field**; folder outlines expand as a unit; the editor grid stays compact and centered; the card picker has its own layout. |
+| Physical and portable Digimon Lab | **Field** while verified Lab tasks are active; partner/form/technique screens, chart hints and L1/R1 page-turn ribbons have targeted alignment rules. |
+| Shops and gyms | **Field** for the shared supported interfaces. Leomon and shop checks do not establish coverage of every NPC or training minigame. |
+| Card battles, movies and rewards | Original view; not part of the widescreen conversion. |
+
+The recent menu checks use the English game and a progressed copied save.
+Selection pulses, opening/closing transitions and restored states have targeted
+regressions, but they are not a guarantee for all menu owners or languages.
+When comparing screenshots, let the menu settle and also check its transition;
+these can use different native drawing paths. A chart title already stored in
+an old savestate refreshes its button glyph when that chart is reopened.
 
 ## Implementation
 
@@ -74,7 +94,12 @@ member is the stored field preference; `active_wide` is the effective scene stat
 Use `screenshot` or `wide_shot` for native-wide captures; `screenshot_file` only
 captures the original 320-pixel VRAM rectangle and omits the extra sides.
 
-## Verification
+## Verification history
+
+The first battle-camera checks below predate the Field widescreen setting.
+Their original 4:3 field/Status observations and test counts describe those
+builds. Use [current screen coverage](#current-screen-coverage) for present
+behavior; later dated sections record subsequent field and menu fixes.
 
 The Windows Release build passed nine native suites and all 70 Python tests.
 Native camera checks cover the six combinations, scene isolation and a scene

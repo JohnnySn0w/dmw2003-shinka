@@ -33,8 +33,8 @@ in the sample domain, before native SPU pitch scaling. DS melodic samples regain
 their target level after blending/filtering. Source/target
 RMS and achieved palette levels are recorded per route in `music-live.json`.
 
-The next balance pass lowers **percussion by 3 dB and bass by 2 dB** during
-playback in DS, Sampled and Chip. Melody levels are unchanged. This uses the
+Live playback lowers **percussion by 3 dB and bass by 2 dB** in DS, Sampled
+and Chip. Melody levels are unchanged. This uses the
 pack's instrument routing rather than note pitch or a filter on the entire
 output, so low melody notes and sound effects are not reduced. Gain is applied
 before the original SPU envelope, volume and reverb, and before the palette

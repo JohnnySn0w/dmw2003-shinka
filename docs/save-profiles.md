@@ -11,6 +11,30 @@ its own native savestates, so diagnostic slots can be reused across profiles.
 Mod settings currently apply across profiles through the runtime's
 `build-windows/Release/mods/state.toml`.
 
+## What is saved where?
+
+| Data | Location / behavior |
+| --- | --- |
+| In-game memory cards | `card1.mcd` and `card2.mcd` in the selected profile. Use the original in-game save/Continue flow. |
+| Native runtime savestates | Separate `.pst` states in that profile. These capture an emulator checkpoint and are not DuckStation states or card files. |
+| Shinka feature preferences | Shared `build-windows/Release/mods/state.toml`; selecting another card profile does not reset EXP, soundtrack or view settings. |
+| Disc/profile paths for direct launch | Local executable-side `settings.toml`, or explicit shortcut arguments. These are machine-specific. |
+
+The launch script defaults to `output/player-saves`. An executable launched by
+a shortcut or local `settings.toml` can select a different directory. Use the
+[direct-launch setup](windows-baseline.md#launching-the-executable-directly)
+to check that path; the profile finder below does not identify a running game's
+active profile.
+
+## Transfer speed and progress
+
+Current builds batch repeated file requests, while preserving sector checks,
+disk flushes, error handling and the card format. During supported in-game save
+and load transfers, the bar follows acknowledged bytes and reserves its final
+5% for the native completion step. Directory scans and other operations keep
+their original animation. Faster data transfer does not remove every menu or
+confirmation delay. See [measurements and progress-bar validation](save-timing.md).
+
 ## Find a card or profile
 
 From the repository root:

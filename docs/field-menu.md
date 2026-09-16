@@ -23,7 +23,7 @@ SETTINGS has eight rows:
 - **DV EXP:** 1x, 2x, 3x, 4x final DV EXP, or fixed 10 points per participating form.
 - **Encounters:** 0%, 50%, 100%, 150%, 200% random encounter frequency; default 100%.
 - **Soundtrack:** Original, DS, Sampled, Chip; switches live instruments.
-- **Screen view:** separate battle and field 4:3 / 16:9 controls; the experimental field setting also widens the gym/shop interfaces, both expanded Start-menu roots and Items.
+- **Screen view:** separate battle and field 4:3 / 16:9 controls. The experimental Field setting also controls supported menus, shops, gyms, Card Folders and the portable Lab; see the [screen coverage guide](camera.md#current-screen-coverage).
 - **Battle zoom:** 100%, 90%, 80% (experimental).
 - **Battle motion:** opens separate Idle poses and Action poses speed controls.
 - **BACK:** return to the field menu. Triangle also returns.
@@ -42,8 +42,21 @@ built music pack is present. Original is the default; the three alternate
 palettes remain available. This row selects curated palettes, not arbitrary
 `.sf2` files. The [camera options](camera.md) apply independently to battles and
 fields. The OpenGL field preview draws additional preloaded scenery tiles;
-map boundaries and object culling still limit coverage. The Start roots and Items
-support widescreen; other full-screen Status children retain 4:3.
+map boundaries and object culling still limit coverage. Both Start roots, Items,
+Sort, Map, Techniques, character Status, Card Folders, Card Album/Edit Folder and
+the Lab have widescreen layouts while their verified menu owners are active.
+Card battles, movies and rewards keep their original view.
+
+Outside SETTINGS, **L2/LT** toggles the current supported scene's aspect ratio
+and **R2/RT** toggles speedup. Keyboard defaults are **E** and **R**; **Tab**
+remains hold-to-speedup. Aspect ratio persists; toggled speedup is session-only.
+See [shortcut behavior](controller-support.md#trigger-shortcuts).
+
+Map travel requires the exact arrival area to have been visited and the local
+story checks to pass. **Travel not added here** describes an unsupported source;
+**No travel point yet** describes an unsupported destination. These messages
+do not necessarily mean a story event is blocking progress. Use the current
+[destination list](menu-map.md) rather than assuming every visible icon is enabled.
 
 **Battle motion** offers **100%, 125%, 150% or 200%** for each category, both defaulting to 100% (original speed).
 Idle follows each combatant's own default pose. Action includes attacks,

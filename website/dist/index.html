@@ -5,7 +5,7 @@
   <title>SHINKA — Digimon World 2003 for Windows</title>
   <meta name="description" content="Digimon World 2003 for Windows, with a portable Digimon Lab, adjustable EXP, widescreen menus, map travel and live soundtrack switching.">
   <meta name="theme-color" content="#080e22">
-  <link rel="icon" href="media/emblem.png"><link rel="stylesheet" href="style.css?v=20260915-3">
+  <link rel="icon" href="media/emblem.png"><link rel="stylesheet" href="style.css?v=20260915-4">
 </head>
 <body>
 <a class="skip" href="#main">Skip to content</a>
@@ -99,6 +99,16 @@
 </section>
 <section class="wide-section" id="widescreen">
   <div class="section-intro"><p class="eyebrow">06 / Screen view</p><h2>Widescreen menus.</h2><p>Separate field and battle settings. Supported menus move panels and text into the wider view while keeping sprites and card artwork at their original proportions.</p></div>
+  <fieldset class="aspect-comparison" aria-describedby="album-comparison-note">
+    <legend>Compare the Card Album</legend>
+    <input class="aspect-choice" type="radio" name="album-aspect" id="album-original" value="original"><label for="album-original">4:3 · Original view</label>
+    <input class="aspect-choice" type="radio" name="album-aspect" id="album-wide" value="wide" checked><label for="album-wide">16:9 · Widescreen</label>
+    <div class="aspect-stage">
+      <img class="aspect-original" src="media/album-original.png" width="320" height="240" loading="lazy" alt="Original 4:3 Card Album with Eclipse Undo selected, centered with black side margins">
+      <img class="aspect-wide" src="media/album-wide.png" width="426" height="240" loading="lazy" alt="Widescreen Card Album with the same Eclipse Undo card selected; cards, header and description use the extra width">
+    </div>
+    <p id="album-comparison-note">Same selection, same image height. The cards keep their size as the layout widens. September 15 captures; the animated backdrop differs between frames.</p>
+  </fieldset>
   <div class="screen-gallery">
     <figure class="capture"><div class="frame-label"><span>Card folder editor</span><span>16:9</span></div><a href="media/card-editor.png" aria-label="Open full card folder capture"><img src="media/card-editor.png" width="426" height="240" loading="lazy" alt="Compact nine-column card grid with aligned folder name and card instructions"></a><figcaption><strong>Edit your deck.</strong> A compact grid and aligned card descriptions.</figcaption></figure>
     <figure class="capture"><div class="frame-label"><span>Digimon Lab / Techniques</span><span>16:9</span></div><a href="media/lab-techniques.png" aria-label="Open full Lab technique capture"><img src="media/lab-techniques.png" width="426" height="240" loading="lazy" alt="Angemon's technique list alongside its stats in the widened portable Digimon Lab"></a><figcaption><strong>Compare forms and techniques.</strong> Stats and skill lists stay together.</figcaption></figure>

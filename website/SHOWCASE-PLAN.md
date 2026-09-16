@@ -24,6 +24,10 @@ Name the feature, explain its effect, then let the capture demonstrate it.
 - Images link to their full capture and use the existing pixel-preserving style.
 - Existing GIF controls and the four-palette audible clip remain available.
 - Gallery sources and limitations are recorded in [MEDIA.md](MEDIA.md).
+- A selectable 4:3/16:9 Card Album comparison, using the verified September 15
+  pair. It holds image height and pixel scale constant, with black margins in
+  the original view. Native radio controls support keyboard and touch and work
+  without JavaScript. The separate field/battle comparisons below remain queued.
 
 ## Refresh existing displays
 

@@ -12,6 +12,7 @@ are not AI-generated gameplay or promises of full-game compatibility.
 | `dist/media/battle.png` | `output/field-stream-02/battle.png`, the tested widescreen battle view. |
 | `dist/media/map-travel.png` | Exact copy of `output/desert-travel-01/south-map.png`, September 15 presented-frame capture of South Badland selected in the 426×240 map. Uses the private copied travel-test save profile. |
 | `dist/media/card-editor.png` | Exact copy of `output/folders-lab-wide-01/editor-fixed.png`, September 15 compact nine-column editor verification frame (426×240). |
+| `dist/media/album-original.png`, `album-wide.png` | Exact copies of `output/folders-lab-wide-01/verified-album-0.png` (320×240) and `verified-album-1.png` (426×240). The September 15 `verified-aspects.json` identifies both as successful captures of the same album scene with view preference 0/1. Same card and page selection; the background animation advances between captures. |
 | `dist/media/lab-techniques.png` | Exact copy of `output/folders-lab-wide-01/lab-tech-fixed.png`, September 15 form/technique overview verification frame (426×240). |
 | `dist/media/lab-hint-wide.png` | Exact copy of `output/folders-lab-wide-01/kumamon-hint-final.png`, September 15 two-line hint and native Cross-glyph verification frame (426×240). |
 | `dist/media/gym-wide.png` | Exact copy of `output/npc-wide-01/gym-tp-wide.png`, earlier widened Leomon training-point menu verification frame (426×240). Added to the showcase September 15; not a new gameplay test. |
@@ -30,6 +31,13 @@ The four-image menu gallery reuses earlier copied-profile verification captures;
 it does not establish fresh animation or full-game coverage. Images were inspected
 and copied unchanged. Planned replacements and additional recordings are tracked
 in [SHOWCASE-PLAN.md](SHOWCASE-PLAN.md).
+
+The Card Album comparison uses unchanged 320×240 and 426×240 captures at equal
+display height. CSS contains each image inside a fixed 426:240 stage, leaving
+black side margins for the original view. Neither image is cropped or stretched;
+the 4:3 image is not derived from the wide frame. Background animation and arrow
+pulse phases differ between captures, so this is a layout comparison, not a
+pixel-difference test of rendering accuracy.
 
 The soundtrack demonstration uses the runtime's 44.1 kHz SPU output and matching
 sample-clock timestamps for screen captures. Input changes the selected palette

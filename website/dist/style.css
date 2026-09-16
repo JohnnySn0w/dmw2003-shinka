@@ -832,6 +832,75 @@ footer>a:last-child {
   grid-template-columns:repeat(2,minmax(0,1fr));
   gap:2rem;
 }
+.aspect-comparison {
+  min-width:0;
+  margin:0 0 3rem;
+  padding:1rem;
+  border:1px solid var(--line);
+  background:#0a122c;
+}
+.aspect-comparison legend {
+  padding:0 .5rem;
+  font-size:1.15rem;
+  font-weight:650;
+}
+.aspect-choice {
+  position:absolute;
+  width:1px;
+  height:1px;
+  opacity:0;
+}
+.aspect-choice+label {
+  display:inline-flex;
+  align-items:center;
+  min-height:44px;
+  padding:.6rem 1rem;
+  margin:0 .5rem .8rem 0;
+  border:1px solid var(--line);
+  color:var(--muted);
+  cursor:pointer;
+  touch-action:manipulation;
+}
+.aspect-choice:checked+label {
+  background:var(--blue);
+  color:white;
+  border-color:var(--blue);
+}
+.aspect-choice:focus-visible+label {
+  outline:3px solid #e2a537;
+  outline-offset:3px;
+}
+.aspect-stage {
+  position:relative;
+  width:100%;
+  aspect-ratio:426 / 240;
+  background:#000;
+}
+.aspect-stage img {
+  position:absolute;
+  inset:0;
+  width:100%;
+  height:100%;
+  object-fit:contain;
+  image-rendering:pixelated;
+}
+.aspect-stage .aspect-original {
+  display:none;
+}
+.aspect-stage .aspect-wide {
+  display:block;
+}
+#album-original:checked~.aspect-stage .aspect-original {
+  display:block;
+}
+#album-original:checked~.aspect-stage .aspect-wide {
+  display:none;
+}
+.aspect-comparison p {
+  margin:1rem 0 0;
+  max-width:75ch;
+  font-size:.9rem;
+}
 .screen-gallery .capture {
   min-width:0;
 }

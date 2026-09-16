@@ -15,6 +15,11 @@ menu captures: card editing, techniques, evolution hints and Leomon's gym.
 [SHOWCASE-PLAN.md](SHOWCASE-PLAN.md) tracks the requested recording refreshes and
 new feature demonstrations, with priorities and acceptance checks.
 
+The widescreen section also has a 4:3/16:9 Card Album comparison using verified
+captures of the same selection. Both views keep the same image height; the
+original view is centered with side margins. Native radio controls work with
+keyboard/touch and do not require JavaScript.
+
 ## Preview locally
 
 From this directory, serve the static output with Python:

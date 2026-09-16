@@ -28,6 +28,7 @@ The initial travel network connects these Asuka locations:
 | Tranquil Swamp | Boardwalk near the inn |
 | Phoenix Bay | South-side bridge, or northern approach while its earthquake event is pending |
 | Suzaku City | Plaza, with event approaches for the first conversation, Kail's return and the later earthquake |
+| South Badland | Native entrance from Noise Desert |
 | Pelche Oasis | Path near the waterfront |
 | North Badland W | Native entrance from Pelche Oasis |
 | North Badland E | Native entrance from North Badland W |
@@ -72,10 +73,11 @@ its exact field has been visited. Jungle Grave remains excluded because its firs
 entry owns the Zanbamon encounter and returns the party through the native event.
 
 Most unsupported icons currently mean that no arrival point has been validated;
-they do not imply a known story lock. North Badland W's local encounter must
-finish once started before map travel can use that stop; its pending flags are
+they do not imply a known story lock. South Badland and North Badland W each have
+a local encounter that must finish once started before map travel can use that stop; their pending flags are
 checked for both departures and arrivals, including again at the deferred cut.
-See the [Badland audit](travel-story-audit.md#north-badland-w-and-e--2026-09-15).
+See the [North Badland audit](travel-story-audit.md#north-badland-w-and-e--2026-09-15)
+and [South Badland audit](travel-story-audit.md#south-badland--2026-09-15).
 
 Other unsupported icons are still investigation work. The story range above is a broad scope
 limit, not a complete quest-by-quest access policy. Earlier visitation does not

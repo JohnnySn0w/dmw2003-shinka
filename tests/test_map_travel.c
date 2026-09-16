@@ -210,6 +210,55 @@ static void badland_policy(void) {
         CHECK(R(RETURN)==(from ? 0x24au : 0x249u) && !R(PARENT+0x78));
     }
 }
+static void south_badland_policy(void) {
+    /* Start/completion straddle bytes. Neighboring North Badland flags must
+     * neither complete this encounter nor prevent this destination. */
+    for(unsigned started=0;started<2;++started) for(unsigned done=0;done<2;++done)
+        for(unsigned neighbors=0;neighbors<2;++neighbors) for(unsigned from=0;from<2;++from) {
+        unsigned a=(started ? 0x80 : 0) | (neighbors ? 0x7f : 0);
+        unsigned b=done | (neighbors ? 0xfe : 0);
+        fresh();watching=0;
+        psx_mod_write_byte(0x8004b3e2,(uint8_t)a);
+        psx_mod_write_byte(0x8004b3e3,(uint8_t)b);
+        if(from) W(RETURN,0x247);else target(28);
+        watching=1;writes=0;select_icon();
+        if(started && !done) CHECK(!writes && !R(PARENT+0x78));
+        else {
+            shinka_map_present();CHECK(R(RETURN)==(from ? 0x21du : 0x247u));
+            if(!from) CHECK(R(RETURN+4)==176*256 && R(RETURN+8)==144*256);
+        }
+        CHECK(psx_mod_read_byte(0x8004b3e2)==a && psx_mod_read_byte(0x8004b3e3)==b);
+    }
+    /* A visible icon or a neighboring visit cannot replace the exact visit. */
+    fresh();watching=0;target(28);psx_mod_write_byte(0x8004b3c8,0x7f);
+    watching=1;writes=0;select_icon();CHECK(!writes);
+    fresh();watching=0;W(RETURN,0x247);target(28);
+    watching=1;writes=0;select_icon();CHECK(!writes); /* same location */
+    /* Recheck both flags, in both directions, after selection and on old states. */
+    for(unsigned legacy=0;legacy<2;++legacy) for(unsigned from=0;from<2;++from)
+        for(unsigned change=0;change<2;++change) {
+        fresh();watching=0;
+        psx_mod_write_byte(0x8004b3e2,change ? 0xff : 0x7f);
+        psx_mod_write_byte(0x8004b3e3,change ? 0xff : 0xfe);
+        if(from) W(RETURN,0x247);else target(28);
+        watching=1;
+        if(legacy) {legacy_request();W(PARENT+0x7c,from ? 30 : 28);root_close();}
+        else select_icon();
+        watching=0;
+        if(change) psx_mod_write_byte(0x8004b3e3,0xfe);
+        else psx_mod_write_byte(0x8004b3e2,0xff);
+        watching=1;
+        if(legacy) transition();else shinka_map_present();
+        CHECK(R(RETURN)==(from ? 0x247u : 0x249u) && !gpu_count && !R(PARENT+0x78));
+    }
+    for(unsigned legacy=0;legacy<2;++legacy) {
+        fresh();watching=0;target(28);watching=1;
+        if(legacy) {legacy_request();W(PARENT+0x7c,28);root_close();} else select_icon();
+        watching=0;psx_mod_write_byte(0x8004b3c8,0x7f);watching=1;
+        if(legacy) transition();else shinka_map_present();
+        CHECK(R(RETURN)==0x249 && !gpu_count && !R(PARENT+0x78));
+    }
+}
 static void south_policy(void) {
     const unsigned icons[]={32,43,44}, stages[]={0x232,0x234,0x237};
     /* Visitation can exist before the arrival scene completes. Both directions
@@ -400,6 +449,7 @@ int main(void) {
     south_policy();
     story_policy();
     badland_policy();
+    south_badland_policy();
     fresh();cpu.gpr[31]=0x80099aa4;cpu.gpr[4]=0x80099894;cpu.gpr[5]=0x78;cpu.gpr[6]=8;
     shinka_map_allocate(&cpu);CHECK(cpu.gpr[5]==0x88 && cpu.gpr[6]==12 && writes==0);
     fresh();select_icon();CHECK(R(MAP+0xc)==1 && R(RETURN)==0x249);
@@ -428,7 +478,7 @@ int main(void) {
     cpu.gpr[31]=0x800997ec;cpu.gpr[16]=PARENT;shinka_map_frame(&cpu);CHECK(writes==0);
     /* Every exposed icon must lead to its own area according to the original map. */
     {
-        const unsigned icons[]={20,30,22,21,15,26,32,43,44,46,42,29,27,17};
+        const unsigned icons[]={20,30,22,21,15,26,32,43,44,46,42,29,27,17,28};
         for(unsigned i=0;i<sizeof(icons)/sizeof(icons[0]);++i) {
             fresh();watching=0;W(RETURN,0x200);W(0x8004b370,24);
             W(MAP+0x184,icons[i]);W(MAP+0xa8+(icons[i]-1)*4,1);watching=1;

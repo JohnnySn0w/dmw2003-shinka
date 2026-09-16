@@ -20,6 +20,8 @@ extern int shinka_journal_enabled(void);
 #define SUZAKU_INTRO_COMPLETE 0x8004b3dfu /* flag 0x400a, bit 2 */
 #define BADLAND_ENCOUNTER 0x8004b3e3u /* flags 0x4029 started, 0x402a complete */
 #define BULLET_SCENE_COMPLETE 0x8004b3f2u /* flag 0x40a2, bit 2 */
+#define SOUTH_BADLAND_STARTED 0x8004b3e2u /* flag 0x4027, bit 7 */
+#define SOUTH_BADLAND_COMPLETE 0x8004b3e3u /* flag 0x4028, bit 0 */
 
 struct arrival { uint32_t stage, x, y; };
 
@@ -38,6 +40,7 @@ static const struct { uint32_t icon, stage, x, y; } destinations[] = {
     {44, 0x237, 0x2d205, 0x106a6}, /* Tranquil Swamp */
     {46, 0x23b, 0x437f2, 0x29469}, /* Phoenix Bay, south-side bridge */
     {42, 0x23e, 0x24f57, 0x2cff4}, /* Suzaku City plaza */
+    {28, 0x247, 176*256, 144*256}, /* South Badland, native Noise Desert entry */
     {26, 0x249, 84211, 84884},   /* Pelche Oasis */
     {29, 0x24a, 128*256, 376*256}, /* North Badland W, native Oasis entry */
     {27, 0x24b, 144*256, 208*256}, /* North Badland E, native western entry */
@@ -83,7 +86,14 @@ static int source(uint32_t stage) {
         if (destinations[i].stage == stage) return 1;
     return 0;
 }
+static int south_badland_pending(void) {
+    /* WSTAG550 resumes event 0x4f6 while started but not completed.
+     * These adjacent flags span two bytes; 0x4029 belongs to North Badland W. */
+    return (B(SOUTH_BADLAND_STARTED) & 0x80) && !(B(SOUTH_BADLAND_COMPLETE) & 1);
+}
 static const char* departure(uint32_t stage, uint32_t story) {
+    if (stage == 0x247 && south_badland_pending())
+        return "Finish the local encounter";
     /* WSTAG575 starts event 0x1a6 on entry at story 16 while 0x40a2 is
      * clear. Arrival uses the native entry path; departure waits for it. */
     if (stage == 0x24c && story == 16 && !(B(BULLET_SCENE_COMPLETE) & 4))
@@ -148,6 +158,8 @@ static const char* plan(uint32_t parent, uint32_t icon, struct arrival* out) {
     blocked=departure(stage,story);
     if (blocked) return blocked;
     if (i < 0) return "No travel point yet";
+    if (destinations[i].stage == 0x247 && south_badland_pending())
+        return "Finish the local encounter";
     if (destinations[i].stage == 0x24a && (B(BADLAND_ENCOUNTER) & 6) == 2)
         return "Finish the local encounter";
     if (stage == 0x23e || destinations[i].stage == 0x23e) {

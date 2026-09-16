@@ -526,6 +526,56 @@ current and legacy deferred travel. Private captures and fixture records are
 under `output/north-travel-01/`; the owner's original memory cards were not used
 for writes.
 
+## South Badland — 2026-09-15
+
+South Badland (`0x247`, map icon 28) uses the original Noise Desert entrance at
+`(176*256, 144*256)`. Its own exact visit is required; the neighboring desert's
+visit does not grant access. The existing Asuka-server and story 1–36 limits apply.
+
+The annotated modules were checked word-for-word against the owner's extracted
+disc files: 1,204 words in `WSTAG550.PRO`, 771 in `WSTAG555.PRO`, and 585 in
+`WSTAG560.PRO`. The original transition records are:
+
+| Module / record offset | Native transition | Arrival before fixed-point scaling |
+| --- | --- | --- |
+| `WSTAG560.PRO` / `0x838` | Pelche Oasis → Noise Desert | `(1552, 576)` |
+| `WSTAG555.PRO` / `0xb50` | Noise Desert → South Badland | `(176, 144)` |
+| `WSTAG550.PRO` / `0x10d0` | South Badland → Noise Desert | `(1552, 1344)` |
+| `WSTAG555.PRO` / `0xb38` | Noise Desert → Pelche Oasis | `(122, 234)` |
+
+All four native transitions were exercised using directional input and Cross
+after developer positioning inside each original trigger region. Opening the
+quick menu after arrival confirmed the four coordinates above. This tests the
+original exits and loader, not a complete walked route across each field.
+
+`WSTAG550`'s entry callback at offsets `0x34..0x8c` starts event `0x4f6` when
+flag `0x4027` is set and `0x4028` is clear. Its callbacks at `0x100` and `0x14c`
+set start and completion respectively. The flags straddle two bytes:
+`0x8004b3e2 & 0x80` and `0x8004b3e3 & 1`. Neighboring bits 1 and 2 in the
+second byte belong to North Badland W and must not count as South's completion.
+An unfinished encounter blocks both arrival and departure with **Finish the
+local encounter**, including a recheck immediately before the deferred cut.
+Travel never writes these flags. The module's separate story-39/40 behavior
+remains outside the supported story range.
+
+The rebuilt game was tested through the actual map cursor and Cross: South
+Badland → Central Park → South Badland, with unchanged story/quest/visit bytes
+in `0x8004b370..0x8004b3f7`. Walking changed the player position; reloading a
+private save state restored the native landing. Controlled pending-encounter
+fixtures test the blocked map actions separately from the ordinary round trip.
+These fixtures do not certify a naturally earned completion of the local
+encounter or all campaign phases. Original memory cards were not modified.
+
+Native regressions cover the two flag bits and unrelated neighbors, both travel
+directions, exact visitation, same-location rejection, landing coordinates,
+and flags/visits revoked after selection on current and legacy pending-state
+paths. Private records and captures are in `output/desert-travel-01/`.
+
+Noise Desert is still excluded as a map-travel source and destination. Its
+`WSTAG555` record at `0xbb0` gates event `0x17c` on `0x600f` and `0x400c`;
+the completion callback writes `0x400c`. Native route validation above does
+not resolve that scene's travel policy. Audit it before enabling the desert.
+
 ## Priorities for the existing network
 
 | Current field | First check before broader campaign claims |

@@ -511,9 +511,11 @@ diagonal cap. The base-partner tab in Choose Digivolve moves with the form list:
 its frame, name and cursor use one right-hand anchor. The stat-sheet name below
 retains its separate left anchor.
 
-The folder selector's white outline uses palette `0x3d69`, distinct from the
-dark folder panels. Its connected strips now use the same continuous expansion
-as the panels instead of splitting at the generic left/right threshold. Folder
+The folder selector's outline pulses through 16 palettes (`0x3c29`–`0x3fe9`,
+stride 64). Matching only the initially captured `0x3d69` fixed one color state
+but left most of the animation split. All five outline texture strips now use
+the same continuous expansion in every palette state instead of splitting at
+the generic left/right threshold. Folder
 names follow the expanded panel's left edge with a four-pixel inset. These rules
 also apply to the unscaled geometry captured for native menu animations.
 
@@ -523,3 +525,8 @@ widescreen. Regressions
 cover both framebuffer bands, margins 1–160, prompt/cursor movement, partner-tab
 attachment, and shared outline endpoints. Captures remain local under
 `output/folders-lab-wide-01/fixed-*`.
+
+The pulse follow-up captures under `output/folders-lab-wide-01/folder-pulse-*`
+include all 16 palette states across repeated cycles. The outline regressions
+now cover every state on all three folder rows, including the diagonal join
+and far-right strip, while preserving texture coordinates and name spacing.

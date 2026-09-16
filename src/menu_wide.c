@@ -21,6 +21,14 @@ static int ribbon_x(int x, int start) {
     return x <= 66 ? x + start - 34 : start + 32 + (x - 66) * (290 - start) / 256;
 }
 
+static int folder_outline(unsigned clut, unsigned uv) {
+    /* The border pulses through 16 palette rows, not different geometry.
+     * Match its five texture strips so every pulse shares the panel span. */
+    if (clut < 0x3c29 || clut > 0x3fe9 || (clut - 0x3c29) % 64) return 0;
+    return uv == 0x0014 || uv == 0x732c || uv == 0xab00
+        || uv == 0x2d88 || uv == 0xc788;
+}
+
 static int backdrop_tile(uint32_t* words, unsigned mode, int x, int margin) {
     if (words[3] != 0x00300030) return 0;
     uint32_t uv = words[2];
@@ -135,7 +143,7 @@ static int layout_rect(uint32_t* words, int count, int offset_x, int offset_y,
                 if (col > 8) col = 8;
                 dest_x = x + (col - 4)*margin/4;
             } else if (clut == 0x3a68 || clut == 0x3de9
-                || (status == SHINKA_FOLDER_SELECT && clut == 0x3d69)) {
+                || (status == SHINKA_FOLDER_SELECT && folder_outline(clut, words[2] & 65535))) {
                 dest_x = stretch_x(x, margin);
                 dest_w = stretch_x(x+w, margin)-dest_x;
             } else if (status == SHINKA_FOLDER_SELECT && clut == 0x3a17

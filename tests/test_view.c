@@ -493,15 +493,29 @@ int main(void) {
         shinka_menu_wide_rect(prose2,4,0,band,0,band,319,band+239,margin);
         CHECK((int16_t)prose2[1]-(int16_t)prose1[1]==7); /* explanation crosses x=140 intact */
         items_menu=SHINKA_FOLDER_SELECT;shinka_view_tick();
-        /* The white outline uses a different palette from the dark panel. */
-        int highlight_end=0;
-        for(int x=23;x<199;x=x==23 ? 43 : x+32) {
-            int w=x==23 ? 20 : x==171 ? 28 : 32;
-            uint32_t piece[]={0x64808080,0x007d0000u|(unsigned)x,0x3d69732c,0x00270000u|(unsigned)w};
-            int span=shinka_menu_wide_rect(piece,4,0,band,0,band,319,band+239,margin);
-            if(x!=23) CHECK((int16_t)piece[1]==highlight_end);
-            highlight_end=(int16_t)piece[1]+span;
-        }
+        /* All 16 palette frames share identical geometry on all three rows,
+         * including the diagonal join and the far right lower strip. */
+        const unsigned outline[][5]={
+            {23,0,20,39,0x14},{43,0,32,39,0x732c},{75,0,32,39,0x732c},
+            {107,0,32,39,0x732c},{139,0,32,39,0x732c},{171,0,28,39,0xab00},
+            {199,15,20,24,0x2d88},{219,15,20,24,0x2d88},
+            {239,15,20,24,0x2d88},{259,15,20,24,0x2d88},{279,15,36,24,0xc788}
+        };
+        for(unsigned palette=0x3c29;palette<=0x3fe9;palette+=64)
+            for(unsigned row=0;row<3;++row) {
+                int end=23*(320+2*margin)/320-margin;
+                for(unsigned i=0;i<sizeof(outline)/sizeof(*outline);++i) {
+                    const unsigned *p=outline[i];
+                    uint32_t piece[]={0x64808080,((80+45*row+p[1])<<16)|p[0],
+                        (palette<<16)|p[4],(p[3]<<16)|p[2]};
+                    uint32_t uv=piece[2],size=piece[3];
+                    int span=shinka_menu_wide_rect(piece,4,0,band,0,band,319,band+239,margin);
+                    CHECK((int16_t)piece[1]==end && span>0);
+                    CHECK(piece[2]==uv && piece[3]==size);
+                    end+=span;
+                }
+                CHECK(end==315*(320+2*margin)/320-margin);
+            }
         for(int y=83;y<=173;y+=45) {
             uint32_t name[]={0x64808080,((unsigned)y<<16)|29,0x3a1715d8,0x000c0008};
             shinka_menu_wide_rect(name,4,0,band,0,band,319,band+239,margin);

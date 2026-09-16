@@ -152,7 +152,11 @@ int shinka_menu_status_layout(void) {
         return SHINKA_STATUS_TECHNIQUES;
     if (object(p, 0x8008e744) && READ(p + 0x20) == 68 && READ(p + 0xc) <= 1
         && READ(0x8008e744) == 0x27bdffd0 && READ(0x8008e748) == 0xafb3001c) {
-        if (READ(p + 0x10) <= 12) return SHINKA_STATUS_CHARACTER_SELECT;
+        unsigned phase = READ(p + 0x10);
+        /* Cancel from the partner chooser runs the 50..56 closing sequence.
+         * Its footer survives into that sequence; treating it as the detail
+         * page would split the caption between the left and right columns. */
+        if (phase <= 12 || (phase >= 50 && phase <= 56)) return SHINKA_STATUS_CHARACTER_SELECT;
         /* The two actions share this owner. Its action index survives while
          * their nested selectors are open, including equipment comparison. */
         if (READ(p + 0x10) >= 18 && READ(p + 0x10) <= 23) {

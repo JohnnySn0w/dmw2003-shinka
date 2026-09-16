@@ -460,6 +460,14 @@ int main(void) {
             W(detail+0x8c,kind==SHINKA_STATUS_CHARACTER_TECHNIQUES ? (uint32_t)-34 : 0);
             W(callback,0x27bdffd0);W(callback+4,0xafb3001c);
             writes=0;CHECK(shinka_menu_status_layout()==kind);CHECK(!writes);
+            if(kind==SHINKA_STATUS_CHARACTER_SELECT) {
+                for(unsigned phase=50;phase<=56;++phase) {
+                    W(items+0x10,phase);writes=0;
+                    CHECK(shinka_menu_status_layout()==SHINKA_STATUS_CHARACTER_SELECT && !writes);
+                }
+                W(items+0x10,15);CHECK(shinka_menu_status_layout()==SHINKA_STATUS_CHARACTER);
+                W(items+0x10,11);
+            }
             if(kind==SHINKA_STATUS_DIGIVOLVE || kind==SHINKA_STATUS_CHARACTER_TECHNIQUES) {
                 W(detail+0x48,0);CHECK(!shinka_menu_status_layout());W(detail+0x48,0x8008b3c8);
                 W(items+0x24,0x801ffef4);CHECK(!shinka_menu_status_layout());W(items+0x24,items+0x100);

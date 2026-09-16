@@ -41,6 +41,10 @@ static void animation_tests(void) {
         {168,40,40,22,320,221,40,0x26976300,1},
         {0,194,40,38,0,-53,53,0x7deab368,0},
         {108,120,32,32,124,55,32,0x7f6b2000,0},
+        /* The same edge pivot also owns pieces translated to the OTHER side:
+         * a stats panel opens from the right, and footer icons from the left. */
+        {24,63,24,42,320,-29,24,0x2697b700,1},
+        {168,40,40,22,0,221,40,0x26976300,1},
     };
     mode=0x1000;options[2]=1;previous_mode=0x21d;destination=4;
     shinka_view_tick();
@@ -70,6 +74,32 @@ static void animation_tests(void) {
         shinka_menu_animation_reset();memcpy(quad,original,sizeof(quad));
         shinka_menu_wide_quad(quad,9,0x1d0004,0,band,0,band,319,band+239,53);
         CHECK(!memcmp(quad,original,sizeof(quad))); /* state-load invalidation */
+    }
+    /* Captured stat/divider/background strips must share every seam through
+     * the entire open/close cycle, not just pass individual endpoint tests. */
+    root_menu=0;
+    for(int lab=0;lab<=1;++lab) for(int band=0;band<=256;band+=256)
+    for(int margin=1;margin<=160;++margin) for(int step=0;step<=10;++step) {
+        static const int status_x[]={80,120,160,184,220,256,292,328};
+        static const int lab_x[]={84,104,136,168,208,236,264,292,320};
+        const int* xs=lab ? lab_x : status_x;
+        int strips=lab ? 8 : 7, scale=step*4096/10, last=0;
+        mode=lab ? 0xd01 : 0x1000;items_menu=lab ? SHINKA_LAB_TECHNIQUES : SHINKA_STATUS_DIGIVOLVE;
+        shinka_view_tick();
+        for(int k=0;k<strips;++k) {
+            int x=xs[k],w=xs[k+1]-x,y=lab ? 122 : 119;
+            unsigned clut=lab ? 0x7cab : 0x7dea;
+            uint32_t rect[]={0x64808080,x|((unsigned)y<<16),(clut<<16)|0xb490,w|(14u<<16)};
+            uint32_t quad[]={0x2c808080,0,rect[2],0,0x6001f,0,0xd0000,0,0xd001f};
+            for(int v=0;v<4;++v)quad[1+v*2]=(uint16_t)(320+floor_scale(x+(v&1?w:0)-320,scale))
+                |((unsigned)(y+(v&2?14:0))<<16);
+            shinka_menu_animation_tag(0x801d0004,quad,rect,320,scale);
+            shinka_menu_wide_quad(quad,9,0x1d0004,0,band,0,band,319,band+239,margin);
+            int dest=x+(x>=(lab?236:220)?margin:-margin);
+            CHECK((int16_t)quad[1]==320+margin+floor_scale(dest-320-margin,scale));
+            if(k) CHECK((int16_t)quad[1]==last);
+            last=(int16_t)quad[3];
+        }
     }
     root_menu=0;items_menu=0;
     for(int band=0;band<=256;band+=256) for(int wide=0;wide<=1;++wide) {

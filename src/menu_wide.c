@@ -376,9 +376,14 @@ void shinka_menu_wide_quad(uint32_t* words, int count, uint32_t source,
     int dest = (int16_t)rect[1];
     if (!width) width = w;
     int ribbon = (a->rect[1] >> 16) == 13 && (a->rect[2] >> 16 == 0x2697 || a->rect[2] >> 16 == 0x7dea);
-    /* A translated icon scales around its own translated centre. Resized
-     * panels (including the ribbon's intact leading cap) use the wide edge. */
-    int pivot = width == w && !ribbon ? a->pivot + dest - original : stretch_x(a->pivot, margin);
+    /* Edge-driven panels share ONE pivot across all their strips, glyphs and
+     * icons, even when some move left and others move right in the wide layout.
+     * Translating the pivot separately per strip splits the panel by as much
+     * as two margins during its collapse. Portraits with their own interior
+     * pivot still scale around their translated centre. */
+    int edge = a->pivot == 0 || a->pivot == 320;
+    int pivot = !edge && width == w && !ribbon
+        ? a->pivot + dest - original : stretch_x(a->pivot, margin);
     for (int i = 0; i < 4; ++i) {
         int old_x = original + (i & 1 ? w : 0);
         int new_x = dest + (i & 1 ? width : 0);

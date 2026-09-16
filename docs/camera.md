@@ -601,3 +601,31 @@ in [the evolution journal](evolution-journal.md#locked-portrait-and-cursor-rende
 Geometry regressions check native stat-strip widths, divider joins, technique
 text and expanded background endpoints in both framebuffer bands over margins
 1–160. All 19 native test targets pass, including the dependency example.
+
+### September 16: Panel joins during transitions
+
+Edge-driven menu animations now use one widened pivot for the whole panel.
+Previously, unchanged-width strips used a pivot translated by their individual
+layout offset, while expanded strips used the screen edge. In the evolution
+stats panel those offsets differ by two widescreen margins: adjacent strips
+could separate by up to 106 native pixels while opening or closing, despite
+meeting correctly when fully open. Native pivots 0 and 320 now consistently map
+to the widened left and right edges. Portraits with an interior pivot retain
+their own native collapse, and animation timing and vertical motion are unchanged.
+
+The Status partner chooser also keeps its selection layout during native closing
+phases 50–56. Its caption previously switched to the character-detail layout
+before disappearing, splitting a line across the left and right columns.
+
+Copied-profile captures cover exits from Items, Sort, Techniques, Status, and
+Choose Digivolve, plus entry into Choose Digivolve, in both aspect ratios.
+All 606 final wide screenshot samples stayed 426×240; the corresponding 4:3
+captures were 320×240. These are sampled presented frames, not a claim of one
+capture per emulated frame. The scrolling background remained stable in the
+replays. Local comparisons and the owner-phase trace are under
+`output/menu-pinch-01/`.
+
+Regressions check shared stat/divider/background seams at eleven animation
+scales, every margin from 1–160 and both framebuffer bands, plus pieces anchored
+opposite their native pivot, interior portrait pivots, and the chooser's closing
+phases. The opposite-edge test fails on the earlier pivot calculation.

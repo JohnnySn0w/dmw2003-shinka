@@ -469,9 +469,16 @@ int main(void) {
                 W(items+0x10,11);
             }
             if(kind==SHINKA_STATUS_DIGIVOLVE || kind==SHINKA_STATUS_CHARACTER_TECHNIQUES) {
-                W(detail+0x48,0);CHECK(!shinka_menu_status_layout());W(detail+0x48,0x8008b3c8);
+                /* Valid parent, child absent for construction or released on
+                 * return: keep the parent anchored, without accepting a stale child. */
+                W(items+0x100+67*4,0);writes=0;
+                CHECK(shinka_menu_status_layout()==SHINKA_STATUS_CHARACTER && !writes);
+                W(items+0x100+67*4,detail);W(detail+0xc,3);writes=0;
+                CHECK(shinka_menu_status_layout()==SHINKA_STATUS_CHARACTER && !writes);
+                W(detail+0xc,1);
+                W(detail+0x48,0);CHECK(shinka_menu_status_layout()==SHINKA_STATUS_CHARACTER);W(detail+0x48,0x8008b3c8);
                 W(items+0x24,0x801ffef4);CHECK(!shinka_menu_status_layout());W(items+0x24,items+0x100);
-                W(detail+0x50,items+4);CHECK(!shinka_menu_status_layout());W(detail+0x50,items);
+                W(detail+0x50,items+4);CHECK(shinka_menu_status_layout()==SHINKA_STATUS_CHARACTER);W(detail+0x50,items);
             }
             CHECK(!shinka_menu_items_active());
             for(int i=0;i<4;++i) {

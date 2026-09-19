@@ -170,7 +170,11 @@ int shinka_menu_status_layout(void) {
             uint32_t detail = READ(children + 67 * 4);
             if (!object(detail, 0x8008b3c8) || READ(detail + 0x20) != 36
                 || READ(detail + 0xc) > 1 || READ(detail + 0x50) != p
-                || READ(0x8008b3c8) != 0x27bdffe0 || READ(0x8008b3cc) != 0xafb10014) return 0;
+                || READ(0x8008b3c8) != 0x27bdffe0 || READ(0x8008b3cc) != 0xafb10014)
+                /* The parent remains visible for one frame before its child
+                 * is constructed and after it is released. Keep that verified
+                 * parent layout; do not briefly draw it at native x positions. */
+                return SHINKA_STATUS_CHARACTER;
             int slide = (int32_t)READ(detail + 0x8c);
             if (slide < -34 || slide > 0) return 0;
             return slide < 0

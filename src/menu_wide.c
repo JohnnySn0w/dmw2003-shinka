@@ -29,26 +29,39 @@ static int folder_outline(unsigned clut, unsigned uv) {
         || uv == 0x2d88 || uv == 0xc788;
 }
 
-static int backdrop_tile(uint32_t* words, unsigned mode, int x, int margin) {
+static int backdrop_tile(const uint32_t* words, unsigned mode) {
     if (words[3] != 0x00300030) return 0;
     uint32_t uv = words[2];
-    int match = mode == 0x400 ? (uv == 0x3ae91a28 || uv == 0x3b2b00a8 || uv == 0x3b6b0078)
+    return mode == 0x400 ? (uv == 0x3ae91a28 || uv == 0x3b2b00a8 || uv == 0x3b6b0078)
         : mode == 0x1200 ? (uv == 0x3f6b0060 || uv == 0x3fab0030 || uv == 0x3feb0000)
         : (mode == 0xd00 || mode == 0xd01) ? (uv == 0x7d28ba30 || uv == 0x7d68bb00 || uv == 0x7d2a3814)
         : (mode == 0x1000 || (mode >= 0x200 && mode < 0x300))
             ? (uv == 0x7da81060 || uv == 0x7deb1090 || uv == 0x7da93000)
-            : (uv == 0x7ca7b850 || uv == 0x7ce65828 || uv == 0x7ce75858);
-    if (!match) return 0;
-    /* Quantize the repeating grid's pitch once, not each moving tile's edges.
-     * At 16:9 every 48px tile is 64px wide. Independently rounded edges made
-     * some tiles 63px wide and changed their texel sampling as they scrolled.
-     * This small backdrop-only scale rounding keeps all layers rigid, with
-     * shared edges even at negative positions and across the 96px wrap. */
-    int pitch = (48 * (320 + 2 * margin) + 160) / 320;
-    int scaled = x * pitch;
-    int dest = (scaled >= 0 ? scaled / 48 : -((-scaled + 47) / 48)) - margin;
-    words[1] = (words[1] & 0xffff0000u) | (uint16_t)dest;
-    return pitch;
+            : (mode == 0xa00 || mode == 0xf00)
+                && (uv == 0x7ca7b850 || uv == 0x7ce65828 || uv == 0x7ce75858
+            || (mode == 0xf00 && (uv == 0x7eea4230 || uv == 0x7f2b3400 || uv == 0x7eeb4260)));
+}
+
+/* A row repeats every 96px. Use one original packet per phase/texture and
+ * repeat it into the margins at its native 48x48 size. Keeping integer guest
+ * positions preserves the original diagonal motion without resampling steps.
+ * Positive: output copies; negative: redundant native copy; zero: not ours. */
+int shinka_menu_backdrop_positions(const uint32_t* words, int count,
+    int offset_x, int offset_y, int left, int top, int right, int bottom,
+    int margin, int positions[8]) {
+    if (count != 4 || words[0] >> 24 != 0x64 || margin <= 0 || margin > 160
+        || offset_x || (offset_y != 0 && offset_y != 256)
+        || left != 0 || right != 319 || top != offset_y || bottom != top + 239
+        || !shinka_view_wide_active() || !shinka_view_wide_requested()) return 0;
+    unsigned mode = psx_mod_read_word(0x8004b3f8u);
+    if (!backdrop_tile(words, mode)) return 0;
+    int x = (int16_t)words[1], y = (int16_t)(words[1] >> 16);
+    if (x < -128 || x > 448 || y < -128 || y > 368) return 0;
+    if (x < 0 || x >= 96) return -1;
+    while (x - 96 + 48 > -margin) x -= 96;
+    int n = 0;
+    for (; x < 320 + margin; x += 96) positions[n++] = x;
+    return n; /* at most eight copies over the supported 640px viewport */
 }
 
 /* Panels are tiled textured rectangles, not a single menu bitmap. Expand the
@@ -84,8 +97,7 @@ static int layout_rect(uint32_t* words, int count, int offset_x, int offset_y,
         return stretch_x(x + w, margin) - dest_x;
     }
     if (!backdrop) return 0;
-    dest_w = backdrop_tile(words, mode, x, margin);
-    if (dest_w) return dest_w;
+    if (backdrop_tile(words, mode)) return 0; /* repeated at native size by GPU */
     /* During the Items/root handoff the backdrop outlives the UI tasks. Keep
      * repainting the margins through its palette fade, but don't treat a
      * half-constructed or unrelated task as the Items layout. */
@@ -112,14 +124,10 @@ static int layout_rect(uint32_t* words, int count, int offset_x, int offset_y,
             } else if (y >= 191) dest_x = x + (y >= 208 && x >= 265 ? margin : -margin);
             else dest_x = x + ((y >= 65 || x >= 140) ? margin : -margin);
         } else if (status == SHINKA_LAB || status == SHINKA_LAB_TECHNIQUES) {
-            if (status == SHINKA_LAB_TECHNIQUES && y >= 100) {
-                /* Keep the stats and their divider at native width. Extra
-                 * space belongs inside the technique pane, not between its
-                 * text and the stats. The Skill LV header stays at the right. */
-                if (clut == 0x7cab && x == 208 && w == 28) {
-                    dest_x = x - margin; dest_w = w + 2*margin;
-                } else dest_x = x + (x >= 230 && (clut == 0x7cab || y < 122) ? margin : -margin);
-            } else dest_x = x + (x >= 140 ? margin : -margin);
+            /* The complete form detail sheet keeps its native width and
+             * moves to the right edge: stats, divider, skills and header. */
+            dest_x = x + (status == SHINKA_LAB_TECHNIQUES && y >= 100
+                ? margin : x >= 140 ? margin : -margin);
         } else if (status == SHINKA_CARD_ALBUM) {
             if (y >= 50 && y < 150) {
                 int col = (x - 32) / 42;
@@ -216,22 +224,10 @@ static int layout_rect(uint32_t* words, int count, int offset_x, int offset_y,
         else if (clut == 0x7dea && y == 194 && (!digivolve || techniques)) {
             dest_x = stretch_x(x, margin);
             dest_w = stretch_x(x + w, margin) - dest_x;
-        } else if (digivolve && y >= form_y + 22 && !footer) {
-            /* Same compact stat column in Status > See Digivolve. Extend the
-             * technique background after its intact divider; move whole text
-             * lines with that divider, leaving the upper form list alone. */
-            if (clut == 0x7dea && x == 184 && w == 36) {
-                dest_x = x - margin; dest_w = w + 2*margin;
-            } else dest_x = x + (clut == 0x7dea && x >= 220 ? margin : -margin);
-        } else if (digivolve && clut == 0x7dea
-            && ((x == 200 && w == 40 && h == 22 && y >= 63 && y <= 97
-                    && (words[2] & 65535) == 0x9690)
-                || (x == 120 && w == 40 && ((words[2] & 65535) == 0x9690
-                    || (words[2] & 65535) == 0x9890 || (words[2] & 65535) == 0xac90)))) {
-            /* Extend the plain bridge/fill strips. The form tab, stat glyphs,
-             * Skill LV divider and technique list keep their native widths. */
-            dest_x = x - margin;
-            dest_w = w + 2 * margin;
+        } else if (digivolve && y >= form_y && !footer) {
+            /* Keep the whole stats/skills sheet compact at the right edge.
+             * Expanding only its fill still leaves an oversized skill list. */
+            dest_x = x + margin;
         } else if (techniques && clut == 0x3a17 && y == 212 && x >= 266)
             dest_x = x + stretch_x(303, margin) - 303;
         else if (footer) dest_x = x - margin;
@@ -240,9 +236,6 @@ static int layout_rect(uint32_t* words, int count, int offset_x, int offset_y,
         else if (digivolve && ((clut == 0x7de9 && y == form_y-29)
             || (clut == 0x3a17 && y >= form_y-20 && y <= form_y-19)))
             dest_x = x + margin; /* Base-partner tab belongs to the form list. */
-        else if (digivolve && ((clut == 0x7dea && (words[2] & 65535) == 0x80a8)
-            || (clut == 0x3a17 && y >= form_y + 7 && y < form_y + 19)))
-            dest_x = x + (x >= 226 ? margin : -margin);
         else if (digivolve)
             dest_x = x + ((x >= 160 || (y < 37 && x >= 148)) ? margin : -margin);
         else dest_x = x + (x >= 148 ? margin : -margin);

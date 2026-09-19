@@ -95,7 +95,7 @@ static void animation_tests(void) {
                 |((unsigned)(y+(v&2?14:0))<<16);
             shinka_menu_animation_tag(0x801d0004,quad,rect,320,scale);
             shinka_menu_wide_quad(quad,9,0x1d0004,0,band,0,band,319,band+239,margin);
-            int dest=x+(x>=(lab?236:220)?margin:-margin);
+            int dest=x+margin;
             CHECK((int16_t)quad[1]==320+margin+floor_scale(dest-320-margin,scale));
             if(k) CHECK((int16_t)quad[1]==last);
             last=(int16_t)quad[3];
@@ -169,43 +169,56 @@ int main(void) {
         CHECK(!shinka_menu_wide_rect(panel,4,0,0,0,0,99,59,53));
         CHECK(panel[1]==0x009c0000); /* offscreen texture/portrait pass */
     }
-    for(int shop=0;shop<2;++shop) for(int band=0;band<=256;band+=256) {
-        const uint32_t layers[]={0x7ca7b850,0x7ce65828,0x7ce75858};
-        int previous=-1000;
-        mode=shop ? 0xf00 : 0xa00;options[2]=1;shinka_view_tick();
-        for(int x=-96;x<=384;++x) {
-            int reference=0, reference_width=0;
-            for(int layer=0;layer<3;++layer) {
-                uint32_t tile[]={0x64808080,0x002b0000u|(uint16_t)x,layers[layer],0x00300030};
-                int width=shinka_menu_wide_rect(tile,4,0,band,0,band,319,band+239,53);
-                int position=(int16_t)tile[1];
-                CHECK(width>0);
-                CHECK(tile[2]==layers[layer] && tile[3]==0x00300030);
-                if(!layer) { reference=position;reference_width=width; }
-                else CHECK(position==reference && width==reference_width);
+    /* Every texture family repeats at native size. Across all scroll phases,
+     * the two alternating columns cover the wide viewport without gaps or
+     * overlap; packets/UVs remain untouched and redundant copies are skipped. */
+    {
+        const unsigned modes[]={0xa00,0xf00,0xf00,0x1000,0x400,0x1200,0xd01};
+        const uint32_t textures[][3]={
+            {0x7ca7b850,0x7ce65828,0x7ce75858},
+            {0x7ca7b850,0x7ce65828,0x7ce75858},
+            {0x7eea4230,0x7f2b3400,0x7eeb4260},
+            {0x7da81060,0x7deb1090,0x7da93000},
+            {0x3ae91a28,0x3b2b00a8,0x3b6b0078},
+            {0x3f6b0060,0x3fab0030,0x3feb0000},
+            {0x7d28ba30,0x7d68bb00,0x7d2a3814}};
+        for(int scene=0;scene<7;++scene) for(int band=0;band<=256;band+=256)
+        for(int margin=1;margin<=160;++margin) for(int phase=0;phase<96;++phase) {
+            mode=modes[scene];items_menu=scene>=4 ? SHINKA_LAB : SHINKA_STATUS_ITEMS;
+            options[2]=1;shinka_view_tick();
+            int coverage[640]={0};
+            for(int col=0;col<2;++col) for(int layer=0;layer<3;++layer) {
+                int x=(phase+48*col)%96, positions[8];
+                uint32_t tile[]={0x64808080,0x00200000u|(unsigned)x,textures[scene][layer],0x00300030};
+                uint32_t original[4];memcpy(original,tile,sizeof tile);
+                CHECK(!shinka_menu_wide_rect(tile,4,0,band,0,band,319,band+239,margin));
+                int n=shinka_menu_backdrop_positions(tile,4,0,band,0,band,319,band+239,margin,positions);
+                CHECK(n>0 && n<=8 && !memcmp(tile,original,sizeof tile));
+                for(int i=0;i<n;++i) {
+                    CHECK((positions[i]-x)%96==0);
+                    CHECK(positions[i]+48>-margin && positions[i]<320+margin);
+                    if(i) CHECK(positions[i]-positions[i-1]==96);
+                    if(!layer) for(int px=positions[i];px<positions[i]+48;++px)
+                        if(px>=-margin && px<320+margin) ++coverage[px+margin];
+                }
+                tile[1]+=96;
+                CHECK(shinka_menu_backdrop_positions(tile,4,0,band,0,band,319,band+239,margin,positions)==-1);
             }
-            if(previous!=-1000) CHECK(reference-previous==1 || reference-previous==2);
-            previous=reference; /* no column-boundary jump during scrolling */
+            for(int px=0;px<320+2*margin;++px) CHECK(coverage[px]==1);
         }
-    }
-    /* A repeating tile must keep its sampling width throughout a scroll.
-     * Sharing integer edges alone allowed 63/64px breathing at 16:9. */
-    for(int scene=0;scene<4;++scene) for(int band=0;band<=256;band+=256) {
-        const uint32_t status_layers[]={0x7da81060,0x7deb1090,0x7da93000};
-        const uint32_t npc_layers[]={0x7ca7b850,0x7ce65828,0x7ce75858};
-        mode=scene<2 ? (scene ? 0xf00 : 0xa00) : 0x1000;
-        root_menu=scene==3;items_menu=scene==2;options[2]=1;shinka_view_tick();
-        for(int layer=0;layer<3;++layer) for(int phase=-96;phase<96;++phase) {
-            uint32_t texture=scene<2 ? npc_layers[layer] : status_layers[layer];
-            int edge=0;
-            for(int column=0;column<7;++column) {
-                uint32_t tile[]={0x64808080,0x00200000u|(uint16_t)(phase+column*48),texture,0x00300030};
-                int width=shinka_menu_wide_rect(tile,4,0,band,0,band,319,band+239,53);
-                CHECK(width==64); /* constant texture scale, every phase and layer */
-                if(column) CHECK((int16_t)tile[1]==edge);
-                edge=(int16_t)tile[1]+width;
-            }
+        int positions[8];
+        mode=0x1000;items_menu=SHINKA_STATUS_ITEMS;
+        for(int bad=0;bad<10;++bad) {
+            uint32_t tile[]={0x64808080,0x00200010,0x7da81060,0x00300030};
+            options[2]=bad==0 ? 0 : 1;shinka_view_tick();
+            if(bad==1) tile[2]^=1;
+            if(bad==2) tile[3]^=1;
+            if(bad==3) tile[0]=0x66808080;
+            if(bad==7) tile[1]=0x002001c1; /* beyond the native backdrop grid */
+            CHECK(!shinka_menu_backdrop_positions(tile,bad==8?3:4,bad==9?1:0,0,0,0,bad==4?255:319,239,
+                bad==5?0:bad==6?161:53,positions));
         }
+        options[2]=1;shinka_view_tick();
     }
     root_menu=0;items_menu=0;
     for(int fullscreen=0;fullscreen<2;++fullscreen) {
@@ -246,8 +259,10 @@ int main(void) {
     {
         uint32_t tile[]={0x64808080,0x00200000,0x7da81060,0x00300030};
         uint32_t panel[]={0x64808080,0x00c20000,0x7deab368,0x00260028};
-        CHECK(shinka_menu_wide_rect(tile,4,0,0,0,0,319,239,53)==64);
-        CHECK((int16_t)tile[1]==-53); /* closing backdrop must repaint both margins */
+        CHECK(!shinka_menu_wide_rect(tile,4,0,0,0,0,319,239,53));
+        int positions[8];
+        CHECK(shinka_menu_backdrop_positions(tile,4,0,0,0,0,319,239,53,positions)>0);
+        CHECK((int16_t)tile[1]==0); /* closing backdrop retains original motion */
         CHECK(!shinka_menu_wide_rect(panel,4,0,0,0,0,319,239,53));
         CHECK(panel[1]==0x00c20000); /* pending presentation isn't layout admission */
     }
@@ -296,29 +311,6 @@ int main(void) {
     options[2]=1;previous_mode=0;destination=2;
     root_menu=1;shinka_view_tick();CHECK(frontend);
     mode=0x1000;items_menu=1;options[2]=1;shinka_view_tick();CHECK(frontend);
-    for(int layer=0;layer<3;++layer) {
-        uint32_t tile[]={0x64808080,0x0000001c,layer==0?0x7da81060:layer==1?0x7deb1090:0x7da93000,0x00300030};
-        int width=shinka_menu_wide_rect(tile,4,0,0,0,0,319,239,53);
-        CHECK(width==64);
-        CHECK((int16_t)tile[1]==-16);
-    }
-    for(int margin=1;margin<=160;++margin) {
-        const unsigned backgrounds[]={0x7da81060,0x7deb1090,0x7da93000};
-        int previous=-1000;
-        for(int x=-96;x<=384;++x) {
-            int reference=0, reference_width=0;
-            for(int layer=0;layer<3;++layer) {
-                uint32_t tile[]={0x64808080,0x00000000u|(uint16_t)x,backgrounds[layer],0x00300030};
-                int width=shinka_menu_wide_rect(tile,4,0,0,0,0,319,239,margin);
-                int position=(int16_t)tile[1];
-                CHECK(width>0);
-                if(!layer) { reference=position;reference_width=width; }
-                else CHECK(position==reference && width==reference_width);
-            }
-            if(previous!=-1000) CHECK(reference-previous==1 || reference-previous==2);
-            previous=reference;
-        }
-    }
     root_menu=0;items_menu=1;shinka_view_tick();CHECK(frontend);
     /* Captured Choose Digimon packets use 0x2697, unlike the 0x7dea
      * character-detail header. The old column split tore these nine strips. */
@@ -359,12 +351,11 @@ int main(void) {
         }
         CHECK(ribbon_end==322+margin); /* 24px visible overhang at the menu's left */
         for(int layer=0;layer<3;++layer) {
-            int end=-margin;
             for(int x=0;x<384;x+=48) {
                 uint32_t tile[]={0x64808080,0x00200000u|(unsigned)x,backgrounds[layer],0x00300030};
                 int width=shinka_menu_wide_rect(tile,4,0,band,0,band,319,band+239,margin);
-                CHECK((int16_t)tile[1]==end && width>0);
-                CHECK(tile[2]==backgrounds[layer] && tile[3]==0x00300030);end+=width;
+                CHECK((int16_t)tile[1]==x && width==0);
+                CHECK(tile[2]==backgrounds[layer] && tile[3]==0x00300030);
             }
         }
         /* Captured anchors: list columns, full description, page numerator,
@@ -427,14 +418,14 @@ int main(void) {
             {SHINKA_STATUS_CHARACTER,58,213,-1},
             {SHINKA_STATUS_CHARACTER_SELECT,170,199,-1},
             {SHINKA_STATUS_CHARACTER_SELECT,160,212,-1},
-            {SHINKA_STATUS_DIGIVOLVE,153,125,-1},
-            {SHINKA_STATUS_DIGIVOLVE,182,212,-1},
-            {SHINKA_STATUS_DIGIVOLVE,117,104,-1},
+            {SHINKA_STATUS_DIGIVOLVE,153,125,1},
+            {SHINKA_STATUS_DIGIVOLVE,182,212,1},
+            {SHINKA_STATUS_DIGIVOLVE,117,104,1},
             {SHINKA_STATUS_DIGIVOLVE,236,104,1},
-            {SHINKA_STATUS_CHARACTER_TECHNIQUES,153,93,-1},
-            {SHINKA_STATUS_CHARACTER_TECHNIQUES,182,178,-1},
+            {SHINKA_STATUS_CHARACTER_TECHNIQUES,153,93,1},
+            {SHINKA_STATUS_CHARACTER_TECHNIQUES,182,178,1},
             {SHINKA_STATUS_CHARACTER_TECHNIQUES,170,199,-1},
-            {SHINKA_STATUS_CHARACTER_TECHNIQUES,117,70,-1},
+            {SHINKA_STATUS_CHARACTER_TECHNIQUES,117,70,1},
             {SHINKA_STATUS_CHARACTER_TECHNIQUES,236,70,1},
             {SHINKA_STATUS_EQUIPMENT,120,58,1},
             {SHINKA_STATUS_EQUIPMENT,116,20,-1},
@@ -472,13 +463,14 @@ int main(void) {
         uint32_t border[]={0x64808080,0x007700a0,0x7dea80c8,0x006c0018};
         int width=shinka_menu_wide_rect(fill,4,0,band,0,band,319,band+239,margin);
         CHECK(!shinka_menu_wide_rect(border,4,0,band,0,band,319,band+239,margin));
-        CHECK(width==0 && (int16_t)fill[1]==120-margin
+        CHECK(width==0 && (int16_t)fill[1]==120+margin
             && (int16_t)fill[1]+40==(int16_t)border[1]);
         CHECK(fill[2]==0x7dea9690 && fill[3]==0x00160028);
-        for(int y=63;y<=97;++y) {
+        for(int y=63;y<=97;y+=34) {
+            items_menu=y==63 ? SHINKA_STATUS_CHARACTER_TECHNIQUES : SHINKA_STATUS_DIGIVOLVE;
             uint32_t bridge[]={0x64808080,((unsigned)y<<16)|200,0x7dea9690,0x00160028};
-            CHECK(shinka_menu_wide_rect(bridge,4,0,band,0,band,319,band+239,margin)==40+2*margin);
-            CHECK((int16_t)bridge[1]==200-margin && bridge[3]==0x00160028);
+            CHECK(shinka_menu_wide_rect(bridge,4,0,band,0,band,319,band+239,margin)==0);
+            CHECK((int16_t)bridge[1]==200+margin && bridge[3]==0x00160028);
         }
         /* Compact Status header pieces share their endpoints and retain UVs. */
         int end=144+margin;
@@ -500,11 +492,10 @@ int main(void) {
             mode=layer<3 ? 0x400 : layer<6 ? 0x1200 : 0xd01;
             items_menu=layer<3 ? SHINKA_FOLDER_SELECT : layer<6 ? SHINKA_CARD_ALBUM : SHINKA_LAB;
             options[2]=1;shinka_view_tick();CHECK(frontend);
-            int end=-margin;
             for(int x=0;x<384;x+=48) {
                 uint32_t tile[]={0x64808080,(unsigned)x,backgrounds[layer],0x00300030};
                 int width=shinka_menu_wide_rect(tile,4,0,band,0,band,319,band+239,margin);
-                CHECK((int16_t)tile[1]==end && width>0);end+=width;
+                CHECK((int16_t)tile[1]==x && width==0);
                 CHECK(tile[2]==backgrounds[layer] && tile[3]==0x00300030);
             }
         }
@@ -615,13 +606,13 @@ int main(void) {
         uint32_t divider[]={0x64808080,0x006400a8,0x7cab0028,0x00820028};
         CHECK(shinka_menu_wide_rect(bridge,4,0,band,0,band,319,band+239,margin)==0);
         shinka_menu_wide_rect(divider,4,0,band,0,band,319,band+239,margin);
-        CHECK((int16_t)bridge[1]==136-margin && (int16_t)bridge[1]+32==(int16_t)divider[1]);
+        CHECK((int16_t)bridge[1]==136+margin && (int16_t)bridge[1]+32==(int16_t)divider[1]);
         uint32_t pane[]={0x64808080,0x006400d0,0x7cab009c,0x0082001c};
-        CHECK(shinka_menu_wide_rect(pane,4,0,band,0,band,319,band+239,margin)==28+2*margin);
-        CHECK((int16_t)pane[1]==208-margin && pane[2]==0x7cab009c);
+        CHECK(shinka_menu_wide_rect(pane,4,0,band,0,band,319,band+239,margin)==0);
+        CHECK((int16_t)pane[1]==208+margin && pane[2]==0x7cab009c);
         uint32_t skill[]={0x64808080,0x008c00b0,0x3a171e28,0x000c0008};
         shinka_menu_wide_rect(skill,4,0,band,0,band,319,band+239,margin);
-        CHECK((int16_t)skill[1]==176-margin);
+        CHECK((int16_t)skill[1]==176+margin);
         options[2]=0;shinka_view_tick();
         uint32_t panel[]={0x64808080,0x00130000,0x7cabb800,0x00350028};
         CHECK(!shinka_menu_wide_rect(panel,4,0,band,0,band,319,band+239,margin));CHECK(panel[1]==0x00130000);

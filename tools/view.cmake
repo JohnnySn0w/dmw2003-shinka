@@ -63,6 +63,27 @@ if(_hud_stretch_pos EQUAL -1)
     message(FATAL_ERROR "Review pinned textured rectangle stretch path")
 endif()
 string(REPLACE "${_hud_stretch}" "    int ws_w = shinka_hud_dialogue_width;\n    if (ws_active() && w > 0) {" _hud_code "${_hud_code}")
+set(_backdrop_anchor "    /* Widescreen: tagged sprite parts squash around their projected anchor;")
+string(FIND "${_hud_code}" "${_backdrop_anchor}" _backdrop_pos)
+if(_backdrop_pos EQUAL -1)
+    message(FATAL_ERROR "Review pinned textured rectangle background repetition")
+endif()
+set(_backdrop_repeat [=[    int backdrop_x[8];
+    int backdrop_n = shinka_menu_backdrop_positions(gp0_cmd_buf, gp0_words_needed,
+        draw_offset_x, draw_offset_y, draw_area_left, draw_area_top,
+        draw_area_right, draw_area_bottom, ws_nw_extra()/2, backdrop_x);
+    if (backdrop_n) {
+        if (backdrop_n > 0) {
+            setup_textured_draw(color24, semi_trans, raw_texture);
+            for (int i = 0; i < backdrop_n; ++i)
+                gr_draw_textured_rect(backdrop_x[i], y0 + draw_offset_y, 48, 48,
+                    u0, v0, clut_x, clut_y, current_texpage());
+        }
+        return;
+    }
+
+]=])
+string(REPLACE "${_backdrop_anchor}" "${_backdrop_repeat}${_backdrop_anchor}" _hud_code "${_hud_code}")
 set(_menu_anchor "    if (shinka_hud_dialogue_width) gp0_cmd_buf[1] = (gp0_cmd_buf[1]&0xffff0000u)|(uint16_t)dialogue_x;")
 string(REPLACE "${_menu_anchor}" "${_menu_anchor}\n    shinka_menu_wide_quad(gp0_cmd_buf, gp0_words_needed, gp0_cmd_source_addr,\n        draw_offset_x, draw_offset_y, draw_area_left, draw_area_top,\n        draw_area_right, draw_area_bottom, ws_nw_extra()/2);" _hud_code "${_hud_code}")
 string(REPLACE "${_menu_anchor}" "${_menu_anchor}\n    if (!shinka_hud_dialogue_width) shinka_hud_dialogue_width = shinka_menu_wide_rect(\n        gp0_cmd_buf, gp0_words_needed, draw_offset_x, draw_offset_y,\n        draw_area_left, draw_area_top, draw_area_right, draw_area_bottom, ws_nw_extra()/2);" _hud_code "${_hud_code}")

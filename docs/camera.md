@@ -629,3 +629,63 @@ Regressions check shared stat/divider/background seams at eleven animation
 scales, every margin from 1–160 and both framebuffer bands, plus pieces anchored
 opposite their native pivot, interior portrait pivots, and the chooser's closing
 phases. The opposite-edge test fails on the earlier pivot calculation.
+
+### September 16: Right-anchored detail sheets and parent lifetime
+
+The earlier compact-stats change left its added width in the skill list. The
+complete lower sheet now retains its native width and moves right: the form
+name, Skill LV header, stats, divider, technique rows and highlight. This applies
+to Status > See Digivolve (including its technique view) and the Lab's form
+selection used by Change Digivolve Type and Load Technique. The standalone
+Load Technique picker keeps its existing right-anchored layout.
+
+During See Digivolve entry/exit, the validated Status parent briefly has no live
+child 67. Returning no layout in that interval shifted the still-visible partner
+panel to its native x coordinates for one frame. The parent now retains the
+character layout while that child is constructed or released. The child itself
+still requires its callback, ownership and geometry checks.
+
+Consecutive vblank captures under `output/menu-compact-03/` reproduce that
+one-frame jump before the fix and show the parent remaining anchored afterward.
+These also expose a background join mismatch around partner-chooser/root
+backout. The presentation ring stays at 426x240 with a stable destination
+rectangle; tests disabling automatic backdrop stretching and the center-copy
+optimization did not resolve that mismatch. The user's reported whole-screen
+pinch is **still open**, not covered by the parent-panel fix. Earlier sampled
+screenshots were insufficient to rule it out.
+
+The `menu_capture` debug command records up to 180 consecutive display frames
+without screenshot-polling gaps; see [developer navigation](developer-navigation.md#consecutive-menu-frame-captures).
+Geometry tests now check the unchanged sheet width and joined strip endpoints
+at every margin 1–160, eleven animation scales, and both framebuffer bands.
+
+### September 19: Native square scrolling backgrounds
+
+Menu backdrops now repeat their original 48x48 tiles into the extra horizontal
+space. They no longer widen to 64x48 at 16:9. The original integer x/y positions,
+UVs, palette animation and scrolling speed are retained. Captured Status, Lab,
+card folder, album, shop and gym packets confirm a 96-pixel horizontal repeat;
+one representative packet per phase/texture supplies the additional copies.
+Only those identified background textures and full-screen drawing passes are
+handled. 4:3 drawing is unchanged. Shop textures missing from the earlier
+stretch matcher are included.
+
+`output/menu-square-01/` contains screenshots and consecutive 120-frame captures
+of the Lab, shop, shop list, gym and Status chooser-to-root backout, plus card
+album/folder entry. Pixel comparisons of unobstructed background patches show
+only simultaneous `(1,1)` movement or repeated `(0,0)` frames. Lab and shop
+patches and a patch spanning the left framebuffer join during Status backout
+match exactly after translation. Settled card-menu samples match too. The game
+updates these backdrops every other PAL vblank; this change preserves that
+cadence rather than inventing intermediate motion.
+
+The Status backout recording no longer shows the previously observed backdrop
+join mismatch in the inspected patch. Its presentation remains 426x240. This
+is stronger evidence than the earlier sampled screenshots, but the user's
+perceived whole-screen pinch still needs confirmation on the final window.
+Do not infer that every transition in the game has been exhaustively validated.
+
+Regression tests cover every 96-pixel phase, margins 1–160, both framebuffer
+bands, all identified texture families, exact viewport coverage without overlap,
+unchanged texture packets, and rejection of unrelated drawing passes. All 19
+native tests, capture-parser tests and capture-tool lint pass.

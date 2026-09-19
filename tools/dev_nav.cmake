@@ -8,8 +8,13 @@ if(NOT _debug_match_count EQUAL 1)
     message(FATAL_ERROR "Review pinned debug-server command table before adding Shinka navigation")
 endif()
 string(REPLACE "${_debug_anchor}"
-    "#include \"dev_nav_server.inc\"\n${_debug_anchor}\n    { \"shinka_nav\", handle_shinka_nav },"
+    "#include \"dev_nav_server.inc\"\n#include \"menu_capture.inc\"\n${_debug_anchor}\n    { \"shinka_nav\", handle_shinka_nav },\n    { \"menu_capture\", handle_menu_capture },"
     _debug_code "${_debug_code}")
+string(FIND "${_debug_code}" "    disp_ring_capture();" _capture_position)
+if(_capture_position EQUAL -1)
+    message(FATAL_ERROR "Review pinned frame capture hook")
+endif()
+string(REPLACE "    disp_ring_capture();" "    disp_ring_capture();\n    menu_capture_frame();" _debug_code "${_debug_code}")
 # Continuous GPU readback is a forensic feature, not a normal-play requirement.
 # Preserve explicit opt-in and all one-shot captures without paying for a full
 # 64-frame VRAM/display history at every eligible vblank.

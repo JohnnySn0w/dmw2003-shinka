@@ -278,3 +278,30 @@ Tested with a copy of the South Sector test profile and the retail BIOS backend:
 
 Final Windows build succeeded; seven native regression suites and 40 Python
 tests passed. No always-on combat patch or general chapter-skip recipe is claimed.
+
+## Consecutive menu frame captures
+
+Use a copied save profile and a dedicated debug port. `menu_capture` records the
+next 1–180 vblank display surfaces, including the native-wide surface when it is
+active. It performs no readback until explicitly started. This is a visual
+forensics tool, not a performance measurement: capture adds GPU readback and
+file-write cost. A recording is capped at 256 MiB and uses little-endian ARGB
+pixels with frame, dimensions, menu layout, root state and controller metadata.
+
+```json
+{"cmd":"menu_capture","frames":120,"path":"C:/your/output/menu.bin"}
+```
+
+Send the desired input after starting capture, then query
+`{"cmd":"menu_capture"}` until `active` is false. Check `failed` is zero. Export:
+
+```powershell
+python tools/export_menu_capture.py output/menu.bin output/menu-frames
+```
+
+The exporter writes numbered PNGs and `metadata.json`, rejecting truncated
+records, excessive sizes and nonconsecutive frame numbers. Disabled/unavailable
+display surfaces produce zero-sized records rather than invented pixels. These
+are consecutive vblank observations, not a count of unique guest animation
+poses. Pair them with `present_ring` and `gl_present_ring` when investigating
+aspect changes: those record the presentation decision and window fit.

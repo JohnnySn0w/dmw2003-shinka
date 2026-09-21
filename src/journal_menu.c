@@ -131,8 +131,25 @@ static int extra_menu_layout(unsigned mode) {
     }
     return SHINKA_LAB;
 }
+/* The resident inn widget lives under field child 4. Follow its owner chain
+ * so ordinary NPC speech and unrelated uses of the same font stay untouched. */
+static int field_inn_layout(unsigned mode) {
+    if (mode < 0x200 || mode >= 0x300 || READ(0x8005cca8) != 2) return 0;
+    uint32_t p = READ(0x8005ccbc), children;
+    if (!live_page(p, 0x80020b58, 1, 0x27bdffe0)) return 0;
+    p = lab_child(p);
+    if (!live_page(p, 0x800874d0, 3, 0x27bdffe0)) return 0;
+    p = lab_child(p);
+    if (!live_page(p, 0x8008aa10, 31, 0x27bdffc0)) return 0;
+    children = READ(p + 0x24);
+    if (children < 0x80090000 || children > 0x801fff80 || (children & 3)) return 0;
+    p = READ(children + 4*4);
+    return live_page(p, 0x800119a8, 8, 0x27bdff38) ? SHINKA_FIELD_INN : 0;
+}
+
 int shinka_menu_status_layout(void) {
     unsigned mode = READ(MODE);
+    if (mode >= 0x200 && mode < 0x300) return field_inn_layout(mode);
     if (mode != STATUS) return extra_menu_layout(mode);
     uint32_t p = status_page(), children;
     if (!p) return SHINKA_STATUS_NONE;

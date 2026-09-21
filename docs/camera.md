@@ -689,3 +689,39 @@ Regression tests cover every 96-pixel phase, margins 1–160, both framebuffer
 bands, all identified texture families, exact viewport coverage without overlap,
 unchanged texture packets, and rejection of unrelated drawing passes. All 19
 native tests, capture-parser tests and capture-tool lint pass.
+
+### September 21: Menu-history handoff and Pelche Oasis inn
+
+The remaining black-side-bar flash was reproduced from a copy of the player's
+save after their recording isolated the final retraction frame. That save had
+previous overlay `0x400` (Card Folders), current mode `0x1000`, and destination
+row 4 (Status). The previous overlay survives subsequent navigation between
+the root menu's children; it is not the previous selected menu row.
+
+The old presentation fallback accepted a card/lab history only while its own
+row was selected. When a different submenu closed and both UI owners were
+briefly absent, it rejected this valid history. A consecutive capture showed
+three frames falling from 426 to 320 pixels wide. The scene predicate now
+accepts the supported card/lab histories for all supported root rows, retaining
+the existing language, game-started, current-mode, row and view-setting guards.
+Panel layout still requires its verified live owner. No timed host latch or
+change to the native animation is involved.
+
+With the fix, 120 consecutive frames for each of Status, Items, Sort and
+Techniques backout remain 426 pixels wide using that same copied save/history.
+Earlier tests used field-origin histories and could not expose this defect.
+Regression tests cover all supported rows after card-folder, album and lab
+returns, including consumed lab markers and immediate rejection of 4:3,
+unsupported language and unrelated scenes. Local evidence is under
+`output/menu-edges-01/user-seam-*` and `user-*-after.*`; the player's recording
+and save data remain local.
+
+The resident inn widget also has a widescreen layout now: location at the left,
+money at the right, and the price ribbon, choices and cursor aligned together
+on the right. Recognition follows the field task's live child-4 owner chain,
+validated callbacks and code signatures. Ordinary world drawing and speech
+remain unchanged. Pelche Oasis captures cover opening, cancelling and accepting
+the stay prompt on a copied profile, with a 4:3 reference. Other inns have not
+received the same visual verification. Native checks cover owner rejection,
+read-only recognition, both framebuffer bands, margins 1–160 and unchanged 4:3
+packets. All 19 native CTest entries pass with both fixes.

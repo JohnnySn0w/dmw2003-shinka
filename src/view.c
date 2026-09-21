@@ -17,12 +17,15 @@ int shinka_view_wide_requested(void) {
          * No host latch can leak across state loads or delay a 4:3 setting. */
         unsigned previous = psx_mod_read_word(0x8004b400u);
         unsigned row = psx_mod_read_word(0x8005ccf0u);
+        /* Previous mode records the last OVERLAY, not the current menu row.
+         * After returning from cards/lab, opening Items or Status changes the
+         * row without changing that history. Both UI owners are absent at the
+         * backout seam: keep the viewport wide through this valid combination.
+         * The lab return marker is consumed when its root is constructed, so
+         * it cannot describe the lifetime of later sibling menus either. */
         field = ((previous >= 0x200 && previous < 0x300)
-                || (row == 5 && (previous == 0x400 || previous == 0x1200))
-                || (row == 6 && (previous == 0xd00 || previous == 0xd01))
-                /* Portable lab initially returns through native Status row 4;
-                 * menu construction consumes this marker and restores row 6. */
-                || (previous == 0xd01 && psx_mod_read_word(0x8004b404u) == 0x53484c42u))
+                || previous == 0x400 || previous == 0x1200
+                || previous == 0xd00 || previous == 0xd01)
             && psx_mod_read_word(0x8005cca8u) == 2
             && row <= 6;
     }

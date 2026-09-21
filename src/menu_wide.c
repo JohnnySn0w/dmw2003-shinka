@@ -103,7 +103,12 @@ static int layout_rect(uint32_t* words, int count, int offset_x, int offset_y,
      * half-constructed or unrelated task as the Items layout. */
     if (!layout) return 0;
     if (extra) {
-        if (status == SHINKA_LAB_CHART) {
+        if (status == SHINKA_FIELD_INN) {
+            /* Location stays left; money, price, choices and highlight form
+             * right-anchored groups. World sprites and speech use other CLUTs. */
+            if (clut != 0x2bd7 && clut != 0x2697 && clut != 0x3a17 && clut != 0x3417) return 0;
+            dest_x = x + (y < 36 && x < 160 ? -margin : margin);
+        } else if (status == SHINKA_LAB_CHART) {
             /* Preserve the chart's node/line geometry as one centered unit.
              * Its title, page indicator and shoulder prompts use the edges. */
             dest_x = x;

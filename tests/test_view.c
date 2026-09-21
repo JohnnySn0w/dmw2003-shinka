@@ -273,15 +273,21 @@ int main(void) {
     }
     destination=0;language=3;shinka_view_tick();CHECK(!frontend);language=2;
     previous_mode=0x600;shinka_view_tick();CHECK(!frontend); /* stale row after a state load */
-    for(int card=0;card<2;++card) {
-        previous_mode=card ? 0x1200 : 0xd01;destination=card ? 5 : 6;
-        shinka_view_tick();CHECK(frontend); /* return from card overlay / portable lab */
-        destination=7;shinka_view_tick();CHECK(!frontend);
+    /* Actual failing save: previous=Card Folders (0x400), row=Status (4).
+     * History survives sibling menu navigation; no root/child owns the seam. */
+    const unsigned histories[]={0x400,0x1200,0xd00,0xd01};
+    for(unsigned i=0;i<4;++i) for(unsigned row=0;row<8;++row) {
+        previous_mode=histories[i];destination=row;root_menu=0;items_menu=0;
+        CHECK(shinka_view_wide_requested()==(row<=6));
+        shinka_view_tick();CHECK(frontend==(row<=6));
+        options[2]=0;CHECK(!shinka_view_wide_requested());options[2]=1;
+        language=3;CHECK(!shinka_view_wide_requested());language=2;
+        mode=0x700;CHECK(!shinka_view_wide_requested());mode=0x1000;
     }
     destination=0;
     previous_mode=0xd01;destination=4;return_marker=0x53484c42;
     shinka_view_tick();CHECK(frontend);
-    return_marker=0;shinka_view_tick();CHECK(!frontend);
+    return_marker=0;shinka_view_tick();CHECK(frontend); /* consumed marker is irrelevant */
     destination=0;
     previous_mode=0x21d;started=0;shinka_view_tick();CHECK(!frontend);started=1;
     mode=0xd00;CHECK(!shinka_view_wide_requested()); /* unrelated overlay */
@@ -732,6 +738,30 @@ int main(void) {
         shinka_battle_hud_command(sprite,4,scenario==1 ? 160 : 0,scenario==1 ? 120 : 0,
             0,0,319,239,scenario==2 ? 0 : 53);
         CHECK(sprite[1]==(scenario==3 ? 0x006DFFF0u : 0x006D0025u));
+    }
+    /* Captured inn panels/glyphs retain native width and share their anchors. */
+    mode=0x249;root_menu=0;items_menu=SHINKA_FIELD_INN;options[2]=1;shinka_view_tick();
+    const struct {int x,y,w,h,side;uint32_t uv;} inn[] = {
+        {22,18,32,24,-1,0x2bd7b588}, {30,20,8,12,-1,0x3a1715d8},
+        {214,15,40,24,1,0x2bd79f64}, {222,23,8,12,1,0x341715d8},
+        {76,46,48,36,1,0x2bd7bb20}, {122,52,8,12,1,0x3a1715d8},
+        {175,89,12,48,1,0x2bd79f58}, {175,95,40,16,1,0x26976b00},
+        {184,95,8,12,1,0x3a1715d8}, {184,111,8,12,1,0x3a1715d8}
+    };
+    for(int band=0;band<=256;band+=256) for(int margin=1;margin<=160;++margin)
+    for(unsigned i=0;i<sizeof(inn)/sizeof(*inn);++i) {
+        uint32_t rect[]={0x64808080,inn[i].x|(inn[i].y<<16),inn[i].uv,inn[i].w|(inn[i].h<<16)};
+        uint32_t original[4];memcpy(original,rect,sizeof(rect));
+        shinka_menu_wide_rect(rect,4,0,band,0,band,319,band+239,margin);
+        CHECK((int16_t)rect[1]==inn[i].x+inn[i].side*margin);
+        CHECK((rect[1]>>16)==inn[i].y && rect[2]==original[2] && rect[3]==original[3]);
+        memcpy(rect,original,sizeof(rect));rect[2]=0x12340000;
+        shinka_menu_wide_rect(rect,4,0,band,0,band,319,band+239,margin);
+        CHECK(rect[1]==original[1]); /* unrelated world/speech palettes */
+        options[2]=0;shinka_view_tick();memcpy(rect,original,sizeof(rect));
+        CHECK(!shinka_menu_wide_rect(rect,4,0,band,0,band,319,band+239,margin));
+        CHECK(!memcmp(rect,original,sizeof(rect)));
+        options[2]=1;shinka_view_tick();
     }
     animation_tests();
     puts("Field preview, battle projection, scene isolation and independent settings passed.");

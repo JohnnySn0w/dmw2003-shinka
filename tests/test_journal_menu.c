@@ -563,6 +563,35 @@ int main(void) {
         }
         W(callbacks[2],0);CHECK(!shinka_menu_status_layout());
     }
+    /* Pelche Oasis capture: field child 4 owns the resident inn widget. */
+    memset(ram,0,sizeof(ram));shinka_lab_selection_reset();
+    const uint32_t inn_objects[]={0x800ab80c,0x800ab878,0x800ab8ec,0x800abb88};
+    const uint32_t inn_callbacks[]={0x80020b58,0x800874d0,0x8008aa10,0x800119a8};
+    const uint32_t inn_counts[]={1,3,31,8};
+    const uint32_t inn_prologues[]={0x27bdffe0,0x27bdffe0,0x27bdffc0,0x27bdff38};
+    W(0x8004b3f8,0x249);W(0x8005cca8,2);W(0x8005ccbc,inn_objects[0]);
+    for(int i=0;i<4;++i) {
+        uint32_t p=inn_objects[i],table=0x801e0000+i*0x100;
+        W(p+0x28,0x80014274);W(p+0x48,inn_callbacks[i]);W(p+0x20,inn_counts[i]);
+        W(p+0xc,1);W(p+0x24,table);W(inn_callbacks[i],inn_prologues[i]);
+        if(i<3) W(table+(i==2?16:0),inn_objects[i+1]);
+    }
+    writes=0;CHECK(shinka_menu_status_layout()==SHINKA_FIELD_INN);CHECK(!writes);
+    W(0x8004b3fc,0x249);CHECK(shinka_menu_status_layout()==SHINKA_FIELD_INN);
+    W(0x8005cca8,3);CHECK(!shinka_menu_status_layout());W(0x8005cca8,2);
+    W(0x8004b3f8,0x600);CHECK(!shinka_menu_status_layout());W(0x8004b3f8,0x249);
+    for(int i=0;i<4;++i) {
+        uint32_t p=inn_objects[i];
+        W(p+0x48,0);CHECK(!shinka_menu_status_layout());W(p+0x48,inn_callbacks[i]);
+        W(p+0x20,0);CHECK(!shinka_menu_status_layout());W(p+0x20,inn_counts[i]);
+        W(p+0xc,3);CHECK(!shinka_menu_status_layout());W(p+0xc,1);
+        W(inn_callbacks[i],0);CHECK(!shinka_menu_status_layout());W(inn_callbacks[i],inn_prologues[i]);
+        if(i<3) {
+            W(p+0x24,0x801fffff);CHECK(!shinka_menu_status_layout());
+            W(p+0x24,0x801e0000+i*0x100);
+        }
+    }
+    W(0x801e0210,0);CHECK(!shinka_menu_status_layout());
     puts("Full lab actions, partner retention, legacy restoration, root return and menu input checks passed.");
     return 0;
 }

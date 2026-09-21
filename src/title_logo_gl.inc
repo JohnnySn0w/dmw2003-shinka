@@ -47,8 +47,9 @@ static void shinka_title_gl_draw(int ww, int wh) {
     }
     alpha = shinka_title_opacity();
     if (!shinka_title_tex || alpha <= 0.0f) return;
-    letterbox_rect_aspect(ww, wh, 4, 3, &lx, &ly, &lw, &lh);
-    dw = lw * 220 / 320;
+    int wide = g_wide_w > 0 && shinka_view_wide_active();
+    letterbox_rect_aspect(ww, wh, wide ? 16 : 4, wide ? 9 : 3, &lx, &ly, &lw, &lh);
+    dw = lw * 220 / (wide ? g_wide_w : 320);
     dh = dw * shinka_title_h / shinka_title_w;
     x = lx + (lw - dw) / 2;
     y = ly + lh * 8 / 240;

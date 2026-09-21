@@ -20,8 +20,10 @@ by complete rectangle, UV/CLUT and texture-page identity. It also checks the
 scene mode, resident module and native drawing environment, including both
 frame buffers. Background and menu palettes are not removed.
 
-`src/title_logo_gl.inc` draws the PNG over the 4:3 title viewport before the
-runtime OSD. It follows native logo modulation and observes the outgoing fade
+`src/title_logo_gl.inc` draws the PNG over the active title viewport before the
+runtime OSD. The Field screen-view preference also applies to the title:
+16:9 widens its circuit-board background while the logo, Start/Continue choices
+and credits stay centered at their original proportions. L2/LT toggles the view. It follows native logo modulation and observes the outgoing fade
 triangles to fade the replacement. The fade is a uniform alpha approximation
 of the original subtractive Gouraud effect. The title scene's outgoing owner
 modes remain eligible only while its module is resident, avoiding a flash of

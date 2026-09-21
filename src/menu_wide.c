@@ -3,8 +3,19 @@
 #include "mod_plugins.h"
 #include <string.h>
 
+/* The mode changes before the outgoing overlay stops drawing. Identify the
+ * resident module too: title -> Continue briefly uses the card mode while
+ * the title artwork and its fade are still alive. Never admit the intro FMV. */
+int shinka_menu_boot_scene(unsigned mode) {
+    if (mode != 0xe00 && mode != 0xc00 && mode != 0xc01 && mode != 0x1600 && mode != 0x2d7) return 0;
+    unsigned module = psx_mod_read_word(0x80055d28u);
+    if (module == 14 && mode != 0xc01) return SHINKA_BOOT_TITLE;
+    if (module == 12 && (mode == 0xc00 || mode == 0xc01)) return SHINKA_BOOT_CARD;
+    return 0;
+}
+
 int shinka_menu_wide_mode(unsigned mode) {
-    return mode == 0xa00 || mode == 0xf00
+    return shinka_menu_boot_scene(mode) || mode == 0xa00 || mode == 0xf00
         || (mode == 0x1000 && shinka_menu_root_active()) || shinka_menu_status_layout();
 }
 
@@ -13,6 +24,10 @@ static int stretch_x(int x, int margin) {
     int scaled = x * (320 + 2 * margin);
     return (scaled >= 0 ? scaled / 320 : -((-scaled + 319) / 320)) - margin;
 }
+
+/* Stretch only the empty join between the file information and party. A
+ * shared edge mapping keeps all border strips attached to both columns. */
+static int card_x(int x, int margin) { return x + (x <= 144 ? -margin : margin); }
 
 static int ribbon_x(int x, int start) {
     /* The first 32px tile is the angled cap. The original ribbon starts at
@@ -32,7 +47,9 @@ static int folder_outline(unsigned clut, unsigned uv) {
 static int backdrop_tile(const uint32_t* words, unsigned mode) {
     if (words[3] != 0x00300030) return 0;
     uint32_t uv = words[2];
-    return mode == 0x400 ? (uv == 0x3ae91a28 || uv == 0x3b2b00a8 || uv == 0x3b6b0078)
+    return shinka_menu_boot_scene(mode) == SHINKA_BOOT_CARD
+        ? (uv == 0x342b9200 || uv == 0x33eb9230 || uv == 0x33ab80a0)
+        : mode == 0x400 ? (uv == 0x3ae91a28 || uv == 0x3b2b00a8 || uv == 0x3b6b0078)
         : mode == 0x1200 ? (uv == 0x3f6b0060 || uv == 0x3fab0030 || uv == 0x3feb0000)
         : (mode == 0xd00 || mode == 0xd01) ? (uv == 0x7d28ba30 || uv == 0x7d68bb00 || uv == 0x7d2a3814)
         : (mode == 0x1000 || (mode >= 0x200 && mode < 0x300))
@@ -72,8 +89,9 @@ static int layout_rect(uint32_t* words, int count, int offset_x, int offset_y,
     int left, int top, int right, int bottom, int margin, unsigned mode, int root, int status) {
     unsigned clut;
     int x, y, w, h, anchor = 0, dest_x, dest_w = 0;
+    int boot = shinka_menu_boot_scene(mode);
     int extra = status >= SHINKA_CARD_ALBUM;
-    int layout = root || status || mode == 0xa00 || mode == 0xf00;
+    int layout = boot || root || status || mode == 0xa00 || mode == 0xf00;
     int transition = (mode == 0x1000 || mode == 0x400 || mode == 0x1200 || mode == 0xd00 || mode == 0xd01 || (mode >= 0x200 && mode < 0x300))
         && shinka_view_wide_requested();
     int backdrop = layout || transition;
@@ -85,7 +103,7 @@ static int layout_rect(uint32_t* words, int count, int offset_x, int offset_y,
     x = (int16_t)words[1]; y = (int16_t)(words[1] >> 16);
     w = words[3] & 65535; h = words[3] >> 16; clut = words[2] >> 16;
     if (x < -128 || x > 448 || y < -128 || y > 368 || w < 1 || w > 320 || h < 1 || h > 240) return 0;
-    if (op == 0x66 && (!extra || words[3] == 0x00400040)) {
+    if (!boot && op == 0x66 && (!extra || words[3] == 0x00400040)) {
         /* The native menu wipe is five columns of animated 64px tiles, not a
          * full-screen flat rectangle. Preserve its palette animation and UVs
          * while letting the mask reach both widescreen edges. */
@@ -102,7 +120,41 @@ static int layout_rect(uint32_t* words, int count, int offset_x, int offset_y,
      * repainting the margins through its palette fade, but don't treat a
      * half-constructed or unrelated task as the Items layout. */
     if (!layout) return 0;
-    if (extra) {
+    if (boot == SHINKA_BOOT_TITLE) {
+        /* Five strips form one circuit-board image (different texture pages).
+         * Only that image widens; choices, copyright and either logo stay
+         * centered at their native size. Shared edges avoid visible seams. */
+        if (op != 0x64 || words[3] != 0x00f00040 || y != 0
+            || x < 0 || x > 256 || x % 64
+            || (words[2] != 0x7cc00000 && words[2] != 0x7cc00040
+                && words[2] != 0x7d000000 && words[2] != 0x7d000040)) return 0;
+        dest_x = stretch_x(x, margin);
+        dest_w = stretch_x(x+w, margin)-dest_x;
+    } else if (boot == SHINKA_BOOT_CARD) {
+        unsigned uv = words[2] & 65535;
+        /* Widen the enclosing sheet, keeping the file information and party
+         * as intact left/right groups. The bottom instruction is a single
+         * sentence: it must never split at the screen's midpoint. */
+        if (clut == 0x34ab) {
+            if (h == 146 || (h == 4 && (y == 116 || y == 181 || y == 188 || y == 221))
+                || (y == 100 && h == 4)) {
+                dest_x = card_x(x, margin);
+                dest_w = card_x(x+w, margin)-dest_x;
+            } else dest_x = x + (x >= 147 ? margin : -margin);
+        } else if (clut == 0x332b && uv == 0x34c0) {
+            dest_x = card_x(x, margin);
+            dest_w = card_x(x+w, margin)-dest_x;
+        } else if (clut == 0x39eb || clut == 0x336b || clut == 0x32eb)
+            dest_x = x-margin; /* pillar, title cap and its two connectors */
+        else if (y < 89) dest_x = x+margin; /* card sockets and all pulse palettes */
+        else if (clut == 0x32ab || (w == 12 && h == 12 && uv == 0x3c54
+            && clut >= 0x3057 && clut <= 0x3157 && (clut-0x3057)%64 == 0))
+            dest_x = x+margin; /* confirmation box / every advance-icon pulse */
+        else if (clut == 0x3a17 && y >= 109 && y < 185)
+            dest_x = x-margin; /* access/error messages span the whole sheet */
+        else if (y >= 185) dest_x = x + (x >= 188 && (y == 189 || y == 190 || y == 203 || y == 204) ? margin : -margin);
+        else dest_x = x + (x >= 147 ? margin : -margin);
+    } else if (extra) {
         if (status == SHINKA_FIELD_INN) {
             /* Location stays left; money, price, choices and highlight form
              * right-anchored groups. World sprites and speech use other CLUTs. */
@@ -345,9 +397,34 @@ static int scaled_x(int x, int scale) {
 
 void shinka_menu_wide_quad(uint32_t* words, int count, uint32_t source,
     int offset_x, int offset_y, int left, int top, int right, int bottom, int margin) {
-    if ((count != 9 && count != 5) || !shinka_view_wide_active() || margin <= 0 || margin > 160
+    if ((count != 9 && count != 5 && count != 6 && count != 8) || !shinka_view_wide_active() || margin <= 0 || margin > 160
         || offset_x || (offset_y != 0 && offset_y != 256)
         || left || right != 319 || top != offset_y || bottom != top + 239) return;
+    if (count == 8) {
+        /* Transfer fill is an untextured Gouraud quad, separate from its
+         * textured frame. Keep the acknowledged-byte animation intact. */
+        if (shinka_menu_boot_scene(psx_mod_read_word(0x8004b3f8u)) != SHINKA_BOOT_CARD
+            || words[0] >> 24 != 0x38 || words[1] != 0x00c100cdu
+            || words[5] != 0x00cb00cdu || (words[3] >> 16) != 193
+            || (words[7] >> 16) != 203 || (uint16_t)words[3] != (uint16_t)words[7]
+            || (uint16_t)words[3] < 205 || (uint16_t)words[3] > 303) return;
+        for (int i = 1; i < 8; i += 2)
+            words[i] = (words[i] & 0xffff0000u) | (uint16_t)((int16_t)words[i]+margin);
+        return;
+    }
+    if (count == 6) {
+        /* Native title/card screen fades are a four-triangle fan. Move only
+         * its outer corners, preserving the center and per-vertex intensity. */
+        if (!shinka_menu_boot_scene(psx_mod_read_word(0x8004b3f8u))
+            || words[0] >> 24 != 0x32 || words[1] != 0x007800a0) return;
+        for (int i = 3; i <= 5; i += 2) {
+            int x = (int16_t)words[i], y = (int16_t)(words[i] >> 16);
+            if ((x != 0 && x != 320) || (y != -15 && y != 260)) return;
+        }
+        for (int i = 3; i <= 5; i += 2)
+            words[i] = (words[i] & 0xffff0000u) | (uint16_t)((int16_t)words[i] == 0 ? -margin : 320+margin);
+        return;
+    }
     if (count == 5) {
         unsigned mode = psx_mod_read_word(0x8004b3f8u);
         /* The shop/card overlay fades with a full-screen semitransparent
@@ -355,7 +432,8 @@ void shinka_menu_wide_quad(uint32_t* words, int count, uint32_t source,
         if (words[0] >> 24 != 0x2a || words[1] || words[2] != 320
             || words[3] != 0x01000000u || words[4] != 0x01000140u
             || (mode != 0x1000 && mode != 0x400 && mode != 0x1200
-                && mode != 0xd00 && mode != 0xd01 && mode != 0xa00 && mode != 0xf00)) return;
+                && mode != 0xd00 && mode != 0xd01 && mode != 0xa00 && mode != 0xf00
+                && !shinka_menu_boot_scene(mode))) return;
         for (int i = 1; i <= 4; ++i)
             words[i] = (words[i] & 0xffff0000u) | (uint16_t)(i & 1 ? -margin : 320 + margin);
         return;

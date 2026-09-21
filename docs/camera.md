@@ -11,7 +11,8 @@ SETTINGS provides independent view and battle zoom controls:
   Small interiors can have authored black space outside their artwork. This is
   a preview, not a complete field widescreen conversion. It also widens the
   shared gym/shop interfaces and the supported Status, card and Lab menus listed
-  below, and anchors both expanded Start-menu roots to the wider canvas.
+  below, the title Start/Continue screen and memory-card save/load screens,
+  and anchors both expanded Start-menu roots to the wider canvas.
 - **Battle zoom:** 100%, 90%, or 80% projected size. At 80%, the same viewport
   covers approximately 25% more world span along each axis. This changes the
   effective field of view; it does not move the scripted camera backwards.
@@ -25,8 +26,9 @@ the field preference applies to modes `0x200..0x2ff`, the gym (`0xa00`), shops
 (`0xf00`), and the expanded Start root, Items, Sort, Map, Techniques, character
 Status and Card Folders in the Status overlay (`0x1000`). Card Album (`0x1200`),
 Edit Folder (`0x400`) and the Digimon Lab (`0xd00`/`0xd01`) also support the field
-preference while their verified menu tasks are active. Card battles, movies and
-rewards retain their original view. In battle 16:9,
+preference while their verified menu tasks are active. The title (`0xe00`, module 14) and memory-card save/load screens
+(`0xc00`/`0xc01`, module 12) also use Field, including the outgoing title
+handoff. Card battles, movies and rewards retain their original view. In battle 16:9,
 enemy health, battle commands/submenus and bottom dialogue stay aligned on the
 left; player health/MP and the miniature portrait move to the right. The bottom
 dialogue panel spans between the outer edges of both health panels. Its text and
@@ -44,6 +46,8 @@ game-side culling need coverage across more battles.
 | --- | --- |
 | Ordinary battles | **Battle**; wider arena view, side-anchored HUD and full-width bottom dialogue. **Battle zoom** is independent. |
 | Overworld and interiors | **Field**; extra preloaded scenery where available. Authored map edges and object culling still limit coverage. |
+| Title / Start / Continue | **Field**; circuit-board backdrop fills the width; logo, choices and credits remain centered at native proportions. |
+| Memory-card save/load | **Field**; repeated square backdrop, wider file sheet, intact information/party columns and aligned progress/confirmation controls. |
 | Both expanded Start roots | **Field**; party panels and menu/ribbon anchors follow the wider canvas, including return from a submenu. |
 | Items, Sort, Map, Techniques and character Status | **Field**; supported panels, text and cursors move together. The map retains its native artwork width and cursor snapping. |
 | Card Folders, Card Album and Edit Folder | **Field**; folder outlines expand as a unit; the editor grid stays compact and centered; the card picker has its own layout. |
@@ -725,3 +729,35 @@ the stay prompt on a copied profile, with a 4:3 reference. Other inns have not
 received the same visual verification. Native checks cover owner rejection,
 read-only recognition, both framebuffer bands, margins 1–160 and unchanged 4:3
 packets. All 19 native CTest entries pass with both fixes.
+
+### September 21: Title and memory-card screens
+
+The title and STGMCARD overlays now follow the persisted Field view setting;
+L2/LT can toggle them directly. Recognition checks both mode and resident module,
+including the outgoing title modes before Continue. Intro movie mode `0xe02`
+is excluded. No preference or width latch survives an unrelated scene.
+
+The title circuit-board image consists of five strips on different texture
+pages, so it is widened as one image, with shared integer boundaries. The menu
+choices and original/replacement logos retain their own proportions. The PNG
+presentation layer uses the active viewport when sizing its native footprint;
+this also keeps it aligned in a 4:3 desktop window displaying 16:9 content.
+The native four-triangle fade covers the expanded image.
+
+Memory-card backgrounds repeat native 48px tiles into the margins. The enclosing
+file sheet expands only across its empty join; file information stays left and
+party details stay right. Text, icons, palette-driven selection effects and
+confirmation choices remain native size. Transfer/error instructions stay whole.
+The progress fill uses an untextured Gouraud quad, so it is translated separately
+with its textured frame, without changing transfer progress or completion logic.
+
+Copied-profile OpenGL checks cover title/Continue, card selection, load/save
+transfer and completion, cancellation to title and return to the field. Local
+consecutive captures and reference images are under `output/boot-wide-01/`.
+Eight 150-frame sequences (1,200 frames) retain the full 426px width through
+those handoffs. A separate 120-frame completion capture covers the advance-icon
+pulse; a 4:3 comparison confirms the original layout remains intact.
+Native regression checks exercise both framebuffer bands, all margins 1–160,
+contiguous border joins, every progress-fill width, selection palettes, 4:3
+rejection and title/movie/module isolation. The 19 native CTest entries pass.
+These checks use the English PAL game and do not establish other-region coverage.

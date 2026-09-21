@@ -5,7 +5,7 @@
 #include "battle_hud.h"
 #include "menu_wide.h"
 #define CHECK(c) do { if (!(c)) { fprintf(stderr,"line %d: %s\n",__LINE__,#c); exit(1); } } while (0)
-static uint32_t mode;
+static uint32_t mode, module;
 static uint32_t previous_mode, language = 2, destination = 5;
 static uint32_t return_marker;
 static int started = 1, options[3], frontend;
@@ -18,6 +18,7 @@ int shinka_menu_items_active(void) { return items_menu; }
 int shinka_menu_status_layout(void) { return items_menu; }
 int psx_mod_game_started(void) { return started; }
 uint32_t psx_mod_read_word(uint32_t addr) {
+    if (addr == 0x80055d28) return module;
     if (addr == 0x8004b3f8) return mode;
     if (addr == 0x8004b400) return previous_mode;
     if (addr == 0x8004b404) return return_marker;
@@ -114,6 +115,82 @@ static void animation_tests(void) {
         CHECK(!partial[1] && partial[2]==319);
     }
 }
+static void boot_tests(void) {
+    root_menu=items_menu=0; options[2]=1; started=1;
+    static const struct {unsigned mode,module;int wide;} scenes[]={
+        {0xe00,14,1},{0xc00,14,1},{0x1600,14,1},{0x2d7,14,1},
+        {0xc00,12,1},{0xc01,12,1},{0xe02,14,0},{0xc00,0,0},
+        {0xe00,12,0},{0xc01,14,0},{0x1600,12,0}
+    };
+    for(unsigned i=0;i<sizeof(scenes)/sizeof(*scenes);++i) {
+        mode=scenes[i].mode;module=scenes[i].module;shinka_view_tick();
+        CHECK(frontend==scenes[i].wide);
+        options[2]=0;shinka_view_tick();CHECK(!frontend);options[2]=1;
+    }
+    mode=0xe00;module=14;shinka_view_tick();
+    for(int band=0;band<=256;band+=256) for(int margin=1;margin<=160;++margin) {
+        int edge=-margin;
+        for(int x=0;x<320;x+=64) {
+            uint32_t strip[]={0x64808080,x,0x7cc00000,0x00f00040};
+            int w=shinka_menu_wide_rect(strip,4,0,band,0,band,319,band+239,margin);
+            CHECK((int16_t)strip[1]==edge);edge+=w;
+            CHECK(strip[2]==0x7cc00000 && strip[3]==0x00f00040);
+        }
+        CHECK(edge==320+margin);
+        uint32_t choice[]={0x64808080,0x009a0089,0x7f2bb7d0,0x00100030};
+        CHECK(!shinka_menu_wide_rect(choice,4,0,band,0,band,319,band+239,margin));
+        CHECK(choice[1]==0x009a0089); /* text/artwork retains its native aspect */
+        uint32_t fade[]={0x32808080,0x007800a0,0,0xfff10000,0,0x01040140};
+        shinka_menu_wide_quad(fade,6,0,0,band,0,band,319,band+239,margin);
+        CHECK((int16_t)fade[3]==-margin && (int16_t)fade[5]==320+margin);
+        CHECK(fade[0]==0x32808080 && fade[1]==0x007800a0 && fade[2]==0 && fade[4]==0);
+    }
+    mode=0xc01;module=12;shinka_view_tick();
+    static const struct {int x,y,w,h,side;unsigned uv;} pieces[]={
+        {25,0,20,40,-1,0x39eb57e0}, {104,32,52,52,1,0x376b8178},
+        {24,135,120,5,-1,0x34ab5278}, {148,129,8,45,1,0x34ab7fe0},
+        {25,123,8,12,-1,0x3a571500}, {206,98,8,12,1,0x3a171500},
+        {229,206,8,12,-1,0x3a171500},
+        {210,145,8,12,-1,0x3a171500}, /* long instruction must not split */
+        {194,189,8,12,1,0x3a171500}, {299,206,12,12,1,0x30973c54}, {208,185,20,37,1,0x32ab00e0}
+    };
+    for(int band=0;band<=256;band+=256) for(int margin=1;margin<=160;++margin) {
+        for(unsigned i=0;i<sizeof(pieces)/sizeof(*pieces);++i) {
+            uint32_t r[]={0x64808080,pieces[i].x|(pieces[i].y<<16),pieces[i].uv,pieces[i].w|(pieces[i].h<<16)};
+            CHECK(!shinka_menu_wide_rect(r,4,0,band,0,band,319,band+239,margin));
+            CHECK((int16_t)r[1]==pieces[i].x+pieces[i].side*margin);
+            CHECK(r[2]==pieces[i].uv && (r[3]&65535)==pieces[i].w);
+        }
+        for (unsigned filled=0;filled<=98;++filled) {
+            uint32_t fill[]={0x38f2327f,0x00c100cd,0xde2fd1,0x00c100cd+filled,
+                0xf2327f,0x00cb00cd,0xde2fd1,0x00cb00cd+filled};
+            shinka_menu_wide_quad(fill,8,0,0,band,0,band,319,band+239,margin);
+            CHECK((int16_t)fill[1]==205+margin && (int16_t)fill[3]==205+margin+filled);
+            CHECK(fill[2]==0xde2fd1 && fill[6]==0xde2fd1);
+        }
+        int edge=16-margin;
+        for(int x=16;x<176;x+=40) {
+            uint32_t r[]={0x64808080,(100<<16)|x,0x34ab3dc0,(4<<16)|40};
+            int w=shinka_menu_wide_rect(r,4,0,band,0,band,319,band+239,margin);
+            CHECK((int16_t)r[1]==edge);edge+=w;
+        }
+        CHECK(edge==176+margin); /* decorative cap joins the long rule */
+        for(unsigned palette=0x3c2b;palette<=0x3feb;palette+=64) {
+            uint32_t r[]={0x64808080,0x0012005f,(palette<<16)|0x0078,0x00430048};
+            shinka_menu_wide_rect(r,4,0,band,0,band,319,band+239,margin);
+            CHECK((int16_t)r[1]==95+margin); /* every card cursor pulse */
+        }
+        uint32_t tile[]={0x64808080,0x00200000,0x342b9200,0x00300030};int positions[8];
+        int n=shinka_menu_backdrop_positions(tile,4,0,band,0,band,319,band+239,margin,positions);
+        CHECK(n>0 && n<=8);
+        for(int i=1;i<n;++i) CHECK(positions[i]-positions[i-1]==96);
+        uint32_t r[]={0x64808080,0x0012005f,0x3eeb0078,0x00430048};
+        shinka_menu_wide_rect(r,4,0,band,0,band,255,band+239,margin);
+        CHECK(r[1]==0x0012005f); /* render-to-texture pass is untouched */
+    }
+    module=0;mode=0x1000;
+}
+
 int main(void) {
     const uint32_t modes[] = {0, 0x1ff, 0x200, 0x202, 0x21d, 0x2ff, 0x300,
         0x600, 0x700, 0xa00, 0xa01, 0xc00, 0xc01, 0xd00, 0xd01, 0xe00, 0xf00, 0xf01, 0x1000, 0x1400};
@@ -763,6 +840,7 @@ int main(void) {
         CHECK(!memcmp(rect,original,sizeof(rect)));
         options[2]=1;shinka_view_tick();
     }
+    boot_tests();
     animation_tests();
     puts("Field preview, battle projection, scene isolation and independent settings passed.");
     return 0;

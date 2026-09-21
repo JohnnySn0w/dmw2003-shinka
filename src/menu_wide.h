@@ -11,6 +11,8 @@ enum { SHINKA_STATUS_NONE, SHINKA_STATUS_ITEMS, SHINKA_STATUS_SORT, SHINKA_STATU
     SHINKA_FOLDER_CARDS, SHINKA_FIELD_INN };
 int shinka_menu_status_layout(void);
 int shinka_menu_map_pan(void);
+enum { SHINKA_BOOT_NONE, SHINKA_BOOT_TITLE, SHINKA_BOOT_CARD };
+int shinka_menu_boot_scene(unsigned mode);
 int shinka_menu_wide_mode(unsigned mode);
 int shinka_menu_wide_rect(uint32_t* words, int count, int offset_x, int offset_y,
     int left, int top, int right, int bottom, int margin);

@@ -51,7 +51,8 @@ The launcher resolves the file and supplies it to SDL before initialization, res
 ## Trigger shortcuts
 
 - **L2 / LT:** toggle 4:3 ↔ 16:9 for the current supported scene. Battles update
-  the Battle preference; fields, supported menus and the map update Field.
+  the Battle preference; fields, supported menus, the map, title screen and
+  memory-card save/load screens update Field.
   The choice persists and is reflected in SETTINGS. Unsupported scenes report
   that the shortcut is unavailable instead of changing a hidden preference.
 - **R2 / RT:** toggle speedup on/off using the existing manual speed limit

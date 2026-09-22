@@ -27,6 +27,11 @@ The location descriptions below provide context while identifying instruments
 or judging replacement palettes. They are not a claim that every arrangement
 has been individually tuned.
 
+Completed labels can now produce [three-palette listening arrangements and
+individual stems](labelled-music-arrangements.md). The September 21 local set
+contains 19 completed tracks. These previews preserve the notebook's confidence
+and notes, document substitutes, and leave the live game pack unchanged.
+
 ## Earlier replacement-palette previews
 
 **Asuka City (BGM001, sequence 000).**

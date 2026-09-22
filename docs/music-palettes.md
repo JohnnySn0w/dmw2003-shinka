@@ -1,5 +1,9 @@
 # Soundtrack auditions: DS-inspired, sampled, and chiptune
 
+For the current notebook-driven batch workflow, see [Labeled music
+arrangements](labelled-music-arrangements.md). The sections below document the
+earlier, separately authored Asuka City previews.
+
 **Preferred direction: DS-era sound**, following the user's 2026-09-10 preference.
 The default preview is now a sample/synth hybrid, with bright melodic accents,
 sampled rhythm instruments, a compact stereo mix, and light room ambience.

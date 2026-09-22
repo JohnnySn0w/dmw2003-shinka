@@ -1,0 +1,1164 @@
+{
+  "license": "CC0-1.0",
+  "sources": [
+    "https://github.com/sgossner/VSCO-2-CE",
+    "https://github.com/sgossner/VCSL",
+    "https://freepats.zenvoid.org/ElectricGuitar/clean-electric-guitar.html",
+    "https://freepats.zenvoid.org/Guitar/acoustic-guitar.html",
+    "https://freepats.zenvoid.org/Organ/accordion.html"
+  ],
+  "samples": [
+    {
+      "instrument": "flute",
+      "repo": "VSCO-2-CE",
+      "revision": "440300901dfe9275fd84e0b7763af1f8443ae62e",
+      "path": "Woodwinds/Flute/susNV/LDFlute_susNV_C3_v3_1.wav",
+      "git_blob": "18b1fa490327f38057a2edbaca4f000cffbf633d",
+      "root": 60,
+      "pitched": true,
+      "file": "18b1fa490327f38057a2edbaca4f000cffbf633d.wav",
+      "sha256": "8e0549fb44827c7379b74bba4d8402671c863e483cc1ea85a73407ce27ca3bd6"
+    },
+    {
+      "instrument": "flute",
+      "repo": "VSCO-2-CE",
+      "revision": "440300901dfe9275fd84e0b7763af1f8443ae62e",
+      "path": "Woodwinds/Flute/susNV/LDFlute_susNV_C4_v3_1.wav",
+      "git_blob": "850db1f598b5ba7a88ec2f929f8b832fb83cdd66",
+      "root": 72,
+      "pitched": true,
+      "file": "850db1f598b5ba7a88ec2f929f8b832fb83cdd66.wav",
+      "sha256": "9e09ce606f8fe31c8dd071c717de54d40c38029e3c2e947500defac474e8cd7d"
+    },
+    {
+      "instrument": "flute",
+      "repo": "VSCO-2-CE",
+      "revision": "440300901dfe9275fd84e0b7763af1f8443ae62e",
+      "path": "Woodwinds/Flute/susNV/LDFlute_susNV_C5_v2_1.wav",
+      "git_blob": "c781084689262db0267e3b888ac9a9244f32dbd7",
+      "root": 84,
+      "pitched": true,
+      "file": "c781084689262db0267e3b888ac9a9244f32dbd7.wav",
+      "sha256": "7c9414267bade75f432e38aa893edea9fb7146b5b1b3e0ae1f97a475fa89db0f"
+    },
+    {
+      "instrument": "piccolo",
+      "repo": "VSCO-2-CE",
+      "revision": "440300901dfe9275fd84e0b7763af1f8443ae62e",
+      "path": "Woodwinds/Piccolo/Sus/piccolo_G4_sustain1.wav",
+      "git_blob": "e2f56b2c8691ccda1d60a2f0eeff73dd7bf23e32",
+      "root": 79,
+      "pitched": true,
+      "file": "e2f56b2c8691ccda1d60a2f0eeff73dd7bf23e32.wav",
+      "sha256": "6bdc2e38e2b5982fa5a9a05dc7d8ad5d6a7e0617a1fe4f23df571400757a5a95"
+    },
+    {
+      "instrument": "piccolo",
+      "repo": "VSCO-2-CE",
+      "revision": "440300901dfe9275fd84e0b7763af1f8443ae62e",
+      "path": "Woodwinds/Piccolo/Sus/piccolo_C5_sustain1.wav",
+      "git_blob": "512edafd9a2c4825dad35a887eb742bdd161f9b9",
+      "root": 84,
+      "pitched": true,
+      "file": "512edafd9a2c4825dad35a887eb742bdd161f9b9.wav",
+      "sha256": "d3069f1cf627d1cf9715ea5564e26e0988d321a6e7c5d4ffe8ff5345ff78c09f"
+    },
+    {
+      "instrument": "violin",
+      "repo": "VSCO-2-CE",
+      "revision": "440300901dfe9275fd84e0b7763af1f8443ae62e",
+      "path": "Strings/Violin Section/susVib/VlnEns_susVib_G2_v2.wav",
+      "git_blob": "b7693eb5c9d104fc01e130ee2552dac546ee85f7",
+      "root": 55,
+      "pitched": true,
+      "file": "b7693eb5c9d104fc01e130ee2552dac546ee85f7.wav",
+      "sha256": "c0b06a23f0245c042f0609dc0db704adc14bfc9ea8a34cb5c97d80096715a0e6"
+    },
+    {
+      "instrument": "violin",
+      "repo": "VSCO-2-CE",
+      "revision": "440300901dfe9275fd84e0b7763af1f8443ae62e",
+      "path": "Strings/Violin Section/susVib/VlnEns_susVib_B2_v2.wav",
+      "git_blob": "4f54ea9180f4c11ec3d0e92f556003be59cb0f0c",
+      "root": 59,
+      "pitched": true,
+      "file": "4f54ea9180f4c11ec3d0e92f556003be59cb0f0c.wav",
+      "sha256": "a822fd195e60881afac5e0801d8d494b782a8f6787a08f3c711f5e00290b3fb6"
+    },
+    {
+      "instrument": "violin",
+      "repo": "VSCO-2-CE",
+      "revision": "440300901dfe9275fd84e0b7763af1f8443ae62e",
+      "path": "Strings/Violin Section/susVib/VlnEns_susVib_C4_v2.wav",
+      "git_blob": "1c8e05059b270f870342a03e19b93882d6dd1e1b",
+      "root": 72,
+      "pitched": true,
+      "file": "1c8e05059b270f870342a03e19b93882d6dd1e1b.wav",
+      "sha256": "5857387b40c412f756ef281c1171247664432a4e5078c98142d595d15cd92ef9"
+    },
+    {
+      "instrument": "violin",
+      "repo": "VSCO-2-CE",
+      "revision": "440300901dfe9275fd84e0b7763af1f8443ae62e",
+      "path": "Strings/Violin Section/susVib/VlnEns_susVib_B4_v2.wav",
+      "git_blob": "598c11bd6fb25e33c599836428e03336ad5a5031",
+      "root": 83,
+      "pitched": true,
+      "file": "598c11bd6fb25e33c599836428e03336ad5a5031.wav",
+      "sha256": "bdb85532f47e4ebd681f9617a415116e7e5aeb786dce2eeab5ab9b93c1b31644"
+    },
+    {
+      "instrument": "viola",
+      "repo": "VSCO-2-CE",
+      "revision": "440300901dfe9275fd84e0b7763af1f8443ae62e",
+      "path": "Strings/Viola Section/susvib/ViolaEns_susvib_C2_v2_1.wav",
+      "git_blob": "7851268d881b226650cba4ef1d4e9578ae212099",
+      "root": 48,
+      "pitched": true,
+      "file": "7851268d881b226650cba4ef1d4e9578ae212099.wav",
+      "sha256": "09db4ed2c8eda02d1f6a27258a2292b56e65e94ecc0337265bbbac5d9978dc92"
+    },
+    {
+      "instrument": "viola",
+      "repo": "VSCO-2-CE",
+      "revision": "440300901dfe9275fd84e0b7763af1f8443ae62e",
+      "path": "Strings/Viola Section/susvib/ViolaEns_susvib_B2_v2_1.wav",
+      "git_blob": "0f7bee6ccadc6e25a101cbd7be1c27ac6e896ea4",
+      "root": 59,
+      "pitched": true,
+      "file": "0f7bee6ccadc6e25a101cbd7be1c27ac6e896ea4.wav",
+      "sha256": "edc77038a83f47cf49296c0009fdac23cb5ade3133a2beabd0d2d1f591ccf3cb"
+    },
+    {
+      "instrument": "viola",
+      "repo": "VSCO-2-CE",
+      "revision": "440300901dfe9275fd84e0b7763af1f8443ae62e",
+      "path": "Strings/Viola Section/susvib/ViolaEns_susvib_C4_v2_1.wav",
+      "git_blob": "4561f010d9b6de44b121246731042d1879d38ab7",
+      "root": 72,
+      "pitched": true,
+      "file": "4561f010d9b6de44b121246731042d1879d38ab7.wav",
+      "sha256": "81e1ef9109a1434974092c0165ffee44918b2553fd4afeeee42b91b8007ad263"
+    },
+    {
+      "instrument": "viola",
+      "repo": "VSCO-2-CE",
+      "revision": "440300901dfe9275fd84e0b7763af1f8443ae62e",
+      "path": "Strings/Viola Section/susvib/ViolaEns_susvib_B4_v2_1.wav",
+      "git_blob": "818ac60340e41f1287024c738d43c5bf3cf7dc9d",
+      "root": 83,
+      "pitched": true,
+      "file": "818ac60340e41f1287024c738d43c5bf3cf7dc9d.wav",
+      "sha256": "cac7c5f73d9f7974156ef52c7b5202428271d8fcf9ceb11936e694c199be2f31"
+    },
+    {
+      "instrument": "pizzicato",
+      "repo": "VSCO-2-CE",
+      "revision": "440300901dfe9275fd84e0b7763af1f8443ae62e",
+      "path": "Strings/Solo Violin/Pizz/LLVln_Pizz_G3_f_RR1.wav",
+      "git_blob": "3babfa3e843a8252100cad58d4931d5e9784c2c0",
+      "root": 55,
+      "pitched": true,
+      "file": "3babfa3e843a8252100cad58d4931d5e9784c2c0.wav",
+      "sha256": "dc56b8193aaa29d9a0704aeee8672437a00bd12ec5e964e9a02765ead48fcdf6",
+      "pitch_note": "Library octave convention corrected against sampled pitch"
+    },
+    {
+      "instrument": "pizzicato",
+      "repo": "VSCO-2-CE",
+      "revision": "440300901dfe9275fd84e0b7763af1f8443ae62e",
+      "path": "Strings/Solo Violin/Pizz/LLVln_Pizz_C4_f_RR1.wav",
+      "git_blob": "6c869ff5041622f68dfdc242013f8be83584d585",
+      "root": 60,
+      "pitched": true,
+      "file": "6c869ff5041622f68dfdc242013f8be83584d585.wav",
+      "sha256": "f2836918ed710f19d1e63a6884409f1c9138cdb525d6295d9cdb473f0d56be95",
+      "pitch_note": "Library octave convention corrected against sampled pitch"
+    },
+    {
+      "instrument": "pizzicato",
+      "repo": "VSCO-2-CE",
+      "revision": "440300901dfe9275fd84e0b7763af1f8443ae62e",
+      "path": "Strings/Solo Violin/Pizz/LLVln_Pizz_C5_f_RR1.wav",
+      "git_blob": "6b098e94523e710182b7ffdc9b61a6831b8bf956",
+      "root": 72,
+      "pitched": true,
+      "file": "6b098e94523e710182b7ffdc9b61a6831b8bf956.wav",
+      "sha256": "df52150f00c233e6d270d7c557d90e741ef856577571f3a875b2868a5047b6a0",
+      "pitch_note": "Library octave convention corrected against sampled pitch"
+    },
+    {
+      "instrument": "cello-pizz",
+      "repo": "VSCO-2-CE",
+      "revision": "440300901dfe9275fd84e0b7763af1f8443ae62e",
+      "path": "Strings/Cello Section/pizzT/pizzT_B1_v2_RR1.wav",
+      "git_blob": "4a241c20bb2cb76be13837019363537e85851f40",
+      "root": 47,
+      "pitched": true,
+      "file": "4a241c20bb2cb76be13837019363537e85851f40.wav",
+      "sha256": "d5898f41739b4929530aa7d4a3f1660ee2bb6096b375c1f034eb6d26cbb10623"
+    },
+    {
+      "instrument": "cello-pizz",
+      "repo": "VSCO-2-CE",
+      "revision": "440300901dfe9275fd84e0b7763af1f8443ae62e",
+      "path": "Strings/Cello Section/pizzT/pizzT_C3_v2_RR1.wav",
+      "git_blob": "a0a21bf7abdff541715f3c49df50ca0a3b5ef0f7",
+      "root": 60,
+      "pitched": true,
+      "file": "a0a21bf7abdff541715f3c49df50ca0a3b5ef0f7.wav",
+      "sha256": "fbc86686ef092e92e473dce4d1ff5f1e351dcc76ed2d94b0d336c1346f314e59"
+    },
+    {
+      "instrument": "cello-pizz",
+      "repo": "VSCO-2-CE",
+      "revision": "440300901dfe9275fd84e0b7763af1f8443ae62e",
+      "path": "Strings/Cello Section/pizzT/pizzT_B3_v2_RR1.wav",
+      "git_blob": "37e30848e2c86eeb1a7fd6f704fc33b23c4afa4b",
+      "root": 71,
+      "pitched": true,
+      "file": "37e30848e2c86eeb1a7fd6f704fc33b23c4afa4b.wav",
+      "sha256": "016e6cc084ae4e60eb52b0a60ffada2314211f1eb5bcc95c6a73b64ac0afbde8"
+    },
+    {
+      "instrument": "cello-pizz",
+      "repo": "VSCO-2-CE",
+      "revision": "440300901dfe9275fd84e0b7763af1f8443ae62e",
+      "path": "Strings/Cello Section/pizzT/pizzT_F4_v2_RR1.wav",
+      "git_blob": "5a5d41fbab07b45e1c15f8332ad3a9be98d9087c",
+      "root": 77,
+      "pitched": true,
+      "file": "5a5d41fbab07b45e1c15f8332ad3a9be98d9087c.wav",
+      "sha256": "a0d172b71a6f33890ba5212485e9a23dcc8982bf8ba78b1031c97f3cd419c2a3"
+    },
+    {
+      "instrument": "trumpet",
+      "repo": "VSCO-2-CE",
+      "revision": "440300901dfe9275fd84e0b7763af1f8443ae62e",
+      "path": "Brass/Trumpet/sus/Sum_SHTrumpet_sus_F2_v3_rr1.wav",
+      "git_blob": "ee1895af491c7c332439dae630de17e1a83a4abd",
+      "root": 53,
+      "pitched": true,
+      "file": "ee1895af491c7c332439dae630de17e1a83a4abd.wav",
+      "sha256": "31992fbdf596d77e9464dc57166718389f13870f8b9b1f1e83380f5ec2217c87"
+    },
+    {
+      "instrument": "trumpet",
+      "repo": "VSCO-2-CE",
+      "revision": "440300901dfe9275fd84e0b7763af1f8443ae62e",
+      "path": "Brass/Trumpet/sus/Sum_SHTrumpet_sus_C3_v3_rr1.wav",
+      "git_blob": "d5490467cf68db010843924b975fd71edfc41273",
+      "root": 60,
+      "pitched": true,
+      "file": "d5490467cf68db010843924b975fd71edfc41273.wav",
+      "sha256": "4a55ab4d867cfa3499fbcf1c5d8d530f757621a9979aee5b46d3fd69a2931c99"
+    },
+    {
+      "instrument": "trumpet",
+      "repo": "VSCO-2-CE",
+      "revision": "440300901dfe9275fd84e0b7763af1f8443ae62e",
+      "path": "Brass/Trumpet/sus/Sum_SHTrumpet_sus_A#3_v3_rr1.wav",
+      "git_blob": "f6b2753da2ae19e4748a91b0ed412decf3973fda",
+      "root": 70,
+      "pitched": true,
+      "file": "f6b2753da2ae19e4748a91b0ed412decf3973fda.wav",
+      "sha256": "c931621fae92e22cc73ee43924c0d30ee629764bb37c30cc427b59411198461d"
+    },
+    {
+      "instrument": "trumpet",
+      "repo": "VSCO-2-CE",
+      "revision": "440300901dfe9275fd84e0b7763af1f8443ae62e",
+      "path": "Brass/Trumpet/sus/Sum_SHTrumpet_sus_C5_v3_rr1.wav",
+      "git_blob": "9e43868b7c7e47a8ee107c68c6072756ef0f6bc1",
+      "root": 84,
+      "pitched": true,
+      "file": "9e43868b7c7e47a8ee107c68c6072756ef0f6bc1.wav",
+      "sha256": "ba7dc7050f277c5bba6c59a6dd330c2d50e29dc1d97bd19fb6bcbba4a8cad4d5"
+    },
+    {
+      "instrument": "horn",
+      "repo": "VSCO-2-CE",
+      "revision": "440300901dfe9275fd84e0b7763af1f8443ae62e",
+      "path": "Brass/F Horn/sus/MOHorn_sus_A#1_v2_1.wav",
+      "git_blob": "62c15504278f9c2dfaa0006530d34a5a3d92ecb0",
+      "root": 46,
+      "pitched": true,
+      "file": "62c15504278f9c2dfaa0006530d34a5a3d92ecb0.wav",
+      "sha256": "1a65415731a0be8a1a51ce31f7989180fde674173821acceaceef0f3511d5f35"
+    },
+    {
+      "instrument": "horn",
+      "repo": "VSCO-2-CE",
+      "revision": "440300901dfe9275fd84e0b7763af1f8443ae62e",
+      "path": "Brass/F Horn/sus/MOHorn_sus_C3_v2_1.wav",
+      "git_blob": "9f89dc248404a1a1e0240035ac5fa55c89e9c9cd",
+      "root": 60,
+      "pitched": true,
+      "file": "9f89dc248404a1a1e0240035ac5fa55c89e9c9cd.wav",
+      "sha256": "c0c0b157dcde094c4417b7c165d645897cde9ea6d74247bbab0c0e75355e78c3"
+    },
+    {
+      "instrument": "horn",
+      "repo": "VSCO-2-CE",
+      "revision": "440300901dfe9275fd84e0b7763af1f8443ae62e",
+      "path": "Brass/F Horn/sus/MOHorn_sus_D4_v1_1.wav",
+      "git_blob": "0d13acd769ecdfc234c416fe859a4eda9aac2f22",
+      "root": 74,
+      "pitched": true,
+      "file": "0d13acd769ecdfc234c416fe859a4eda9aac2f22.wav",
+      "sha256": "2866520e737f3826ee9f53693f148109a9cc2d2e54235db0b92f78b2c100b8f7"
+    },
+    {
+      "instrument": "horn",
+      "repo": "VSCO-2-CE",
+      "revision": "440300901dfe9275fd84e0b7763af1f8443ae62e",
+      "path": "Brass/F Horn/sus/MOHorn_sus_F4_v1_1.wav",
+      "git_blob": "3061198e82995900230e9ddde1138a076d8dca9f",
+      "root": 77,
+      "pitched": true,
+      "file": "3061198e82995900230e9ddde1138a076d8dca9f.wav",
+      "sha256": "580b2e57aa42f5fd6e4ecb65dcb79f01dfe510e98ddc2bea0a77fca1cba8d424"
+    },
+    {
+      "instrument": "tuba",
+      "repo": "VSCO-2-CE",
+      "revision": "440300901dfe9275fd84e0b7763af1f8443ae62e",
+      "path": "Brass/Tuba/sus/Tuba3_sus_A#1_v2_rr1_Mid.wav",
+      "git_blob": "64aaad3a1c8853c6b13138d496cba6e3e21b7276",
+      "root": 46,
+      "pitched": true,
+      "file": "64aaad3a1c8853c6b13138d496cba6e3e21b7276.wav",
+      "sha256": "64fba4c0bcdc36c82e48ec63d6820940b9c7074af096f4dac417147acd8d3a26"
+    },
+    {
+      "instrument": "tuba",
+      "repo": "VSCO-2-CE",
+      "revision": "440300901dfe9275fd84e0b7763af1f8443ae62e",
+      "path": "Brass/Tuba/sus/Tuba3_sus_A#2_v2_rr1_Mid.wav",
+      "git_blob": "917db331de98546d72391faa46f6453375778397",
+      "root": 58,
+      "pitched": true,
+      "file": "917db331de98546d72391faa46f6453375778397.wav",
+      "sha256": "8821818170c62d1f084104311ff0832e082a66c3899c3af5da1e8fc7a1f6815f"
+    },
+    {
+      "instrument": "tuba",
+      "repo": "VSCO-2-CE",
+      "revision": "440300901dfe9275fd84e0b7763af1f8443ae62e",
+      "path": "Brass/Tuba/sus/Tuba3_sus_D3_v1_rr1_Mid.wav",
+      "git_blob": "0376412b204d1bdb841d36bf4d9a1030f6b9cda0",
+      "root": 62,
+      "pitched": true,
+      "file": "0376412b204d1bdb841d36bf4d9a1030f6b9cda0.wav",
+      "sha256": "8f2bc8f32c619d25955c397ed9bfa5b2bb78f702688d952ae48764bf6f8f68b1"
+    },
+    {
+      "instrument": "trombone",
+      "repo": "VSCO-2-CE",
+      "revision": "440300901dfe9275fd84e0b7763af1f8443ae62e",
+      "path": "Brass/Tenor Trombone/sus/tenortbn_sus_A#1_v2_1.wav",
+      "git_blob": "bfed422b95827132a8cd27cdf5f6bc3073dbc293",
+      "root": 46,
+      "pitched": true,
+      "file": "bfed422b95827132a8cd27cdf5f6bc3073dbc293.wav",
+      "sha256": "09d6fff28ec8d8a3ac83505c61cf4e2e95fce5b232f3ae4f7adfefddb7af56e1"
+    },
+    {
+      "instrument": "trombone",
+      "repo": "VSCO-2-CE",
+      "revision": "440300901dfe9275fd84e0b7763af1f8443ae62e",
+      "path": "Brass/Tenor Trombone/sus/tenortbn_sus_C3_v2_1.wav",
+      "git_blob": "dbb030c2fdcfddf56ec0cbd1cc9cc2c03eb3aa33",
+      "root": 60,
+      "pitched": true,
+      "file": "dbb030c2fdcfddf56ec0cbd1cc9cc2c03eb3aa33.wav",
+      "sha256": "6858987188e6e87a24ea6b37d0f3c07921e8f891adafbdbd2c72bb8f7241e8ab"
+    },
+    {
+      "instrument": "trombone",
+      "repo": "VSCO-2-CE",
+      "revision": "440300901dfe9275fd84e0b7763af1f8443ae62e",
+      "path": "Brass/Tenor Trombone/sus/tenortbn_sus_F3_v2_1.wav",
+      "git_blob": "aad935618350cdffb0af783043d3b63e00b6092a",
+      "root": 65,
+      "pitched": true,
+      "file": "aad935618350cdffb0af783043d3b63e00b6092a.wav",
+      "sha256": "3ef29a754b2cfcaa8c27b5a8a3c807247d606c8cf95650941cee295e8011cfeb"
+    },
+    {
+      "instrument": "harp",
+      "repo": "VSCO-2-CE",
+      "revision": "440300901dfe9275fd84e0b7763af1f8443ae62e",
+      "path": "Strings/Harp/KSHarp_B1_mf.wav",
+      "git_blob": "bb26292fd8b4d4d7f95703c69667c8f2234eebc8",
+      "root": 35,
+      "pitched": true,
+      "file": "bb26292fd8b4d4d7f95703c69667c8f2234eebc8.wav",
+      "sha256": "284034807efbb429cb63f6fb744834b18e6281a4914e6460de0a5818b5d0d0e6",
+      "pitch_note": "Library octave convention corrected against sampled pitch"
+    },
+    {
+      "instrument": "harp",
+      "repo": "VSCO-2-CE",
+      "revision": "440300901dfe9275fd84e0b7763af1f8443ae62e",
+      "path": "Strings/Harp/KSHarp_C3_mf.wav",
+      "git_blob": "20e91e167e86132bb16601f682c90444779d8a23",
+      "root": 48,
+      "pitched": true,
+      "file": "20e91e167e86132bb16601f682c90444779d8a23.wav",
+      "sha256": "e5d232771704e140959819de8cf2a3e0ba49d021ca77354c42664ce4fce6d9f3",
+      "pitch_note": "Library octave convention corrected against sampled pitch"
+    },
+    {
+      "instrument": "harp",
+      "repo": "VSCO-2-CE",
+      "revision": "440300901dfe9275fd84e0b7763af1f8443ae62e",
+      "path": "Strings/Harp/KSHarp_B3_mf.wav",
+      "git_blob": "8d06cd55bc871d19f25a2bb1b56c7a567aabbc6b",
+      "root": 59,
+      "pitched": true,
+      "file": "8d06cd55bc871d19f25a2bb1b56c7a567aabbc6b.wav",
+      "sha256": "f6f71be8c640822ef48a448b245585659acdfcc7ed5774e10f37be2fc02fcab4",
+      "pitch_note": "Library octave convention corrected against sampled pitch"
+    },
+    {
+      "instrument": "harp",
+      "repo": "VSCO-2-CE",
+      "revision": "440300901dfe9275fd84e0b7763af1f8443ae62e",
+      "path": "Strings/Harp/KSHarp_C5_mf.wav",
+      "git_blob": "748b4b1366616972c2a22e81fc48a86178801c45",
+      "root": 72,
+      "pitched": true,
+      "file": "748b4b1366616972c2a22e81fc48a86178801c45.wav",
+      "sha256": "7c8b862f6fd3f1442ed87537af976d84bda8c05a5b4900e8907d570b5202a517",
+      "pitch_note": "Library octave convention corrected against sampled pitch"
+    },
+    {
+      "instrument": "organ",
+      "repo": "VSCO-2-CE",
+      "revision": "440300901dfe9275fd84e0b7763af1f8443ae62e",
+      "path": "Keys/Organ/Quiet/NT5_Man3Quiet_122_rr1.wav",
+      "git_blob": "674ed832a1540ba7c881fa6e8a584c4a324bdcc4",
+      "root": 60,
+      "pitched": false,
+      "file": "674ed832a1540ba7c881fa6e8a584c4a324bdcc4.wav",
+      "sha256": "daad4df8c2cd9444a6ff04269149ea92dace2326c481cc6a07da67d7a2e5e76d"
+    },
+    {
+      "instrument": "marimba",
+      "repo": "VCSL",
+      "revision": "c1ea7bcc3c7309650ab0da9d15c9cd1fbc4a4c7e",
+      "path": "Idiophones/Struck Idiophones/Marimba/Marimba_hit_Outrigger_C2_loud_01.wav",
+      "git_blob": "155e036d3aa04fba9d3389e2cdf3accec9842e01",
+      "root": 48,
+      "pitched": true,
+      "file": "155e036d3aa04fba9d3389e2cdf3accec9842e01.wav",
+      "sha256": "bfad3b0e57d04c31e6079aba11fb0a6c5c84627fd4bc46e4e0923663586c460c"
+    },
+    {
+      "instrument": "marimba",
+      "repo": "VCSL",
+      "revision": "c1ea7bcc3c7309650ab0da9d15c9cd1fbc4a4c7e",
+      "path": "Idiophones/Struck Idiophones/Marimba/Marimba_hit_Outrigger_B2_loud_01.wav",
+      "git_blob": "e3b63f301191c679cea1eaa61a99d3baa9c3fbfe",
+      "root": 59,
+      "pitched": true,
+      "file": "e3b63f301191c679cea1eaa61a99d3baa9c3fbfe.wav",
+      "sha256": "a329138008daae1c03652822d7079c0e1e9941071b8c22195e1985f0c685fdeb"
+    },
+    {
+      "instrument": "marimba",
+      "repo": "VCSL",
+      "revision": "c1ea7bcc3c7309650ab0da9d15c9cd1fbc4a4c7e",
+      "path": "Idiophones/Struck Idiophones/Marimba/Marimba_hit_Outrigger_C4_loud_01.wav",
+      "git_blob": "fe3ec22b99ed4afdd007d0107d925669e7e1d4c9",
+      "root": 72,
+      "pitched": true,
+      "file": "fe3ec22b99ed4afdd007d0107d925669e7e1d4c9.wav",
+      "sha256": "4af539d47a452d7fad26e171b1c8adcca272cee97191f040d192680462c880b8"
+    },
+    {
+      "instrument": "marimba",
+      "repo": "VCSL",
+      "revision": "c1ea7bcc3c7309650ab0da9d15c9cd1fbc4a4c7e",
+      "path": "Idiophones/Struck Idiophones/Marimba/Marimba_hit_Outrigger_B4_loud_01.wav",
+      "git_blob": "cf36d9cae6614613c17069accbaa46594846c113",
+      "root": 83,
+      "pitched": true,
+      "file": "cf36d9cae6614613c17069accbaa46594846c113.wav",
+      "sha256": "d04aed26222822d14435fa61b88cdcce95606a5e94bb5e7167d266875343a39c"
+    },
+    {
+      "instrument": "xylophone",
+      "repo": "VCSL",
+      "revision": "c1ea7bcc3c7309650ab0da9d15c9cd1fbc4a4c7e",
+      "path": "Idiophones/Struck Idiophones/Xylophone/Medium Mallets/Xylo_Medium_G3_ff_01_far.wav",
+      "git_blob": "0ebb689b682277fdbcde0a3c76b9b1e197ef29fa",
+      "root": 55,
+      "pitched": true,
+      "file": "0ebb689b682277fdbcde0a3c76b9b1e197ef29fa.wav",
+      "sha256": "7fd42d4a659886367b7a54275e4050328385294e680de33eba5ee0007e53eb7c",
+      "pitch_note": "Library octave convention corrected against sampled pitch"
+    },
+    {
+      "instrument": "xylophone",
+      "repo": "VCSL",
+      "revision": "c1ea7bcc3c7309650ab0da9d15c9cd1fbc4a4c7e",
+      "path": "Idiophones/Struck Idiophones/Xylophone/Medium Mallets/Xylo_Medium_C4_ff_01_far.wav",
+      "git_blob": "af5c4ea6431fc38aa5049cd202dde9e58102e6b7",
+      "root": 60,
+      "pitched": true,
+      "file": "af5c4ea6431fc38aa5049cd202dde9e58102e6b7.wav",
+      "sha256": "ef8650516f0734369c5f409f726315db13544e508f59cb82cf46f4206c10518d",
+      "pitch_note": "Library octave convention corrected against sampled pitch"
+    },
+    {
+      "instrument": "xylophone",
+      "repo": "VCSL",
+      "revision": "c1ea7bcc3c7309650ab0da9d15c9cd1fbc4a4c7e",
+      "path": "Idiophones/Struck Idiophones/Xylophone/Medium Mallets/Xylo_Medium_C5_ff_01_far.wav",
+      "git_blob": "f8bd2232bc174009e2a4e1a531e879e8cbd74199",
+      "root": 72,
+      "pitched": true,
+      "file": "f8bd2232bc174009e2a4e1a531e879e8cbd74199.wav",
+      "sha256": "b2ceeb64877d9975afbdf2fafb8892c416ac760c63bb2bc544007ef2331d35fd",
+      "pitch_note": "Library octave convention corrected against sampled pitch"
+    },
+    {
+      "instrument": "bell",
+      "repo": "VCSL",
+      "revision": "c1ea7bcc3c7309650ab0da9d15c9cd1fbc4a4c7e",
+      "path": "Idiophones/Struck Idiophones/Glockenspiel/glock_loud_G4_01.wav",
+      "git_blob": "741d607d19f0b9ca9c449391d332946bd89d4fa5",
+      "root": 79,
+      "pitched": true,
+      "file": "741d607d19f0b9ca9c449391d332946bd89d4fa5.wav",
+      "sha256": "be0bf94731720c0094276fea5646e75ff3a8a646b3c828258e9aaab6a8ef6c49"
+    },
+    {
+      "instrument": "bell",
+      "repo": "VCSL",
+      "revision": "c1ea7bcc3c7309650ab0da9d15c9cd1fbc4a4c7e",
+      "path": "Idiophones/Struck Idiophones/Glockenspiel/glock_loud_C5_01.wav",
+      "git_blob": "25185183d6a23973dcb245843b86c33108098381",
+      "root": 84,
+      "pitched": true,
+      "file": "25185183d6a23973dcb245843b86c33108098381.wav",
+      "sha256": "b28baea01b6028e061e5cc978fca70f9062af6a59d155b0fe55e54ec89f42c07"
+    },
+    {
+      "instrument": "chimes",
+      "repo": "VCSL",
+      "revision": "c1ea7bcc3c7309650ab0da9d15c9cd1fbc4a4c7e",
+      "path": "Idiophones/Struck Idiophones/Hand Chimes/sus_C3_r01_main.wav",
+      "git_blob": "be9b6af72a50457552af8f915937cc4cc8a54f53",
+      "root": 60,
+      "pitched": true,
+      "file": "be9b6af72a50457552af8f915937cc4cc8a54f53.wav",
+      "sha256": "47bec5759eb7b435c255dd7df38fbbd41306b75a4000a890b951b3640f0af50a"
+    },
+    {
+      "instrument": "chimes",
+      "repo": "VCSL",
+      "revision": "c1ea7bcc3c7309650ab0da9d15c9cd1fbc4a4c7e",
+      "path": "Idiophones/Struck Idiophones/Hand Chimes/sus_C4_r01_main.wav",
+      "git_blob": "42811c30853ca12afe64221f96f7c54143a5b55a",
+      "root": 72,
+      "pitched": true,
+      "file": "42811c30853ca12afe64221f96f7c54143a5b55a.wav",
+      "sha256": "89980f18db9e08a137d1fc18f0505281bd6c192021b9dd33dafb7d3117ef608c"
+    },
+    {
+      "instrument": "chimes",
+      "repo": "VCSL",
+      "revision": "c1ea7bcc3c7309650ab0da9d15c9cd1fbc4a4c7e",
+      "path": "Idiophones/Struck Idiophones/Hand Chimes/sus_C5_r01_main.wav",
+      "git_blob": "b203410a0a37a8f5207d779ef5ba238a59e858d2",
+      "root": 84,
+      "pitched": true,
+      "file": "b203410a0a37a8f5207d779ef5ba238a59e858d2.wav",
+      "sha256": "836f13d448c9d6d685da634368615c2f7c03b6fb5b99ac93627e1fbb40368e58"
+    },
+    {
+      "instrument": "kalimba",
+      "repo": "VCSL",
+      "revision": "c1ea7bcc3c7309650ab0da9d15c9cd1fbc4a4c7e",
+      "path": "Idiophones/Plucked Idiophones/Kalimba, Kenya/Mbira6_Normal_MainSpirit_B2_k8_vl3_rr2.wav",
+      "git_blob": "2faf2d70de7bdd960af6d0fedc625df9684f8a38",
+      "root": 59,
+      "pitched": true,
+      "file": "2faf2d70de7bdd960af6d0fedc625df9684f8a38.wav",
+      "sha256": "b4bd2db5c868be7398e2028ec818a3edc3979e49df620f2250b786f2e45b3905"
+    },
+    {
+      "instrument": "kalimba",
+      "repo": "VCSL",
+      "revision": "c1ea7bcc3c7309650ab0da9d15c9cd1fbc4a4c7e",
+      "path": "Idiophones/Plucked Idiophones/Kalimba, Kenya/Mbira6_Normal_MainSpirit_B3_k12_vl3_rr2.wav",
+      "git_blob": "8367490064d6b1959e14b021687ed6be005441c5",
+      "root": 71,
+      "pitched": true,
+      "file": "8367490064d6b1959e14b021687ed6be005441c5.wav",
+      "sha256": "42a57057cfd5516545cb82c74b8512cc5d83fb2302c3c765eeae03031793e1eb"
+    },
+    {
+      "instrument": "kalimba",
+      "repo": "VCSL",
+      "revision": "c1ea7bcc3c7309650ab0da9d15c9cd1fbc4a4c7e",
+      "path": "Idiophones/Plucked Idiophones/Kalimba, Kenya/Mbira6_Normal_MainSpirit_B4_k15_vl3_rr2.wav",
+      "git_blob": "2572a0c10a6bf57812bdb3dbdd934ac51265be6f",
+      "root": 83,
+      "pitched": true,
+      "file": "2572a0c10a6bf57812bdb3dbdd934ac51265be6f.wav",
+      "sha256": "b26d42ab0fe80fd54ec8cfb1cea72ef26cd07ef2dae914e1ffa00471a05f1698"
+    },
+    {
+      "instrument": "harpsichord",
+      "repo": "VCSL",
+      "revision": "c1ea7bcc3c7309650ab0da9d15c9cd1fbc4a4c7e",
+      "path": "Chordophones/Zithers/Harpsichord, French/Sustains/Harpsi2_Normal_C2_rr1_Main.wav",
+      "git_blob": "b1dbf4825efe25540907057c5b16883595dbd269",
+      "root": 48,
+      "pitched": true,
+      "file": "b1dbf4825efe25540907057c5b16883595dbd269.wav",
+      "sha256": "9859e034d9e59dd7f3878e4bd52f05263b2780f5b697c7d87881ad8f880be98f"
+    },
+    {
+      "instrument": "harpsichord",
+      "repo": "VCSL",
+      "revision": "c1ea7bcc3c7309650ab0da9d15c9cd1fbc4a4c7e",
+      "path": "Chordophones/Zithers/Harpsichord, French/Sustains/Harpsi2_Normal_C3_rr1_Main.wav",
+      "git_blob": "bfba5da963ee600cdbdaa3c3e142f15b1fa097fa",
+      "root": 60,
+      "pitched": true,
+      "file": "bfba5da963ee600cdbdaa3c3e142f15b1fa097fa.wav",
+      "sha256": "cda5d21cdf4581517933859b8557e32745b5115ba243f63fef757fee025390de"
+    },
+    {
+      "instrument": "harpsichord",
+      "repo": "VCSL",
+      "revision": "c1ea7bcc3c7309650ab0da9d15c9cd1fbc4a4c7e",
+      "path": "Chordophones/Zithers/Harpsichord, French/Sustains/Harpsi2_Normal_C4_rr1_Main.wav",
+      "git_blob": "25401f1f36f7c9691deb7d321a604caf4e51b238",
+      "root": 72,
+      "pitched": true,
+      "file": "25401f1f36f7c9691deb7d321a604caf4e51b238.wav",
+      "sha256": "57b13d0ce01a8ad50c09ad1d7ecda3df1298c73ab9dc49988fbdf9dc2ce277a5"
+    },
+    {
+      "instrument": "harpsichord",
+      "repo": "VCSL",
+      "revision": "c1ea7bcc3c7309650ab0da9d15c9cd1fbc4a4c7e",
+      "path": "Chordophones/Zithers/Harpsichord, French/Sustains/Harpsi2_Normal_C5_rr1_Main.wav",
+      "git_blob": "0a4b5176930655ead6024168f8eea403f3a1d657",
+      "root": 84,
+      "pitched": true,
+      "file": "0a4b5176930655ead6024168f8eea403f3a1d657.wav",
+      "sha256": "63132dd11bb1a0b9ca09b89183e86c8020afadc7d48812432448450b354fe3cd"
+    },
+    {
+      "instrument": "zither",
+      "repo": "VCSL",
+      "revision": "c1ea7bcc3c7309650ab0da9d15c9cd1fbc4a4c7e",
+      "path": "Chordophones/Zithers/Dan Tranh/Normal/B1_mf_1.wav",
+      "git_blob": "5085255e599e8934cad503c989ab2ce5bf4b2b0d",
+      "root": 47,
+      "pitched": true,
+      "file": "5085255e599e8934cad503c989ab2ce5bf4b2b0d.wav",
+      "sha256": "2a3398f54916fbc6a618cc90ad6cbe86abb4578ad52cd524d700ed39c2aaabe5"
+    },
+    {
+      "instrument": "zither",
+      "repo": "VCSL",
+      "revision": "c1ea7bcc3c7309650ab0da9d15c9cd1fbc4a4c7e",
+      "path": "Chordophones/Zithers/Dan Tranh/Normal/C#3_mf_1.wav",
+      "git_blob": "5de823f46738c786c38eb7d4e2283071f39c85cd",
+      "root": 61,
+      "pitched": true,
+      "file": "5de823f46738c786c38eb7d4e2283071f39c85cd.wav",
+      "sha256": "2b03d7243bdced595cfaa6d87afc8e68eafd74a0ef7d1221271209f66a8ce0fc"
+    },
+    {
+      "instrument": "zither",
+      "repo": "VCSL",
+      "revision": "c1ea7bcc3c7309650ab0da9d15c9cd1fbc4a4c7e",
+      "path": "Chordophones/Zithers/Dan Tranh/Normal/B3_mf_1.wav",
+      "git_blob": "5f5277c2ca02e9d109422003610162a5c5b6ac43",
+      "root": 71,
+      "pitched": true,
+      "file": "5f5277c2ca02e9d109422003610162a5c5b6ac43.wav",
+      "sha256": "df91841b4552f2367334ceafaf5a4d839bd5aa57721f0e360ccebd94d7b70c53"
+    },
+    {
+      "instrument": "zither",
+      "repo": "VCSL",
+      "revision": "c1ea7bcc3c7309650ab0da9d15c9cd1fbc4a4c7e",
+      "path": "Chordophones/Zithers/Dan Tranh/Normal/B4_mf_1.wav",
+      "git_blob": "aa0adeda97fdd7b9cb8289b8961411a903f2d973",
+      "root": 83,
+      "pitched": true,
+      "file": "aa0adeda97fdd7b9cb8289b8961411a903f2d973.wav",
+      "sha256": "782da5b4bd0951d4f8d75fb13c3f86db0f733ed95dca0676e859b010a24ea42a"
+    },
+    {
+      "instrument": "psaltery",
+      "repo": "VCSL",
+      "revision": "c1ea7bcc3c7309650ab0da9d15c9cd1fbc4a4c7e",
+      "path": "Chordophones/Zithers/Psaltery, Bowed and Plucked/Pluck/BowedPsaltery_A#3_Main_Pluck_rr1.wav",
+      "git_blob": "a2d93226f59e0f0981dafb6f51d9e4d15e55e256",
+      "root": 70,
+      "pitched": true,
+      "file": "a2d93226f59e0f0981dafb6f51d9e4d15e55e256.wav",
+      "sha256": "7787947ce936636260ad05ed55465e8299359b7f5c376769a93607d161274eb6"
+    },
+    {
+      "instrument": "psaltery",
+      "repo": "VCSL",
+      "revision": "c1ea7bcc3c7309650ab0da9d15c9cd1fbc4a4c7e",
+      "path": "Chordophones/Zithers/Psaltery, Bowed and Plucked/Pluck/BowedPsaltery_C4_Main_Pluck_rr1.wav",
+      "git_blob": "3f42b5e37fa8728136c6b439f5de9eec76474bc1",
+      "root": 72,
+      "pitched": true,
+      "file": "3f42b5e37fa8728136c6b439f5de9eec76474bc1.wav",
+      "sha256": "752e4863fd3a0dad6a9ee78099d2aed57e3bee7842fe67b4b360072886b6e200"
+    },
+    {
+      "instrument": "psaltery",
+      "repo": "VCSL",
+      "revision": "c1ea7bcc3c7309650ab0da9d15c9cd1fbc4a4c7e",
+      "path": "Chordophones/Zithers/Psaltery, Bowed and Plucked/Pluck/BowedPsaltery_C5_Main_Pluck_rr1.wav",
+      "git_blob": "2ed962bc301ce7d9bb180d2daa8ef17b0e295f87",
+      "root": 84,
+      "pitched": true,
+      "file": "2ed962bc301ce7d9bb180d2daa8ef17b0e295f87.wav",
+      "sha256": "d3edff4b6808e1f1319356cd5115c5740861b3435514abe32c46a5d98320ff14"
+    },
+    {
+      "instrument": "fm-piano",
+      "repo": "VCSL",
+      "revision": "c1ea7bcc3c7309650ab0da9d15c9cd1fbc4a4c7e",
+      "path": "Electrophones/TX81Z/FM Piano/FMPiano_C2_vl3.wav",
+      "git_blob": "449f0e557518c369737615ccba492a7b166f74e1",
+      "root": 36,
+      "pitched": true,
+      "file": "449f0e557518c369737615ccba492a7b166f74e1.wav",
+      "sha256": "e33943cf2bc1507c05fc7666aaaccc9617425b4fd94c3171b7415ddbc4eb4f03",
+      "pitch_note": "Library octave convention corrected against sampled pitch"
+    },
+    {
+      "instrument": "fm-piano",
+      "repo": "VCSL",
+      "revision": "c1ea7bcc3c7309650ab0da9d15c9cd1fbc4a4c7e",
+      "path": "Electrophones/TX81Z/FM Piano/FMPiano_C3_vl3.wav",
+      "git_blob": "0ba427c9ed2322dde1967b4cc7be643f629c609f",
+      "root": 48,
+      "pitched": true,
+      "file": "0ba427c9ed2322dde1967b4cc7be643f629c609f.wav",
+      "sha256": "4e7a7d75bf01af25bcd8b321853e61f159c14432360705b319154d7010ffb1fc",
+      "pitch_note": "Library octave convention corrected against sampled pitch"
+    },
+    {
+      "instrument": "fm-piano",
+      "repo": "VCSL",
+      "revision": "c1ea7bcc3c7309650ab0da9d15c9cd1fbc4a4c7e",
+      "path": "Electrophones/TX81Z/FM Piano/FMPiano_C4_vl3.wav",
+      "git_blob": "b899a97dcea495f77dcddf28395938bb79b3aaed",
+      "root": 60,
+      "pitched": true,
+      "file": "b899a97dcea495f77dcddf28395938bb79b3aaed.wav",
+      "sha256": "c6c48556e88f4e153eb957efc999b7be4a7e8078f4869368b6164a65b6486d4e",
+      "pitch_note": "Library octave convention corrected against sampled pitch"
+    },
+    {
+      "instrument": "fm-piano",
+      "repo": "VCSL",
+      "revision": "c1ea7bcc3c7309650ab0da9d15c9cd1fbc4a4c7e",
+      "path": "Electrophones/TX81Z/FM Piano/FMPiano_C5_vl3.wav",
+      "git_blob": "209dea8f2d7d37f660e87593d074723923d2035e",
+      "root": 72,
+      "pitched": true,
+      "file": "209dea8f2d7d37f660e87593d074723923d2035e.wav",
+      "sha256": "2f87e9af276d12a21914f898e51c722f014b24f47c6c297e99a2b72da6a964d9",
+      "pitch_note": "Library octave convention corrected against sampled pitch"
+    },
+    {
+      "instrument": "glass",
+      "repo": "VCSL",
+      "revision": "c1ea7bcc3c7309650ab0da9d15c9cd1fbc4a4c7e",
+      "path": "Idiophones/Friction Idiophones/Wine Glasses/Sustains/Slow/glass1_D#4_Slow_1_Main.wav",
+      "git_blob": "7185594e0e4431a76c8d9b1aae4e946c052680a2",
+      "root": 75,
+      "pitched": true,
+      "file": "7185594e0e4431a76c8d9b1aae4e946c052680a2.wav",
+      "sha256": "6cdc2f602fac912a768561b3831ebb9099c884cb5ea76c88befedf545bab1997"
+    },
+    {
+      "instrument": "glass",
+      "repo": "VCSL",
+      "revision": "c1ea7bcc3c7309650ab0da9d15c9cd1fbc4a4c7e",
+      "path": "Idiophones/Friction Idiophones/Wine Glasses/Sustains/Slow/glass3_A#4_Slow_1_Main.wav",
+      "git_blob": "577df4ee37495ecf8f25656fba3247588d0caabb",
+      "root": 82,
+      "pitched": true,
+      "file": "577df4ee37495ecf8f25656fba3247588d0caabb.wav",
+      "sha256": "b35da8d5c9ea4e24b33508094e3cb3e736e7ff5ea4517335844023f82c9bb503"
+    },
+    {
+      "instrument": "pluck",
+      "repo": "VCSL",
+      "revision": "c1ea7bcc3c7309650ab0da9d15c9cd1fbc4a4c7e",
+      "path": "Chordophones/Composite Chordophones/Strumstick/Finger/Strumstick_Finger_Str1_Main_D2_vl3_rr1.wav",
+      "git_blob": "9bef2cf8a9cfcb586762a1aef226afc13b64515e",
+      "root": 50,
+      "pitched": true,
+      "file": "9bef2cf8a9cfcb586762a1aef226afc13b64515e.wav",
+      "sha256": "d940c70c9431bdf1be007f8c7789e003fbc43c6bd5fe2b6d472683e181ede739"
+    },
+    {
+      "instrument": "pluck",
+      "repo": "VCSL",
+      "revision": "c1ea7bcc3c7309650ab0da9d15c9cd1fbc4a4c7e",
+      "path": "Chordophones/Composite Chordophones/Strumstick/Finger/Strumstick_Finger_Str2_Main_B2_vl3_rr1.wav",
+      "git_blob": "e413c5508477ed9b1734503ec5e3ec3d00f070d5",
+      "root": 59,
+      "pitched": true,
+      "file": "e413c5508477ed9b1734503ec5e3ec3d00f070d5.wav",
+      "sha256": "5b9038da7989ef955010b5a806dc45c08e5d5fd813242082c5904f051d4200be"
+    },
+    {
+      "instrument": "pluck",
+      "repo": "VCSL",
+      "revision": "c1ea7bcc3c7309650ab0da9d15c9cd1fbc4a4c7e",
+      "path": "Chordophones/Composite Chordophones/Strumstick/Finger/Strumstick_Finger_Str3_Main_B3_vl3_rr1.wav",
+      "git_blob": "27780c8fe4cc8bd4efe18befc386420728c5de2a",
+      "root": 71,
+      "pitched": true,
+      "file": "27780c8fe4cc8bd4efe18befc386420728c5de2a.wav",
+      "sha256": "266547f7c5768b45d4c9e3325906f36c85dbe861a9e61c88adedb35ea270c551"
+    },
+    {
+      "instrument": "pluck",
+      "repo": "VCSL",
+      "revision": "c1ea7bcc3c7309650ab0da9d15c9cd1fbc4a4c7e",
+      "path": "Chordophones/Composite Chordophones/Strumstick/Finger/Strumstick_Finger_Str3_Main_A4_vl3_rr1.wav",
+      "git_blob": "d2329755e172c26963fbbaf3447b3a31b17e1be9",
+      "root": 81,
+      "pitched": true,
+      "file": "d2329755e172c26963fbbaf3447b3a31b17e1be9.wav",
+      "sha256": "14c766f56129ad80a54448c4c27b883736f30b70e8bc2fa19ad77f523aebc434"
+    },
+    {
+      "instrument": "drum-kick",
+      "repo": "VCSL",
+      "revision": "c1ea7bcc3c7309650ab0da9d15c9cd1fbc4a4c7e",
+      "path": "Membranophones/Struck Membranophones/Bass Drum 1/BDrumNew_hit_v2_rr1_Sum.wav",
+      "git_blob": "90e36064984ad741962e2f033e286bc16758b46c",
+      "root": 60,
+      "pitched": false,
+      "file": "90e36064984ad741962e2f033e286bc16758b46c.wav",
+      "sha256": "56827fe9b55f282a0db851e242bc24660d339a0e358b182966aea047240c1136"
+    },
+    {
+      "instrument": "drum-snare",
+      "repo": "VCSL",
+      "revision": "c1ea7bcc3c7309650ab0da9d15c9cd1fbc4a4c7e",
+      "path": "Membranophones/Struck Membranophones/Snare Drum, Modern 1/Snare2_HitNS_v2_rr1_Mid.wav",
+      "git_blob": "0a082bfe0ae1d42ddec5123b8ce432cb417e6b26",
+      "root": 60,
+      "pitched": false,
+      "file": "0a082bfe0ae1d42ddec5123b8ce432cb417e6b26.wav",
+      "sha256": "445dfee4836b775d990f0aca47519b1c0bae8427a9eb9776866dc232fdb37aa2"
+    },
+    {
+      "instrument": "drum-hat",
+      "repo": "VCSL",
+      "revision": "c1ea7bcc3c7309650ab0da9d15c9cd1fbc4a4c7e",
+      "path": "Idiophones/Struck Idiophones/Hi-Hat Cymbal/HiHat_HitC_v2_rr1_Mid.wav",
+      "git_blob": "6855f948794d15bbc636996256cab0a14839e6a1",
+      "root": 60,
+      "pitched": false,
+      "file": "6855f948794d15bbc636996256cab0a14839e6a1.wav",
+      "sha256": "e1fb54c9a030800038abcebbed1c056fb74bdeec627315f3cd5fd893c6e6b031"
+    },
+    {
+      "instrument": "drum-cymbal",
+      "repo": "VCSL",
+      "revision": "c1ea7bcc3c7309650ab0da9d15c9cd1fbc4a4c7e",
+      "path": "Idiophones/Struck Idiophones/Suspended Cymbal 1/susCymb1_bow_13.wav",
+      "git_blob": "9e6d1587757712fa23b005db6a8a61f003a68e36",
+      "root": 60,
+      "pitched": false,
+      "file": "9e6d1587757712fa23b005db6a8a61f003a68e36.wav",
+      "sha256": "41b06b2b7b5648574483f3dee1e7a6bdc72806fe54227ec1763779edd7d9d616"
+    },
+    {
+      "instrument": "drum-tom",
+      "repo": "VCSL",
+      "revision": "c1ea7bcc3c7309650ab0da9d15c9cd1fbc4a4c7e",
+      "path": "Membranophones/Struck Membranophones/Tom 1/Stick/TomH_HitS_v2_rr1_Mid.wav",
+      "git_blob": "82e75d55eed376f65fb51b698b9ab55c0a54f21b",
+      "root": 60,
+      "pitched": false,
+      "file": "82e75d55eed376f65fb51b698b9ab55c0a54f21b.wav",
+      "sha256": "ed22e076b649b9fd678454a6fc8852fb8e6a86d782d8b48e0107c1fb73104122"
+    },
+    {
+      "instrument": "bongo",
+      "repo": "VCSL",
+      "revision": "c1ea7bcc3c7309650ab0da9d15c9cd1fbc4a4c7e",
+      "path": "Membranophones/Struck Membranophones/Bongos/BongoH_Hit1_v1_rr1_Mid.wav",
+      "git_blob": "2c533d7e7e11dd706cf74e2fed9ef798b2819f0f",
+      "root": 60,
+      "pitched": false,
+      "file": "2c533d7e7e11dd706cf74e2fed9ef798b2819f0f.wav",
+      "sha256": "7ebcd2149e8a75189446afba67c96b58f42757bf7aa355364f2e11cee705f33f"
+    },
+    {
+      "instrument": "cajon",
+      "repo": "VCSL",
+      "revision": "c1ea7bcc3c7309650ab0da9d15c9cd1fbc4a4c7e",
+      "path": "Idiophones/Struck Idiophones/Cajon/Cajon_hit1_f_rr1.wav",
+      "git_blob": "fb3a34a2db5b3456efd8b9650851d7716a5b9bd1",
+      "root": 60,
+      "pitched": false,
+      "file": "fb3a34a2db5b3456efd8b9650851d7716a5b9bd1.wav",
+      "sha256": "18241c7c9f73dc9edfe6402371fefba5584ed5f9bc6fe827d3bba945841301d6"
+    },
+    {
+      "instrument": "gong",
+      "repo": "VCSL",
+      "revision": "c1ea7bcc3c7309650ab0da9d15c9cd1fbc4a4c7e",
+      "path": "Idiophones/Struck Idiophones/Gong 1/gong_mf.wav",
+      "git_blob": "6e90170966e0955ff362264468e4e8db3f921837",
+      "root": 60,
+      "pitched": false,
+      "file": "6e90170966e0955ff362264468e4e8db3f921837.wav",
+      "sha256": "7e520ad14acda55db7906984f7efc2430961419435d951f55c8cdd9cd7a71108"
+    },
+    {
+      "instrument": "triangle",
+      "repo": "VCSL",
+      "revision": "c1ea7bcc3c7309650ab0da9d15c9cd1fbc4a4c7e",
+      "path": "Idiophones/Struck Idiophones/Triangles/Triangle1_Hit_v2_rr1_Mid.wav",
+      "git_blob": "5f50809e1d1162482ad10f01324d857392329088",
+      "root": 60,
+      "pitched": false,
+      "file": "5f50809e1d1162482ad10f01324d857392329088.wav",
+      "sha256": "bec62db48c6a052bff1b54f88c11fc6cb6131b9633da2afb35636291754971af"
+    },
+    {
+      "instrument": "anvil",
+      "repo": "VCSL",
+      "revision": "c1ea7bcc3c7309650ab0da9d15c9cd1fbc4a4c7e",
+      "path": "Idiophones/Struck Idiophones/Anvil/Anvil_Hit1_v1_rr1_Mid.wav",
+      "git_blob": "a19512ee07882feba624684fce573c02ec459dd6",
+      "root": 60,
+      "pitched": false,
+      "file": "a19512ee07882feba624684fce573c02ec459dd6.wav",
+      "sha256": "1fb23c5f9113a9ac8eea21c7fc59f4e3c8baa956c9b74052fef2630f52aeef9b"
+    }
+  ],
+  "archives": [
+    {
+      "name": "guitar",
+      "url": "https://github.com/freepats/electric-guitar-FSBS-clean/releases/download/2026-08-07/EGuitarFSBS-clean-bridge-small-SF2-20260807.7z",
+      "sha256": "bcea7d4c92a1cc6a26e545a218b34e59037d4bab6cf0fce24396428e6934d69c",
+      "members": [
+        {
+          "member": "EGuitarFSBS-clean bridge small SF2-20260807/EGuitarFSBS-clean bridge small 20260807.sf2",
+          "sha256": "a58803acd8640a06a0a1a277a16ff4cd2610d9eab5fd6793741db4730c12f594"
+        },
+        {
+          "member": "EGuitarFSBS-clean bridge small SF2-20260807/LICENSE.txt",
+          "sha256": "a2010f343487d3f7618affe54f789f5487602331c0a8d03f49e9a7c547cf0499"
+        },
+        {
+          "member": "EGuitarFSBS-clean bridge small SF2-20260807/picture.jpg",
+          "sha256": "1363405fc5d01505b33e8c3a15fb10b1e76c2547dbc6ba0321e7699975f732f6"
+        },
+        {
+          "member": "EGuitarFSBS-clean bridge small SF2-20260807/README.txt",
+          "sha256": "9d0f723bf48f9e0aae245360aed45eb4328f3f881cd6f34afe4eeabf66f09e43"
+        }
+      ]
+    },
+    {
+      "name": "nylon",
+      "url": "https://freepats.zenvoid.org/Guitar/SpanishClassicalGuitar/SpanishClassicalGuitar-SF2-20190618.7z",
+      "sha256": "8c192f1fc640a553199a4a43a17ae12354a6a05e3d6aad79bd43b5d29314ff51",
+      "members": [
+        {
+          "member": "SpanishClassicalGuitar-SF2-20190618/cc0.txt",
+          "sha256": "a2010f343487d3f7618affe54f789f5487602331c0a8d03f49e9a7c547cf0499"
+        },
+        {
+          "member": "SpanishClassicalGuitar-SF2-20190618/readme.txt",
+          "sha256": "4791887358f865119705b0c2dd9b604be626a06462d37d287edd1b2607d80efb"
+        },
+        {
+          "member": "SpanishClassicalGuitar-SF2-20190618/SpanishClassicalGuitar-20190618.sf2",
+          "sha256": "0d4c08ea8c1c8924b3829084b0c8778f6d6b906f331e44fde51bc159f76b03b9"
+        }
+      ]
+    },
+    {
+      "name": "accordion",
+      "url": "https://github.com/freepats/button-accordion-HN/releases/download/2024-03-29/ButtonAccordionHN-SFZ%2BWAV-20240329.7z",
+      "sha256": "818d3dcdbbf5c454ba3f46a3fa2c9fd77555a476a16d8e881121d6a4d0a907c7",
+      "members": [
+        {
+          "member": "Button Accordion HN SFZ+WAV-20240329/Button Accordion HN A4.wav",
+          "sha256": "6ab0c206056d5ae8128852ca02f56c9b8c57b1d97ca70e71c7952273f0862e25"
+        },
+        {
+          "member": "Button Accordion HN SFZ+WAV-20240329/Button Accordion HN A5.wav",
+          "sha256": "31e4764b94bbabd267befa7ee443339a7adaaa93cf7ef5723b15d0e20015114c"
+        },
+        {
+          "member": "Button Accordion HN SFZ+WAV-20240329/Button Accordion HN B3.wav",
+          "sha256": "ad48094d7eacc3f067ac7b311399150f03b47bc50980b3f0ebe0f7ea0f866e38"
+        },
+        {
+          "member": "Button Accordion HN SFZ+WAV-20240329/Button Accordion HN B4.wav",
+          "sha256": "9ee3e460fe290c73db230eb2ea2f78a991c51068ceb718d05e82da15707c64e4"
+        },
+        {
+          "member": "Button Accordion HN SFZ+WAV-20240329/Button Accordion HN B5.wav",
+          "sha256": "9b47cd343277f3c935c8e65e52ce0fa4160f7e0fdf1f6640ed52f3a633ff63da"
+        },
+        {
+          "member": "Button Accordion HN SFZ+WAV-20240329/Button Accordion HN C5.wav",
+          "sha256": "230994c5f31e48b6b02c9dcc68e132013e55553e7e3f12034cda48182e31bf3f"
+        },
+        {
+          "member": "Button Accordion HN SFZ+WAV-20240329/Button Accordion HN C6.wav",
+          "sha256": "6a6600ef43d1585f5be5e90da653d8df39a1308e8d82c103ce294fb09a5ee536"
+        },
+        {
+          "member": "Button Accordion HN SFZ+WAV-20240329/Button Accordion HN D4.wav",
+          "sha256": "cf13f830383a2ad05d3cce36a8e58d92832cae9fe7a08741a2d61e3dd70d319e"
+        },
+        {
+          "member": "Button Accordion HN SFZ+WAV-20240329/Button Accordion HN D5.wav",
+          "sha256": "75728b97300911ff3e5def3238fe315dafd195b366bed62676585c58d3863e8b"
+        },
+        {
+          "member": "Button Accordion HN SFZ+WAV-20240329/Button Accordion HN D6.wav",
+          "sha256": "e9f387da591c170b57b3dc1e5e6dbc2ed6e65ad79a13863571775438b07fc965"
+        },
+        {
+          "member": "Button Accordion HN SFZ+WAV-20240329/Button Accordion HN E5.wav",
+          "sha256": "6ef64febe988d8dd1975702bcdc9854cb954755873138604b0828d7512c4bcc8"
+        },
+        {
+          "member": "Button Accordion HN SFZ+WAV-20240329/Button Accordion HN E6.wav",
+          "sha256": "0247c3b93a45344c5940bc2d1bac2102c00eacd5f1081973e3c5e2bfadb69f94"
+        },
+        {
+          "member": "Button Accordion HN SFZ+WAV-20240329/Button Accordion HN F#4.wav",
+          "sha256": "6aa275c9c46985789d6c9b67837794f51dd0ecc58c71de348647b8ff87544bb5"
+        },
+        {
+          "member": "Button Accordion HN SFZ+WAV-20240329/Button Accordion HN F#5.wav",
+          "sha256": "9d73e844125e36025a81a580f09da0b02797e09f79e12387cf556a53cb2b5148"
+        },
+        {
+          "member": "Button Accordion HN SFZ+WAV-20240329/Button Accordion HN G4.wav",
+          "sha256": "3c04ca7bdb56df5b9bcbe9b4e8638b8daef2cbecc7c893ed559e5227e5531837"
+        },
+        {
+          "member": "Button Accordion HN SFZ+WAV-20240329/Button Accordion HN G5.wav",
+          "sha256": "45cf33eed9642eeabe0bef2c6180ad6bdd893b2a88abce006c67287afebbd447"
+        },
+        {
+          "member": "Button Accordion HN SFZ+WAV-20240329/Button Accordion HN G6.wav",
+          "sha256": "ca4320e380efcbeb8b7a2224af7f50cdf91f5bbb6c5b484339a00c4affa82512"
+        },
+        {
+          "member": "Button Accordion HN SFZ+WAV-20240329/LICENSE.txt",
+          "sha256": "a2010f343487d3f7618affe54f789f5487602331c0a8d03f49e9a7c547cf0499"
+        },
+        {
+          "member": "Button Accordion HN SFZ+WAV-20240329/picture.jpg",
+          "sha256": "3b77aa0aa58d98502aac99cfd48de60335cef365b503a384e74d360541695b43"
+        },
+        {
+          "member": "Button Accordion HN SFZ+WAV-20240329/PRESET Button Accordion HN tuned.sfz",
+          "sha256": "234be27a92630a0699d30b3f20d9752a9632edb29e0563896a9873819fc12a7d"
+        },
+        {
+          "member": "Button Accordion HN SFZ+WAV-20240329/README.txt",
+          "sha256": "e1c60cd66b0d6167eb29f581b43a141fd39dd6abe90e68b69fed7fd625e66957"
+        },
+        {
+          "member": "Button Accordion HN SFZ+WAV-20240329/rel/Button Accordion HN A4_rel.wav",
+          "sha256": "2d0c37da13641876687163567bcfdf530124094f549d9dd50a3a5a8e5f487f56"
+        },
+        {
+          "member": "Button Accordion HN SFZ+WAV-20240329/rel/Button Accordion HN A5_rel.wav",
+          "sha256": "f1d5d6aa01ea7bb6d26e249f7e3de328e2c3fb0415a2a356f0f9265a360da770"
+        },
+        {
+          "member": "Button Accordion HN SFZ+WAV-20240329/rel/Button Accordion HN B3_rel.wav",
+          "sha256": "b4c9f6c1f4c945b8cfa0a23783971d8904e9524d5e142a017c97533c3472956f"
+        },
+        {
+          "member": "Button Accordion HN SFZ+WAV-20240329/rel/Button Accordion HN B4_rel.wav",
+          "sha256": "2ccba7b11fb8817dcf491ceed2975d6190b7d8d02d4535a617cb698c80a891a3"
+        },
+        {
+          "member": "Button Accordion HN SFZ+WAV-20240329/rel/Button Accordion HN B5_rel.wav",
+          "sha256": "37c096f95d2b7d0e62452871106d97319dd6b14acf67331f85cc9ec065ed174f"
+        },
+        {
+          "member": "Button Accordion HN SFZ+WAV-20240329/rel/Button Accordion HN C5_rel.wav",
+          "sha256": "42c4602179ed793e058fff80acd01eb3cec2ea8b646adb3f7c2a345c11a10529"
+        },
+        {
+          "member": "Button Accordion HN SFZ+WAV-20240329/rel/Button Accordion HN C6_rel.wav",
+          "sha256": "37c096f95d2b7d0e62452871106d97319dd6b14acf67331f85cc9ec065ed174f"
+        },
+        {
+          "member": "Button Accordion HN SFZ+WAV-20240329/rel/Button Accordion HN D4_rel.wav",
+          "sha256": "ebd176a5db7404f1fcb85e062b31eb2dcafe9f14b0d73aaf798961b04e46436d"
+        },
+        {
+          "member": "Button Accordion HN SFZ+WAV-20240329/rel/Button Accordion HN D5_rel.wav",
+          "sha256": "e27ecdc3478e7c0ff0b6013dc30e28893abc07327d9833eae4f4aadc5f007179"
+        },
+        {
+          "member": "Button Accordion HN SFZ+WAV-20240329/rel/Button Accordion HN D6_rel.wav",
+          "sha256": "389559658134de91e9a28978c7bb2a184142b8cc058eb321e5f7d9ec3b36f028"
+        },
+        {
+          "member": "Button Accordion HN SFZ+WAV-20240329/rel/Button Accordion HN E5_rel.wav",
+          "sha256": "6c46ad38c6d75045f07663d1fa1be6453ec468fb92047d842417ef9a508b1f11"
+        },
+        {
+          "member": "Button Accordion HN SFZ+WAV-20240329/rel/Button Accordion HN E6_rel.wav",
+          "sha256": "d09c83df8de357ac680a5555c918242d32066f791c402113811fc3c086286d7c"
+        },
+        {
+          "member": "Button Accordion HN SFZ+WAV-20240329/rel/Button Accordion HN F#4_rel.wav",
+          "sha256": "a364351aeb37b6c79fbe478f528dba9fccefc9c96209de35caae666a9d15bf96"
+        },
+        {
+          "member": "Button Accordion HN SFZ+WAV-20240329/rel/Button Accordion HN F#5_rel.wav",
+          "sha256": "2902101882e611230af1c1d9ee0b5d5dad6286036a09818520869cb30e0bfdbe"
+        },
+        {
+          "member": "Button Accordion HN SFZ+WAV-20240329/rel/Button Accordion HN G4_rel.wav",
+          "sha256": "1474347d2253dc845297747c4183d168b63848284571092b9aef247f45233dfa"
+        },
+        {
+          "member": "Button Accordion HN SFZ+WAV-20240329/rel/Button Accordion HN G5_rel.wav",
+          "sha256": "3af10857f6dd94a8f4bd22ce19484126e98822e81cebf897e705804aa63d23a8"
+        },
+        {
+          "member": "Button Accordion HN SFZ+WAV-20240329/rel/Button Accordion HN G6_rel.wav",
+          "sha256": "ddc3667e620b62b421b281227ece4647fed709699290dfe7e8c1c9e7e2ee02c0"
+        }
+      ]
+    }
+  ]
+}

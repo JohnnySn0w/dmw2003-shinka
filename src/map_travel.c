@@ -20,6 +20,7 @@ extern int shinka_journal_enabled(void);
 #define SUZAKU_INTRO_COMPLETE 0x8004b3dfu /* flag 0x400a, bit 2 */
 #define BADLAND_ENCOUNTER 0x8004b3e3u /* flags 0x4029 started, 0x402a complete */
 #define BULLET_SCENE_COMPLETE 0x8004b3f2u /* flag 0x40a2, bit 2 */
+#define NOISE_SCENE_COMPLETE 0x8004b3dfu /* flag 0x400c, bit 4 */
 #define SOUTH_BADLAND_STARTED 0x8004b3e2u /* flag 0x4027, bit 7 */
 #define SOUTH_BADLAND_COMPLETE 0x8004b3e3u /* flag 0x4028, bit 0 */
 
@@ -41,6 +42,7 @@ static const struct { uint32_t icon, stage, x, y; } destinations[] = {
     {46, 0x23b, 0x437f2, 0x29469}, /* Phoenix Bay, south-side bridge */
     {42, 0x23e, 0x24f57, 0x2cff4}, /* Suzaku City plaza */
     {28, 0x247, 176*256, 144*256}, /* South Badland, native Noise Desert entry */
+    {35, 0x248, 1552*256, 576*256}, /* Noise Desert, native Pelche Oasis entry */
     {26, 0x249, 84211, 84884},   /* Pelche Oasis */
     {29, 0x24a, 128*256, 376*256}, /* North Badland W, native Oasis entry */
     {27, 0x24b, 144*256, 208*256}, /* North Badland E, native western entry */
@@ -91,7 +93,15 @@ static int south_badland_pending(void) {
      * These adjacent flags span two bytes; 0x4029 belongs to North Badland W. */
     return (B(SOUTH_BADLAND_STARTED) & 0x80) && !(B(SOUTH_BADLAND_COMPLETE) & 1);
 }
+static int noise_pending(uint32_t story) {
+    /* WSTAG555 record 0xbb0: event 0x17c requires story 15 and 0x400c
+     * clear. Its native completion callback sets the flag. Retain the normal
+     * desert route while pending; a visit alone does not complete the scene. */
+    return story == 15 && !(B(NOISE_SCENE_COMPLETE) & 0x10);
+}
 static const char* departure(uint32_t stage, uint32_t story) {
+    if (stage == 0x248 && noise_pending(story))
+        return "Follow the desert route";
     if (stage == 0x247 && south_badland_pending())
         return "Finish the local encounter";
     /* WSTAG575 starts event 0x1a6 on entry at story 16 while 0x40a2 is
@@ -158,6 +168,8 @@ static const char* plan(uint32_t parent, uint32_t icon, struct arrival* out) {
     blocked=departure(stage,story);
     if (blocked) return blocked;
     if (i < 0) return "No travel point yet";
+    if (destinations[i].stage == 0x248 && noise_pending(story))
+        return "Follow the desert route";
     if (destinations[i].stage == 0x247 && south_badland_pending())
         return "Finish the local encounter";
     if (destinations[i].stage == 0x24a && (B(BADLAND_ENCOUNTER) & 6) == 2)

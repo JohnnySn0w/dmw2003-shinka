@@ -12,11 +12,12 @@ local files, not prerequisites already supplied by cloning the repository.
 
 ## Current feature guide
 
-The player-facing summaries below reflect the September 15, 2026 updates:
+The player-facing summaries below reflect the September 21, 2026 updates:
 
-- **Travel:** 15 exact arrival fields, including South Badland and Bullet Valley.
-  Visitation, source-area support and story checks all apply. Noise Desert is
-  still under event audit; visibility on the map does not imply travel support.
+- **Travel:** 16 exact arrival fields, including Noise Desert, South Badland and
+  Bullet Valley. Visitation, source-area support and story checks all apply;
+  Noise Desert preserves its pending conversation. Map visibility alone does
+  not imply travel support.
 - **Menus:** widescreen adjustments cover supported Status, card and Lab screens,
   including selection pulses and page turns. See the scene matrix rather than
   treating an older audit's 4:3 observation as the current rule.

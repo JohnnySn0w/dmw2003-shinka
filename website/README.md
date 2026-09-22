@@ -6,7 +6,8 @@ of Original → DS → Sampled → Chip switching in Central Park.
 
 The September 15 refresh adds alternating light/dark feature sections, a
 chapter-based listening panel with pause/resume, a current map-travel capture
-and the 15 supported arrival points. It also covers controller trigger shortcuts
+and a list of supported arrival points (16 after the September 21 Noise Desert
+addition). It also covers controller trigger shortcuts
 and transfer-driven memory-card progress. Older demonstration recordings are
 dated in their captions; they are not represented as the final soundtrack mix.
 

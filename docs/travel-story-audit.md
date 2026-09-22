@@ -9,15 +9,16 @@ scripted exits, temporary closures and transport unlocks. A previously visited
 area can become inaccessible later. Both departure and arrival need checks.
 
 This is an implementation scope and test plan, not a completed campaign safety
-certification. The 15-destination network now guards Seiryu's pending departure
+certification. The 16-destination network now guards Seiryu's pending departure
 scene, adjusts Asuka's early arrival, gates three South Sector stops behind the
 completed first arrival, and admits Phoenix Bay only after its exact surface field
 has been visited. Suzaku has event-aware arrivals and departures, and Asuka's
 Main Lobby cannot be used to teleport out during lockdown. North Badland W and
 South Badland block travel while their local encounters are pending. Bullet
 Valley preserves its native story-16 entry conversation and blocks departure
-until it completes. Noise Desert remains excluded while its event policy is
-investigated. The network retains the broad story range
+until it completes. Noise Desert now uses its native Pelche Oasis entrance;
+both directions wait for its story-15 conversation when that scene is pending.
+The network retains the broad story range
 described in [map travel](menu-map.md). That range does not prove the remaining
 events below are safe.
 
@@ -575,10 +576,54 @@ directions, exact visitation, same-location rejection, landing coordinates,
 and flags/visits revoked after selection on current and legacy pending-state
 paths. Private records and captures are in `output/desert-travel-01/`.
 
-Noise Desert is still excluded as a map-travel source and destination. Its
-`WSTAG555` record at `0xbb0` gates event `0x17c` on `0x600f` and `0x400c`;
-the completion callback writes `0x400c`. Native route validation above does
-not resolve that scene's travel policy. Audit it before enabling the desert.
+Noise Desert remained excluded in this September 15 pass. Its `WSTAG555`
+record at `0xbb0` identified event `0x17c`, but the native route checks alone
+had not resolved its travel policy. The following September 21 audit completes
+that bounded follow-up.
+
+## Noise Desert — 2026-09-21
+
+Noise Desert (`0x248`, map icon 35) is the sixteenth supported arrival. It uses
+Pelche Oasis's original entry `(1552*256, 576*256)`. The stage-to-icon table
+independently maps `0x248` to zero-based icon 34. Travel retains the existing
+Asuka-server source allowlist, story 1–36 range and exact destination-visit checks.
+
+All 771 annotated words of `WSTAG555.PRO` were compared with the owned disc
+module; the neighboring 550/560 modules were also rechecked. At offset `0xbb0`,
+the 24-byte trigger record runs event `0x17c` only when story equals 15 and
+flag `0x400c` is clear. The callback at `0x34c..0x374` calls the original flag
+setter with `0x400c, 1`. Its storage is `0x8004b3df & 0x10`, distinct from the
+Suzaku intro bit in the same byte. Layer-7 trigger index 6 is an automatic
+region near `(240,368)`; the ordinary Oasis landing is well outside it.
+
+Policy: preserve the normal desert route while that scene is pending. Both
+arrival and departure show **Follow the desert route** until the original
+conversation completes. This is deliberately more conservative than allowing
+a teleport to the opposite side of the event. Other story phases do not require
+this flag, matching the native predicate rather than inventing a permanent gate.
+The deferred cut and legacy serialized requests re-evaluate the same rule.
+
+Live validation uses an isolated copy of a progressed save. A controlled fixture
+sets story 15 and clears the completion bit, then enters the native trigger
+region using developer positioning. Ordinary Cross input advances Numemon's
+conversation; the original scene changes the byte from `0xa7` to `0xb7` while
+story remains 15. No test manually sets the completion bit. This establishes
+native event behavior, not a naturally played campaign checkpoint.
+
+The ordinary Oasis-to-Noise transition independently produced the selected
+landing. Copied-profile map checks cover blocked inbound/outbound requests in
+the pending fixture, unlocked round trips after native completion, ordinary
+story-20 travel, walking after arrival and savestate restoration. The ordinary
+Noise-to-Oasis exit and return also work after fast travel. Story, quest
+and visitation bytes are unchanged across these repeat trips. Private captures, RAM,
+fixtures and logs remain under `output/noise-travel-01/`.
+
+Native regressions cover both directions at stories 14/15/16, neighboring bits,
+exact visitation, same-location rejection, changed flags/visits/story between
+selection and commit, current and legacy request paths, wrong-server sources
+and the unchanged late-story cutoff. The supported-icon test also checks the
+new destination against the original map table. All 19 CTest entries pass with
+the updated normal executable; the website checker also passes.
 
 ## Priorities for the existing network
 

@@ -29,6 +29,7 @@ The initial travel network connects these Asuka locations:
 | Phoenix Bay | South-side bridge, or northern approach while its earthquake event is pending |
 | Suzaku City | Plaza, with event approaches for the first conversation, Kail's return and the later earthquake |
 | South Badland | Native entrance from Noise Desert |
+| Noise Desert | Native entrance from Pelche Oasis; the story-15 conversation must finish before using this stop |
 | Pelche Oasis | Path near the waterfront |
 | North Badland W | Native entrance from Pelche Oasis |
 | North Badland E | Native entrance from North Badland W |
@@ -55,6 +56,12 @@ Bullet Valley runs its original entry conversation when story 16 requires it.
 Departures show **Finish the local conversation** until the game records its
 completion. Travel never sets that completion flag itself. As with the other
 landings, Bullet Valley must have been visited; seeing a neighboring Badland icon is not enough.
+
+Noise Desert also requires its exact visit. During story 15, its unfinished
+conversation blocks both arrivals and departures with **Follow the desert route**.
+Use the ordinary field route and complete the native scene; travel becomes
+available without changing the story stage. Shinka never sets its completion
+flag. See the [Noise Desert audit](travel-story-audit.md#noise-desert--2026-09-21).
 
 After the Seiryu badge, travel out of Seiryu shows **Use the city exit** until
 Teddy's Wind Prairie conversation finishes. Returning to Seiryu remains allowed.

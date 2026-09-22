@@ -259,6 +259,57 @@ static void south_badland_policy(void) {
         CHECK(R(RETURN)==0x249 && !gpu_count && !R(PARENT+0x78));
     }
 }
+static void noise_policy(void) {
+    /* The same byte contains other story flags: only 0x400c completes this
+     * scene, and its predicate is exact equality rather than a story range. */
+    for(unsigned story=14;story<=16;++story) for(unsigned done=0;done<2;++done)
+    for(unsigned neighbors=0;neighbors<2;++neighbors) for(unsigned from=0;from<2;++from) {
+        unsigned flags=(done ? 0x10 : 0) | (neighbors ? 0xef : 0);
+        fresh();watching=0;W(0x8004b370,story);
+        psx_mod_write_byte(0x8004b3df,(uint8_t)flags);
+        if(from) W(RETURN,0x248);else target(35);
+        watching=1;writes=0;select_icon();
+        if(story==15 && !done) CHECK(!writes && !R(PARENT+0x78));
+        else {
+            shinka_map_present();CHECK(R(RETURN)==(from ? 0x21du : 0x248u));
+            if(!from) CHECK(R(RETURN+4)==1552*256 && R(RETURN+8)==576*256);
+        }
+        CHECK(R(0x8004b370)==story && psx_mod_read_byte(0x8004b3df)==flags);
+    }
+    /* Neighbor visits cannot grant the Noise Desert landing. */
+    fresh();watching=0;target(35);psx_mod_write_byte(0x8004b3c9,0xfe);
+    watching=1;writes=0;select_icon();CHECK(!writes && !R(PARENT+0x78));
+    fresh();watching=0;W(RETURN,0x248);target(35);
+    watching=1;writes=0;select_icon();CHECK(!writes); /* already there */
+    for(unsigned legacy=0;legacy<2;++legacy) for(unsigned from=0;from<2;++from)
+    for(unsigned change=0;change<3;++change) {
+        fresh();watching=0;W(0x8004b370,change==2 ? 14 : 15);
+        psx_mod_write_byte(0x8004b3df,change==2 ? 0xef : 0xff);
+        if(from) W(RETURN,0x248);else target(35);
+        watching=1;
+        if(legacy) {legacy_request();W(PARENT+0x7c,from ? 30 : 35);root_close();}
+        else select_icon();
+        watching=0;
+        if(change==0) psx_mod_write_byte(0x8004b3df,0xef);
+        else if(change==1) psx_mod_write_byte(0x8004b3c9,0xfe);
+        else W(0x8004b370,15);
+        watching=1;
+        if(legacy) transition();else shinka_map_present();
+        /* Revoking a destination visit matters only for inbound travel. */
+        int blocked=change!=1 || !from;
+        CHECK(R(RETURN)==(blocked ? (from ? 0x248u : 0x249u) : 0x21du));
+        CHECK(!R(PARENT+0x78));
+        if(blocked) CHECK(!gpu_count);
+    }
+    /* Wrong server and unvalidated late phases remain outside the network. */
+    for(unsigned bad=0;bad<3;++bad) {
+        fresh();watching=0;target(35);
+        if(bad==0) W(RETURN,0x2c0);
+        else if(bad==1) W(0x8004b370,37);
+        else W(0x8004b370,0x10f);
+        watching=1;writes=0;select_icon();CHECK(!writes);
+    }
+}
 static void south_policy(void) {
     const unsigned icons[]={32,43,44}, stages[]={0x232,0x234,0x237};
     /* Visitation can exist before the arrival scene completes. Both directions
@@ -450,6 +501,7 @@ int main(void) {
     story_policy();
     badland_policy();
     south_badland_policy();
+    noise_policy();
     fresh();cpu.gpr[31]=0x80099aa4;cpu.gpr[4]=0x80099894;cpu.gpr[5]=0x78;cpu.gpr[6]=8;
     shinka_map_allocate(&cpu);CHECK(cpu.gpr[5]==0x88 && cpu.gpr[6]==12 && writes==0);
     fresh();select_icon();CHECK(R(MAP+0xc)==1 && R(RETURN)==0x249);
@@ -478,7 +530,7 @@ int main(void) {
     cpu.gpr[31]=0x800997ec;cpu.gpr[16]=PARENT;shinka_map_frame(&cpu);CHECK(writes==0);
     /* Every exposed icon must lead to its own area according to the original map. */
     {
-        const unsigned icons[]={20,30,22,21,15,26,32,43,44,46,42,29,27,17,28};
+        const unsigned icons[]={20,30,22,21,15,26,32,43,44,46,42,29,27,17,28,35};
         for(unsigned i=0;i<sizeof(icons)/sizeof(icons[0]);++i) {
             fresh();watching=0;W(RETURN,0x200);W(0x8004b370,24);
             W(MAP+0x184,icons[i]);W(MAP+0xa8+(icons[i]-1)*4,1);watching=1;

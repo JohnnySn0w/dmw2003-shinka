@@ -1,0 +1,21 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Shinka · Mix desk</title><link rel="stylesheet" href="/mixer.css"></head>
+<body><main>
+<header><p class="eyebrow">SHINKA / MUSIC LAB</p><h1>Music mix desk.</h1>
+<p>Compare the first mix with a gentler balance, then tune each part by ear.</p>
+<a href="/">Original listening collection ↗</a> · <a href="/balanced/Shinka-balanced-listening-samples.zip" download>All balanced previews · ZIP</a></header>
+<section class="transport" aria-label="Track controls">
+<div class="selectors"><label>Track<select id="track"></select></label><label>Sound<select id="palette"><option value="sampled">Sampled</option><option value="ds">DS</option><option value="chip">Chip</option></select></label></div>
+<p id="scene"></p><div class="buttons"><button id="play" disabled>Play mix</button><button id="stop" disabled>Stop</button><button id="export" disabled>Download my mix · WAV</button><button id="reset" disabled>Reset this mix</button></div>
+<p id="status" role="status">Loading the mix catalog…</p><p id="save" role="status"></p>
+</section>
+<section><h2>Before &amp; after</h2><p>Playback levels are matched approximately. These previews exclude your slider adjustments.</p>
+<div class="compare"><label>First mix<audio id="before" aria-label="First mix preview" controls preload="none"></audio></label><label>Balanced<audio id="after" aria-label="Balanced preview" controls preload="none"></audio></label></div>
+<a id="balanced-download">Download balanced WAV</a></section>
+<section><div class="section-heading"><h2>Instrument balance</h2><span>Adjustments in dB</span></div>
+<p>Volume changes the part’s level. Warmth shapes its body around 300 Hz; presence shapes definition around 2.5 kHz. Solo is for listening only.</p>
+<div id="parts"></div></section>
+<footer><p>Your changes are saved locally for each track and sound. Export applies the same filters to all aligned parts and lowers the whole mix if needed to prevent sample clipping. Live preview has a safety compressor for large boosts.</p>
+<p>The automatic pass uses active phrases from original-sample approximations as its reference, with at most ±6 dB of level correction and ±2 dB of EQ. It preserves musical differences; it does not force every instrument onto one curve. Listening still decides the final balance.</p></footer>
+</main><script src="/mixer.js"></script></body></html>

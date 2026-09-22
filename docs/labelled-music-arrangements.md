@@ -18,6 +18,77 @@ choices to open an individual stem. Full mixes are WAV; MP3 listening copies are
 also included in `Shinka-labeled-listening-samples.zip`. Stems are lossless FLAC,
 with identical start times. Only one browser audio player plays at a time.
 
+## Balance auditions and the mix desk
+
+The next local pass contains a separate set of 57 balanced mixes and 537 aligned
+stems under `listening/balanced/`. Open
+<http://127.0.0.1:62007/mixer#BGM018-000/sampled> for Badlands. The original
+collection and its ZIP remain available; the live game pack is unchanged.
+The mix desk also links a ZIP of all 57 balanced MP3 previews, before personal
+slider adjustments.
+
+Each track offers approximately level-matched **First mix / Balanced** previews,
+then an interactive mix with per-part **Volume**, **Warmth** (300 Hz) and
+**Presence** (2.5 kHz). Solo isolates a part for listening. All parts start on the
+same audio clock. Manual controls are additional to the automatic corrections,
+shown beside each instrument. Reset returns that track/palette to its automatic
+balance. Changing a slider saves locally to `listening/mix-adjustments.json`;
+settings are separate for Sampled, DS and Chip. A visible error replaces the saved
+message if persistence fails. Conflicting edits from another tab require reload.
+
+**Download my mix** renders the current controls to stereo 48 kHz PCM16 WAV in
+the browser. It includes all parts, regardless of solo, and attenuates the entire
+mix if a sample peak would exceed 0.79. The live preview has a safety compressor
+for large boosts; the downloaded WAV uses only a common gain reduction. This
+export is a local audition, not an installation into the game.
+
+### What the balancing pass measures
+
+- Compare corresponding active phrases, rather than averaging each stem's
+  silences into its level. Reference activity is detected in 400 ms Hann windows,
+  200 ms apart, using a relative −35 dB threshold and an absolute floor.
+- Use the frequency response of the two 48 kHz filters in
+  [ITU-R BS.1770-4](https://www.itu.int/dms_pubrec/itu-r/rec/bs/R-REC-BS.1770-4-201510-S!!PDF-E.pdf)
+  to weight spectral power. This **windowed loudness proxy is not LUFS**: it does
+  not implement the standard's time-domain filtering, block overlap or gates.
+  A steady-tone test compares it with the actual filter cascade.
+- Match each part against its own original-sample reference, retaining the
+  reference's relative hierarchy. Gain corrections are limited to ±6 dB. This
+  replaces the first pass's RMS targets and blanket drum/bass cuts; percussion
+  can rise or fall if the reference suggests it. The manual controls let the
+  listener keep or reject that suggestion.
+- Nudge broad warmth/presence energy toward the reference with two Q=0.7 peaking
+  filters. Only a quarter of the measured band-ratio difference is applied,
+  capped at ±2 dB (±1 dB for drums, triangles and bells). Bands below −35 dB of
+  the stem's total power are not boosted. Original SFX parts receive no such
+  correction. This avoids prescribing a universal EQ curve for unlike voices.
+- Apply a common gain to each finished mix and its stems, targeting −20 on the
+  proxy while retaining sample headroom. Transient-heavy tracks may remain
+  quieter. No automatic compressor, limiter or masking notch is baked into
+  these baseline files. Sample peaks are checked; this is not a true-peak or
+  streaming-delivery certification.
+
+The reference is an **offline original-sample approximation**, not a native SPU
+recording. Frequency envelopes also change legitimately with register,
+articulation and replacement instrument. These bounded suggestions need listening
+approval; they cannot infer every melody/accompaniment role or resolve masking
+reliably on their own. `balanced/catalog.json` records every correction,
+measurement, source identity and comparison trim.
+
+After packaging a fresh arrangement set, build its balance pass and serve it:
+
+```powershell
+python tools/balance_music_arrangements.py output/my-arrangements
+python tools/serve_music_arrangements.py output/my-arrangements
+```
+
+Use `--library` for a different original-stem library or repeat `--track` for a
+smaller first pass. Existing completed balance catalogs are preserved: use a new
+arrangement folder for a new pass. The profile is tied to the balance catalog's
+hash; the server refuses to apply saved settings to a different render. The
+server binds only to loopback and protects writes with Host, Origin, per-process
+token and revision checks. No labels or audio are sent to an external service.
+
 ## What the labels control
 
 The renderer matches labels by bank, sequence, original source hashes, programs

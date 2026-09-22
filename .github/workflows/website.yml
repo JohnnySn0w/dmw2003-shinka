@@ -3,9 +3,9 @@ name: Website checks and publishing
 on:
   push:
     branches: [main]
-    paths: ['website/**', 'tools/check_website.py', 'tests/test_website.py', '.github/workflows/website.yml']
+    paths: ['website/**', 'tools/check_website.py', 'tools/serve_website.py', 'tests/test_website*.py', '.github/workflows/website.yml']
   pull_request:
-    paths: ['website/**', 'tools/check_website.py', 'tests/test_website.py', '.github/workflows/website.yml']
+    paths: ['website/**', 'tools/check_website.py', 'tools/serve_website.py', 'tests/test_website*.py', '.github/workflows/website.yml']
   workflow_dispatch:
     inputs:
       publish:
@@ -29,7 +29,7 @@ jobs:
         with:
           python-version: '3.12'
       - run: python tools/check_website.py
-      - run: python -m unittest discover -s tests -p test_website.py -v
+      - run: python -m unittest discover -s tests -p "test_website*.py" -v
       - run: node --check website/dist/app.js
 
   publish:

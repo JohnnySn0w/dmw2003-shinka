@@ -12,11 +12,12 @@ on pushes and pull requests. Local equivalents, from the repository root:
 
 ```sh
 python tools/check_website.py
-python -m unittest discover -s tests -p test_website.py -v
+python -m unittest discover -s tests -p "test_website*.py" -v
 node --check website/dist/app.js
 ```
 
-These checks catch missing files/anchors, broken GIF targets, duplicate IDs,
+These checks catch missing files/anchors, selectable demo sources and captions,
+broken legacy GIF targets, duplicate IDs,
 missing image descriptions, automatic video playback and paths that would break
 under a repository URL. They do not replace listening to clips, reviewing the
 layout or checking claims against gameplay evidence.

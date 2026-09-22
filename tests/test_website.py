@@ -44,6 +44,18 @@ class WebsiteTests(unittest.TestCase):
         self.assertTrue(any('autoplay' in error for error in errors))
         self.assertTrue(any('alt text' in error for error in errors))
 
+    def test_selectable_demo_assets_are_checked(self):
+        errors = self.check_page(
+            '<button data-src="missing.mp4" data-captions="missing.vtt" '
+            'data-poster="missing.png">Play</button>'
+            '<option data-original="original.png" data-wide="wide.png">View</option>')
+        self.assertEqual(len(errors), 5)
+        self.assertTrue(all('missing asset' in error for error in errors))
+
+    def test_selectable_demo_rejects_project_root_paths(self):
+        errors = self.check_page('<button data-src="/media/demo.mp4">Play</button>')
+        self.assertTrue(any('root-relative' in error for error in errors))
+
     def test_project_hosting_rejects_root_and_parent_paths(self):
         errors = self.check_page('<a href="/style.css">Root</a><a href="../card.mcd">Parent</a>')
         self.assertTrue(any('root-relative' in error for error in errors))

@@ -1,51 +1,53 @@
 # Shinka website
 
-A scrolling, responsive feature showcase using the user's full title artwork,
-real gameplay captures, opt-in feature GIFs and a continuous audible recording
-of Original → DS → Sampled → Chip switching in Central Park.
+A scrolling feature showcase with the user's title artwork and current gameplay
+footage. The September 21 refresh replaces the earlier slideshow GIFs and stale
+captures with 16 short videos, including:
 
-The September 15 refresh adds alternating light/dark feature sections, a
-chapter-based listening panel with pause/resume, a current map-travel capture
-and a list of supported arrival points (16 after the September 21 Noise Desert
-addition). It also covers controller trigger shortcuts
-and transfer-driven memory-card progress. Older demonstration recordings are
-dated in their captions; they are not represented as the final soundtrack mix.
+- Portable Lab entry, evolution hints and technique selection.
+- EXP, encounter and view settings.
+- Audible Original / DS / Sampled / Chip switching in Central Park and North Badland W.
+- An uninterrupted memory-card load and 100% / 150% / 200% battle pose comparisons.
+- Successful map travel and an unsupported destination's explanation.
+- Card editing, Card Album, Leomon's gym and the title screen.
 
-The copy follow-up uses direct feature descriptions and adds four widescreen
-menu captures: card editing, techniques, evolution hints and Leomon's gym.
-[SHOWCASE-PLAN.md](SHOWCASE-PLAN.md) tracks the requested recording refreshes and
-new feature demonstrations, with priorities and acceptance checks.
+The aspect comparison switches among four independently captured 4:3/16:9 pairs:
+title, field, battle and Card Album. Gameplay artwork retains its proportions.
+Videos have native play/pause, seeking and fullscreen controls; action captions
+are available. Playback starts only on user input, and only one demo plays at a
+time. Soundtrack chapters and scene choices allow quick listening comparisons.
 
-The widescreen section also has a 4:3/16:9 Card Album comparison using verified
-captures of the same selection. Both views keep the same image height; the
-original view is centered with side margins. Native radio controls work with
-keyboard/touch and do not require JavaScript.
+## Preview and checks
 
-## Preview locally
-
-From this directory, serve the static output with Python:
+From the repository root:
 
 ```sh
-python -m http.server 4173 --bind 127.0.0.1 --directory dist
+python tools/serve_website.py
+python tools/check_website.py
+python -m unittest discover -s tests -p "test_website*.py" -v
+node --check website/dist/app.js
 ```
 
-Open <http://127.0.0.1:4173/>. No package install or build step is required.
-The HTML, CSS and JavaScript in `dist/` are the authored source. Relative asset
-paths also allow hosting under a repository subdirectory.
+Open <http://127.0.0.1:4173/>. There is no install or build step. `dist/index.html`,
+`dist/style.css` and `dist/app.js` are the authored source. Relative paths work
+under the repository's GitHub Pages subdirectory too.
 
-## Editing and publishing
+## Recording and editing
 
-- Edit `dist/index.html`, `dist/style.css` and `dist/app.js`.
-- Bump the stylesheet/script version queries in `index.html` when changing those
-  assets so returning visitors receive matching markup and controls.
-- Keep performance claims tied to the linked measurement reports.
-- Keep recordings small and retain their provenance in [MEDIA.md](MEDIA.md).
-- Audio begins only through a user gesture. GIFs start as still images and have
-  explicit play/stop controls; they do not autoplay.
-- `.openai/hosting.json` identifies the existing private Sites project and static
-  output. It contains no credentials. Reuse that project for future Sites edits.
-- The game repository tracks this website as ordinary files. A local nested Git
-  checkout used by Sites contains only this folder and is not a submodule.
+Use `tools/record_showcase.py` against an isolated runtime with a copied save
+profile. Never point fixture input at the player's live session. Recipes contain
+ordinary button inputs and sample-clock times. The title needs composed output
+because its logo is drawn after the guest GPU image; see [MEDIA.md](MEDIA.md).
 
-No disc images, BIOS, generated game code, memory cards or complete soundtrack
-packs are deployed. See the root [data policy](../README.md#data-and-assets).
+Keep raw frames, cards and recording manifests under ignored `output/`. Publish
+only selected clips, lossless posters and descriptive captions. Record source
+revision and capture treatment in MEDIA.md. Bump asset query versions when
+changing the CSS or JavaScript. Keep benchmark claims tied to measurement docs;
+a new demo is not automatically a new benchmark.
+
+GitHub Pages publishing remains the owner's manual workflow described in
+[website-publishing.md](../docs/website-publishing.md). The separate existing
+`.openai/hosting.json` private preview configuration is preserved.
+
+[SHOWCASE-PLAN.md](SHOWCASE-PLAN.md) separates this completed refresh from future
+recordings. No executable, disc image, BIOS, card or music pack is deployed.

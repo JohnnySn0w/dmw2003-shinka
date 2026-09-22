@@ -19,7 +19,8 @@ class Page(HTMLParser):
             if attrs['id'] in self.ids:
                 self.errors.append(f"Duplicate id: {attrs['id']}")
             self.ids.add(attrs['id'])
-        for key in ('href', 'src', 'poster', 'data-still', 'data-gif'):
+        for key in ('href', 'src', 'poster', 'data-still', 'data-gif',
+                    'data-src', 'data-captions', 'data-poster', 'data-original', 'data-wide'):
             if attrs.get(key):
                 self.refs.append(attrs[key])
         if 'data-toggle' in attrs:

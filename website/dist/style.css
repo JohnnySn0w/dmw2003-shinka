@@ -944,3 +944,22 @@ footer>a:last-child {
     padding-right:44%;
   }
 }
+
+/* Real-time demonstrations replace the old slideshow GIFs. */
+.capture video { background:#000; aspect-ratio:426 / 240; object-fit:contain; }
+.capture figcaption strong { color:#f6f7ff; }
+.transfer-demo { max-width:852px; margin:2rem 0; }
+.capture-date { color:var(--muted); font-size:.875rem; margin:1.5rem 0 0; }
+.demo-scenes { display:flex; flex-wrap:wrap; gap:.6rem; margin-bottom:1rem; }
+.demo-scenes button { min-height:44px; padding:.6rem 1rem; font:inherit; color:inherit;
+  background:transparent; border:1px solid currentColor; cursor:pointer; }
+.demo-scenes button[aria-pressed="true"] { background:var(--paper); color:var(--navy); }
+.comparison-picker { display:flex; flex-wrap:wrap; align-items:center; gap:.75rem; margin-bottom:1rem; }
+.comparison-picker select { font:inherit; background:#111c3b; color:#fff; padding:.6rem; border:1px solid #7183b2; }
+.frame-label, .capture figcaption { font-size:.875rem; }
+
+.motion-demo { max-width:852px; margin:2rem 0; }
+.capture .demo-scenes { margin:.85rem 0; }
+.capture .demo-scenes button { color:#f6f7ff; border-color:#7183b2; }
+.capture .demo-scenes button[aria-pressed="true"] { color:#121d3a; background:#f0f3ff; }
+.supplemental-demos { margin-top:2rem; }

@@ -1,16 +1,10 @@
 'use strict';
 
-// Animation and audio begin only after an explicit visitor action.
-document.querySelectorAll('[data-toggle]').forEach(button => {
-  const picture = document.getElementById(button.dataset.toggle);
-  const label = button.textContent.replace(/^Play /, '');
-  button.addEventListener('click', () => {
-    const playing = button.getAttribute('aria-pressed') === 'true';
-    picture.src = playing ? picture.dataset.still : picture.dataset.gif;
-    button.setAttribute('aria-pressed', String(!playing));
-    button.textContent = `${playing ? 'Play' : 'Stop'} ${label}`;
-  });
-});
+// Only the visitor starts playback. Keep one demonstration playing at a time.
+const demos = [...document.querySelectorAll('video')];
+demos.forEach(demo => demo.addEventListener('play', () => {
+  demos.forEach(other => { if (other !== demo) other.pause(); });
+}));
 
 const video = document.getElementById('soundtrack');
 const status = document.getElementById('sound-status');
@@ -69,4 +63,60 @@ video.addEventListener('play', () => { hasPlayed = true; updatePlayback(); });
 ['pause', 'timeupdate', 'seeked', 'ended'].forEach(event => video.addEventListener(event, updatePlayback));
 video.addEventListener('error', () => {
   status.textContent = 'The video could not load. Try reopening this page or download the clip.';
+});
+
+
+const sceneNames = { central: 'Central Park', badlands: 'North Badland W' };
+document.querySelectorAll('[data-sound-scene]').forEach(button => {
+  button.addEventListener('click', () => {
+    if (button.getAttribute('aria-pressed') === 'true') return;
+    video.pause();
+    pendingSeek = null;
+    hasPlayed = false;
+    const scene = button.dataset.soundScene;
+    video.querySelector('source').src = button.dataset.src;
+    video.querySelector('track').src = button.dataset.captions;
+    video.poster = button.dataset.poster;
+    video.load();
+    document.getElementById('sound-scene-name').textContent = sceneNames[scene];
+    document.getElementById('sound-download').href = button.dataset.src;
+    video.querySelector('a').href = button.dataset.src;
+    document.querySelectorAll('[data-sound-scene]').forEach(other =>
+      other.setAttribute('aria-pressed', String(other === button)));
+    pause.hidden = true;
+    status.textContent = `${sceneNames[scene]}. Choose a palette to hear it.`;
+    updatePlayback();
+  });
+});
+
+const comparisons = {
+  album: 'Card Album with Eclipse Undo selected',
+  title: 'Shinka title screen',
+  field: 'Central Park field',
+  battle: 'Battle command selection'
+};
+document.getElementById('comparison-scene').addEventListener('change', event => {
+  const scene = event.target.value;
+  const original = document.querySelector('.aspect-original');
+  const wide = document.querySelector('.aspect-wide');
+  original.src = event.target.selectedOptions[0].dataset.original;
+  wide.src = event.target.selectedOptions[0].dataset.wide;
+  original.alt = `${comparisons[scene]}, original 4:3 view`;
+  wide.alt = `${comparisons[scene]}, widescreen view`;
+});
+
+
+const motionDemo = document.getElementById('motion-demo');
+document.querySelectorAll('[data-motion]').forEach(button => {
+  button.addEventListener('click', () => {
+    if (button.getAttribute('aria-pressed') === 'true') return;
+    motionDemo.pause();
+    const rate = button.dataset.motion;
+    motionDemo.querySelector('source').src = button.dataset.src;
+    motionDemo.querySelector('track').src = button.dataset.captions;
+    motionDemo.load();
+    document.getElementById('motion-rate').textContent = `${rate}% pose speed`;
+    document.querySelectorAll('[data-motion]').forEach(other =>
+      other.setAttribute('aria-pressed', String(other === button)));
+  });
 });

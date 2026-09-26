@@ -840,6 +840,50 @@ int main(void) {
         CHECK(!memcmp(rect,original,sizeof(rect)));
         options[2]=1;shinka_view_tick();
     }
+    /* Area-entry geometry uses edge anchors throughout reveal and scissor close. */
+    items_menu=SHINKA_FIELD_ENTRY;
+    const struct {uint32_t color;int x,y,r,b,side;} entry[] = {
+        {0x28800000,0,66,320,97,0}, {0x28800000,0,73,320,97,0},
+        {0x28800000,0,85,320,89,0}, {0x28c83e3e,0,85,320,89,0},
+        {0x28800000,125,16,241,30,1}, {0x28800000,125,16,241,47,1},
+        {0x28c83e3e,27,0,36,240,-1}, {0x28c83e3e,0,81,320,93,0},
+        {0x28c83e3e,124,40,320,43,1}, {0x28c83e3e,310,40,320,43,1},
+        {0x28ffe400,227,0,228,48,1}, {0x28ffe400,227,0,228,240,1},
+        {0x28ffe400,13,0,14,240,-1}, {0x28ffe400,2,0,4,240,-1},
+        {0x28ffe400,31,0,32,240,-1}, {0x28ffe400,0,86,320,88,0},
+        {0x28ffe400,124,41,320,42,1}
+    };
+    for(int band=0;band<=256;band+=256) for(int margin=1;margin<=160;++margin)
+    for(int clip=0;clip<=112;clip+=16) {
+        for(unsigned i=0;i<sizeof(entry)/sizeof(*entry);++i) {
+            uint32_t q[]={entry[i].color,entry[i].x|(entry[i].y<<16),entry[i].r|(entry[i].y<<16),
+                entry[i].x|(entry[i].b<<16),entry[i].r|(entry[i].b<<16)};
+            uint32_t original[5];memcpy(original,q,sizeof(q));
+            shinka_menu_wide_quad(q,5,0,0,band,0,band+clip,319,band+239-clip,margin);
+            for(int v=1;v<=4;++v) {
+                int side=entry[i].side ? entry[i].side : (v&1 ? -1 : 1);
+                CHECK((int16_t)q[v]==(int16_t)original[v]+side*margin);
+                CHECK(q[v]>>16==original[v]>>16);
+            }
+            memcpy(q,original,sizeof(q));q[0]=0x28000000;
+            shinka_menu_wide_quad(q,5,0,0,band,0,band+clip,319,band+239-clip,margin);
+            CHECK(!memcmp(q+1,original+1,4*sizeof(uint32_t)));
+        }
+        for(int row=26;row<=68;row+=42) for(int descent=0;descent<=1;++descent) {
+            int y=row+descent;
+            uint32_t glyph[]={0x64808080,129|(y<<16),0x3a170000,0x000c0008};
+            CHECK(shinka_menu_wide_rect(glyph,4,0,band,0,band+clip,319,band+239-clip,margin)==8);
+            CHECK((int16_t)glyph[1]==129+(row==26 ? margin : -margin));
+            CHECK(glyph[2]==0x3a170000 && glyph[3]==0x000c0008);
+        }
+    }
+    options[2]=0; /* setting changes must take effect even before the next tick */
+    uint32_t entry_off[]={0x28800000,0x00420000,0x00420140,0x00610000,0x00610140};
+    shinka_menu_wide_quad(entry_off,5,0,0,0,0,0,319,239,53);
+    CHECK(entry_off[1]==0x00420000 && entry_off[2]==0x00420140);
+    options[2]=1;items_menu=SHINKA_FIELD_INN;
+    shinka_menu_wide_quad(entry_off,5,0,0,0,0,0,319,239,53);
+    CHECK(entry_off[1]==0x00420000 && entry_off[2]==0x00420140);
     boot_tests();
     animation_tests();
     puts("Field preview, battle projection, scene isolation and independent settings passed.");

@@ -761,3 +761,33 @@ Native regression checks exercise both framebuffer bands, all margins 1–160,
 contiguous border joins, every progress-fill width, selection palettes, 4:3
 rejection and title/movie/module isolation. The 19 native CTest entries pass.
 These checks use the English PAL game and do not establish other-region coverage.
+
+### September 25: Area-entry cards
+
+The blue area-name banner and horizontal lines now reach the widescreen edges.
+The area name and left vertical lines move together toward the left edge; the
+sector label, underline and right vertical line remain a right-anchored group.
+Letters, line thickness, typing cadence and vertical reveal keep their native
+dimensions and timing. Descenders, including the `g` in Asuka Bridge, share the
+same text anchor as the rest of the name.
+
+These are flat polygons and separate font sprites, not a single image. The
+host packet transform requires the live field child-5 owner, callback
+`0x80087974`, its code signature and matching geometry/palette. It also accepts
+the vertically contracting scissor used during the final reveal of the field,
+so the horizontal placement remains wide through the closing scanline.
+Guest coordinates and save data are unchanged; Field view off bypasses it.
+
+Copied-profile OpenGL validation covers Pelche Oasis and Asuka Bridge. Four
+180-frame recordings cover 4:3, widescreen, and the longer bridge-card exit;
+the widescreen sequences retain 426px output and the reference remains 320px.
+Across these recordings, all 479 frames with the main cyan line visible reach
+both horizontal edges. Evidence, packet traces and per-frame checks are local
+under `output/area-entry-01/`. The capture tool's 4:3 path now explicitly syncs
+GPU drawing before reading CPU VRAM, matching the screenshot command; otherwise
+it could record stale images. Packed 24-bit movie data is excluded from that sync.
+
+Regression checks cover both framebuffer bands, margins 1–160, animated reveals,
+vertical scissor contraction, descenders, immediate 4:3 switching and rejection
+of unrelated or stale owners. All 19 native CTest entries and the two capture
+reader tests pass. Live verification is limited to these English PAL locations.

@@ -23,6 +23,14 @@ static void menu_capture_frame(void) {
                 free(pixels); pixels = NULL;
             }
         } else if (pixels) {
+            /* GPU presentation can leave CPU VRAM stale. Match screenshot_file's
+             * explicit readback; never overwrite packed 24-bit movie pixels. */
+            if (!di.depth24) {
+                extern void gl_renderer_sync_cpu(void);
+                extern void vk_renderer_sync_cpu(void);
+                gl_renderer_sync_cpu();
+                vk_renderer_sync_cpu();
+            }
             for (unsigned y=0;y<h;++y) for (unsigned x=0;x<w;++x) {
                 uint8_t r,g,b; gpu_display_pixel_rgb(&di,x,y,&r,&g,&b);
                 pixels[y*w+x] = 0xff000000u | ((uint32_t)r<<16) | ((uint32_t)g<<8) | b;

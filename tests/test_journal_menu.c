@@ -592,6 +592,25 @@ int main(void) {
         }
     }
     W(0x801e0210,0);CHECK(!shinka_menu_status_layout());
+    /* Area-entry owner is the sibling in slot 5, including its closing state. */
+    uint32_t entry=0x800df1bc;
+    W(0x801e0214,entry);W(entry+0x28,0x80014274);W(entry+0x48,0x80087974);
+    W(entry+0x20,2);W(0x80087974,0x27bdffd0);
+    writes=0;
+    for(int life=0;life<=2;++life) {
+        W(entry+0xc,life);writes=0;
+        CHECK(shinka_menu_status_layout()==SHINKA_FIELD_ENTRY);CHECK(!writes);
+    }
+    W(entry+0xc,3);CHECK(!shinka_menu_status_layout());W(entry+0xc,1);
+    W(entry+0x20,3);CHECK(!shinka_menu_status_layout());W(entry+0x20,2);
+    W(0x80087974,0);CHECK(!shinka_menu_status_layout());W(0x80087974,0x27bdffd0);
+    W(0x801e0214,0x801fffff);CHECK(!shinka_menu_status_layout());W(0x801e0214,entry);
+    W(0x8005cca8,3);CHECK(!shinka_menu_status_layout());W(0x8005cca8,2);
+    for(int i=0;i<3;++i) {
+        W(inn_objects[i]+0x48,0);CHECK(!shinka_menu_status_layout());
+        W(inn_objects[i]+0x48,inn_callbacks[i]);
+    }
+    W(0x801e0214,0);CHECK(!shinka_menu_status_layout());
     puts("Full lab actions, partner retention, legacy restoration, root return and menu input checks passed.");
     return 0;
 }

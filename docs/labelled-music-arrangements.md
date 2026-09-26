@@ -89,6 +89,32 @@ hash; the server refuses to apply saved settings to a different render. The
 server binds only to loopback and protects writes with Host, Origin, per-process
 token and revision checks. No labels or audio are sent to an external service.
 
+### September 25 listening checkpoint — balancing paused
+
+The listener reports that the automatic pass sounds fairly minimal, and that
+Asuka City's foreground trumpet-like phrase remains recessed. Keep this as
+unfinished mix work; the validated files and working mix desk are auditions,
+not an approved master or an update to the live game soundtrack.
+
+Inspection of `BGM001-000` found no trumpet voice in the arrangement: the saved
+assignments include tuba, clarinet and tentative violins. Which source part
+contains the reported phrase has not yet been established. Do not relabel the
+notebook or substitute a trumpet based on this observation alone.
+
+The Sampled balance pass raised the main drums by 3.669 dB and tuba by 0.838 dB,
+moving their relative balance toward percussion. The replacement tuba's
+1.5–5 kHz energy fraction was roughly 23 dB below its reference's; the weak-band
+guard therefore applied no presence boost. Matching weighted energy over a
+whole part cannot establish melodic prominence or whether accompaniment masks
+a phrase. Tentative labels and changed attack/sustain also need review.
+
+Next music work: isolate the reported lead phrase against the original, verify
+its instrument and articulation, then compare its level with accompaniment
+during that phrase. Reconsider the weak-band guard and restored percussion
+levels using listening evidence rather than increasing global EQ. Preserve
+existing comparisons and personal mix adjustments. Work moved to the area-entry
+widescreen card at the user's request.
+
 ## What the labels control
 
 The renderer matches labels by bank, sequence, original source hashes, programs

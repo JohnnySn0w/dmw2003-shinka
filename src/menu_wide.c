@@ -25,6 +25,38 @@ static int stretch_x(int x, int margin) {
     return (scaled >= 0 ? scaled / 320 : -((-scaled + 319) / 320)) - margin;
 }
 
+/* The area card closes by contracting its vertical scissor. Keep the same
+ * horizontal anchors until its final scanline, rather than snapping to 4:3. */
+static int entry_view(int ox, int oy, int left, int top, int right, int bottom, int margin) {
+    return shinka_view_wide_active() && shinka_view_wide_requested()
+        && margin > 0 && margin <= 160 && !ox && (oy == 0 || oy == 256)
+        && !left && right == 319 && top >= oy && bottom <= oy+239 && top <= bottom;
+}
+
+static void entry_quad(uint32_t* words, int margin) {
+    int x = (int16_t)words[1], y = (int16_t)(words[1] >> 16);
+    int r = (int16_t)words[2], b = (int16_t)(words[3] >> 16);
+    if (words[1] >> 16 != words[2] >> 16 || words[3] >> 16 != words[4] >> 16
+        || (uint16_t)words[1] != (uint16_t)words[3]
+        || (uint16_t)words[2] != (uint16_t)words[4] || r < x || b < y) return;
+    int side = 0, span = 0;
+    unsigned color = words[0];
+    if ((color == 0x28800000 && x == 0 && r == 320 && y >= 66 && y <= 87 && b >= 87 && b <= 97)
+        || (color == 0x28c83e3e && x == 0 && r == 320 && y >= 81 && y <= 87 && y+b == 174)
+        || (color == 0x28ffe400 && x == 0 && r == 320 && y == 86 && b == 88)) span = 1;
+    else if ((color == 0x28800000 && x == 125 && r == 241 && y == 16 && b <= 47)
+        || (color == 0x28c83e3e && x >= 124 && r == 320 && y == 40 && b == 43)
+        || (color == 0x28ffe400 && x >= 124 && r == 320 && y == 41 && b == 42)
+        || (color == 0x28ffe400 && x == 227 && r == 228 && y == 0 && b <= 240)) side = 1;
+    else if (y == 0 && b == 240 && x >= -36 && r <= 36
+        && ((color == 0x28c83e3e && r-x <= 9)
+            || (color == 0x28ffe400 && r-x <= 2))) side = -1;
+    else return;
+    for (int i = 1; i <= 4; ++i)
+        words[i] = (words[i] & 0xffff0000u)
+            | (uint16_t)((int16_t)words[i] + margin*(span ? (i & 1 ? -1 : 1) : side));
+}
+
 /* Stretch only the empty join between the file information and party. A
  * shared edge mapping keeps all border strips attached to both columns. */
 static int card_x(int x, int margin) { return x + (x <= 144 ? -margin : margin); }
@@ -96,6 +128,16 @@ static int layout_rect(uint32_t* words, int count, int offset_x, int offset_y,
         && shinka_view_wide_requested();
     int backdrop = layout || transition;
     unsigned op = words[0] >> 24;
+    if (status == SHINKA_FIELD_ENTRY) {
+        if (count != 4 || op != 0x64 || !entry_view(offset_x, offset_y, left, top, right, bottom, margin)
+            || words[2] >> 16 != 0x3a17 || words[3] >> 16 != 12) return 0;
+        y = (int16_t)(words[1] >> 16);
+        /* Descenders such as the g in Bridge sit one pixel below baseline. */
+        if (y != 26 && y != 27 && y != 68 && y != 69) return 0;
+        words[1] = (words[1] & 0xffff0000u)
+            | (uint16_t)((int16_t)words[1] + (y < 40 ? margin : -margin));
+        return words[3] & 65535;
+    }
     if ((!backdrop && !transition) || !shinka_view_wide_active()
         || margin <= 0 || margin > 160 || count != 4 || (op != 0x64 && op != 0x66)
         || offset_x != 0 || (offset_y != 0 && offset_y != 256)
@@ -397,6 +439,12 @@ static int scaled_x(int x, int scale) {
 
 void shinka_menu_wide_quad(uint32_t* words, int count, uint32_t source,
     int offset_x, int offset_y, int left, int top, int right, int bottom, int margin) {
+    if (count == 5 && words[0] >> 24 == 0x28
+        && entry_view(offset_x, offset_y, left, top, right, bottom, margin)
+        && shinka_menu_status_layout() == SHINKA_FIELD_ENTRY) {
+        entry_quad(words, margin);
+        return;
+    }
     if ((count != 9 && count != 5 && count != 6 && count != 8) || !shinka_view_wide_active() || margin <= 0 || margin > 160
         || offset_x || (offset_y != 0 && offset_y != 256)
         || left || right != 319 || top != offset_y || bottom != top + 239) return;

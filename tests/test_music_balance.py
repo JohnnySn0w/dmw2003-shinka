@@ -4,7 +4,6 @@ from http.client import HTTPConnection
 from http.server import ThreadingHTTPServer
 import json
 from pathlib import Path
-import subprocess
 import sys
 import tempfile
 import threading
@@ -25,13 +24,20 @@ class BalanceTests(unittest.TestCase):
 
     def test_windowed_k_measurement_agrees_with_time_domain_for_steady_tone(self):
         audio = self.tone(1000)
-        filters = ('biquad=b0=1.53512485958697:b1=-2.69169618940638:b2=1.19839281085285:'
-                   'a0=1:a1=-1.69065929318241:a2=0.73248077421585,'
-                   'biquad=b0=1:b1=-2:b2=1:a0=1:a1=-1.99004745483398:a2=0.99007225036621')
-        raw = subprocess.check_output(['ffmpeg', '-v', 'error', '-f', 'f32le', '-ar', str(RATE),
-                                       '-ac', '2', '-i', '-', '-af', filters, '-f', 'f32le', '-'],
-                                      input=audio.tobytes())
-        filtered = np.frombuffer(raw, '<f4').reshape(-1, 2)[RATE//2:]
+        # Independent time-domain recurrence, rather than the production FFT
+        # response calculation. Keep this synthetic check independent of FFmpeg.
+        filters = ((1.53512485958697, -2.69169618940638, 1.19839281085285,
+                    -1.69065929318241, 0.73248077421585),
+                   (1., -2., 1., -1.99004745483398, 0.99007225036621))
+        filtered = audio.astype(np.float64)
+        for b0, b1, b2, a1, a2 in filters:
+            z1, z2 = np.zeros(2), np.zeros(2)
+            for sample in filtered:
+                value = b0*sample + z1
+                z1 = b1*sample - a1*value + z2
+                z2 = b2*sample - a2*value
+                sample[:] = value
+        filtered = filtered[RATE//2:]
         expected = -.691 + 10*np.log10(np.mean(np.sum(filtered**2, axis=1)))
         self.assertAlmostEqual(measure(spectrum(audio))['db'], expected, delta=.04)
 

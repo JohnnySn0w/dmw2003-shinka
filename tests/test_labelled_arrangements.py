@@ -62,7 +62,9 @@ class LabelledArrangementsTests(unittest.TestCase):
     def test_download_paths_stay_inside_destination(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
-            self.assertEqual(local(root, 'instrument/a.wav'), root/'instrument/a.wav')
+            # Windows runners may expose TEMP through an 8.3 path alias.
+            # local() returns a resolved path; compare canonical forms.
+            self.assertEqual(local(root, 'instrument/a.wav'), root.resolve()/'instrument/a.wav')
             with self.assertRaises(ValueError):
                 local(root, '../escape.wav')
 

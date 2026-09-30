@@ -3,8 +3,10 @@
 ## Completed — September 29, 2026
 
 All 21 gameplay stills were recaptured: hero scenes, video posters and all four
-aspect pairs. They include the current menu and widescreen fixes. Branding and
-the September 21 videos are preserved; [MEDIA.md](MEDIA.md) distinguishes their
+aspect pairs. They include the current menu and widescreen fixes. Both map videos
+were rerecorded with updated posters and captions: Central Park's full travel
+transition and East Station's refusal. Branding and the other 14 September 21
+videos are preserved; [MEDIA.md](MEDIA.md) distinguishes their
 capture dates. Repository updates and public Pages deployments are separate:
 ordinary pushes validate files; the owner runs the publishing workflow.
 

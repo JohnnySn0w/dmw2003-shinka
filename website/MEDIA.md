@@ -1,10 +1,12 @@
 # Showcase media provenance
 
-The September 21, 2026 showcase replaces all earlier gameplay demos and stills
-with fresh captures of Shinka revision `f3adfad`. Branding remains the user's
-artwork. Recordings use an isolated runtime and copied saves under
-`output/showcase-20260921/`; the player's active cards and preferences were not
-changed. No story flags or visits were added for these recordings.
+All 21 gameplay stills were recaptured on September 29, 2026, at repository
+revision `f5a52c8` (game code at `cdd36cc`; subsequent changes cover tests).
+The 16 videos remain the September 21 recordings of revision `f3adfad`.
+Branding remains the user's artwork. Both sessions use isolated runtimes and
+copied saves, under `output/showcase-20260929/` and `output/showcase-20260921/`
+respectively. The player's active cards and preferences were not changed.
+No story flags or visits were added for these captures.
 
 ## Published clips
 
@@ -73,8 +75,14 @@ visual pace comparison, not a new performance benchmark.
 `-original.png` and `-wide.png` views. CSS holds display height constant and
 centers the original image with side margins. No wide image is cropped into a
 fake 4:3 view. Animated backgrounds and idle poses advance between captures.
-Posters are actual frames from their respective clips, saved with lossless PNG
-compression. `central-park.png` and `battle.png` are fresh hero captures.
+The September 29 posters are fresh captures of the corresponding feature views,
+not extracted frames from the older videos. All stills use lossless PNG at
+320×240 or 426×240. `central-park.png` and `battle.png` are fresh hero captures.
+Native screenshots capture the current renderer; the title uses completed
+composed readbacks so the host-drawn logo is included. Its black host letterbox
+is removed before nearest-neighbor resizing. Each aspect is captured separately.
+Source state, capture time, dimensions, title crop and SHA-256 hashes are recorded
+in the local `output/showcase-20260929/stills.json` manifest.
 
 `shinka-title.png` and `emblem.png` preserve the existing supplied branding.
 Original game imagery, music and reference-derived artwork retain their

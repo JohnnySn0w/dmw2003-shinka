@@ -1,9 +1,17 @@
 # Showcase recordings
 
+## Completed — September 29, 2026
+
+All 21 gameplay stills were recaptured: hero scenes, video posters and all four
+aspect pairs. They include the current menu and widescreen fixes. Branding and
+the September 21 videos are preserved; [MEDIA.md](MEDIA.md) distinguishes their
+capture dates. Repository updates and public Pages deployments are separate:
+ordinary pushes validate files; the owner runs the publishing workflow.
+
 ## Completed — September 21, 2026
 
 The full demo refresh replaces the September 11 GIFs/audio and older verification
-stills. All published gameplay media now comes from revision `f3adfad`.
+stills. These video recordings come from revision `f3adfad`.
 
 - Sixteen real-time clips cover the portable Lab, hints, settings, two soundtrack
   scenes, memory-card loading, three battle pose rates, map travel/guards, cards,

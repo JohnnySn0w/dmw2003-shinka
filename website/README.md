@@ -1,8 +1,9 @@
 # Shinka website
 
-A scrolling feature showcase with the user's title artwork and current gameplay
-footage. The September 21 refresh replaces the earlier slideshow GIFs and stale
-captures with 16 short videos, including:
+A scrolling feature showcase with the user's title artwork. All gameplay stills,
+video posters and aspect comparison images were recaptured on September 29.
+The September 21 video refresh replaces the earlier slideshow GIFs with 16 short
+videos, including:
 
 - Portable Lab entry, evolution hints and technique selection.
 - EXP, encounter and view settings.

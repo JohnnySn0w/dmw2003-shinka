@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Get Shinka running with your own Digimon World 2003 disc dump. Supported files, setup, saves, controls and the planned Windows installer.">
+  <title>Get started — SHINKA</title>
+  <link rel="icon" href="media/emblem.png">
+  <link rel="stylesheet" href="style.css?v=20260921-1">
+  <link rel="stylesheet" href="get-started.css?v=20261001">
+</head>
+<body class="setup-page">
+<a class="skip" href="#main">Skip to content</a>
+<header>
+  <a class="wordmark" href="index.html" aria-label="Shinka home"><img src="media/emblem.png" width="28" height="28" alt="">SHINKA <span>進化</span></a>
+  <nav aria-label="Main navigation"><a href="index.html#evolution">Features</a><a href="get-started.html" aria-current="page">Get started</a><a href="https://github.com/JohnnySn0w/dmw2003-shinka">GitHub ↗</a></nav>
+</header>
+<main id="main">
+  <section class="setup-hero">
+    <div><p class="eyebrow">Your copy. Your progress.</p><h1>Get Shinka<br>running.</h1><p class="setup-lead">Start with your own disc dump of Digimon World 2003. Keep your original files and bring your existing save if you have one.</p><div class="badge-line"><span class="badge">Windows x64</span><span class="badge">European SLES-03936</span><span class="badge">English menus</span></div></div>
+    <figure class="capture"><div class="frame-label"><span>Ready to play</span><span>Shinka title screen</span></div><img src="media/title-wide.png?v=20260929" width="426" height="240" alt="Shinka title screen with Start and Continue options"><figcaption>Your disc data stays on your computer.</figcaption></figure>
+  </section>
+  <div class="setup-status" role="note"><strong>Installer in planning.</strong> There is no installer download yet. Today's version requires a source build. The instructions below describe that route; the planned installer will handle setup for you.</div>
+  <nav class="setup-contents" aria-label="On this page"><a href="#disc">1. Check your files</a><a href="#build">2. Build &amp; launch</a><a href="#saves">3. Bring your save</a><a href="#controls">4. Start playing</a><a href="#help">Troubleshooting</a><a href="#installer">Installer plan</a></nav>
+
+  <section class="setup-section" id="disc">
+    <p class="eyebrow">01 / Before you start</p><h2>Check your disc dump.</h2>
+    <div class="setup-columns"><div><p>Shinka currently targets the European multilingual release, <strong>Digimon World 2003</strong>, disc ID <strong>SLES-03936</strong>. The US Digimon World 3 and Japanese releases are not supported by this build.</p><p>For the current setup, keep the <strong>.cue</strong> file and its matching <strong>.bin</strong> file together. The CUE describes the disc; the BIN contains its data. Select the BIN when building and the CUE when launching.</p><p>Choose <strong>English</strong> in the game for Shinka's expanded menus. An ISO, CHD or multi-BIN dump is not a supported input to this build guide; renaming its extension will not convert it.</p></div><div class="setup-card"><h3>A folder with both files</h3><pre aria-label="Example disc folder">My disc dump/
+  game.cue
+  game.bin</pre><p>Your filenames can be different. Keep the name inside the CUE matched to the BIN it references.</p><details><summary>How is the version checked?</summary><p>The build verifies the entire BIN before preparing game code. The currently supported SHA-1 is:</p><code class="file-hash">457cb233349ba841e03b33d8060f8fbcadd45cb3</code><p>A different hash is rejected. Even the right title or region alone does not guarantee a match.</p></details></div></div>
+  </section>
+
+  <section class="setup-section" id="build">
+    <p class="eyebrow">02 / Current setup</p><h2>Build once. Then launch.</h2>
+    <p class="setup-lead">This is the developer route available today. If you want setup without terminals or build tools, wait for the installer; it isn't ready yet.</p>
+    <ol class="setup-steps">
+      <li><h3>Install the build tools</h3><p>You need Visual Studio 2022 with <strong>Desktop development with C++</strong> and a Windows SDK, CMake 3.20 or newer, Git, and Python 3.11 or newer. Open <strong>Developer PowerShell for VS 2022</strong>. Git, CMake and Python must be available there. The first build also needs internet access to download dependencies.</p></li>
+      <li><h3>Get the source</h3><p>In a local development folder, run:</p><pre><code>git clone https://github.com/JohnnySn0w/dmw2003-shinka.git
+cd dmw2003-shinka
+git clone https://github.com/Alexbeav/digimon-world-2003-recomp.git ../audit-recomp
+git -C ../audit-recomp checkout 6ae36f9564b0c81b64428aa5355375d945d56d53
+git -C ../audit-recomp submodule update --init psxrecomp</code></pre></li>
+      <li><h3>Build using your BIN</h3><p>Replace the example path with your own BIN's full path. Keep the quotes. Leave the terminal open until the build and its checks finish successfully.</p><pre><code>./tools/build_windows.ps1 -DiscBin 'C:\Games\My disc dump\game.bin' -CandidateRoot ../audit-recomp -Jobs 2</code></pre><p>The original disc file is read, not patched. Generated game files stay local. Two build jobs limit compile concurrency on a busy computer.</p></li>
+      <li><h3>Launch using your CUE</h3><p>From the same Shinka folder, run:</p><pre><code>./tools/launch_windows.ps1 -DiscCue 'C:\Games\My disc dump\game.cue' -EvolutionJournal -SaveDirectory 'output/player-saves'</code></pre><p>This enables <strong>DIGIVOLUTIONS</strong> and <strong>SETTINGS</strong>. It does not turn on boosted EXP or alternate music. Close the game before rerunning this first-launch command.</p><p>On later launches, use the same command without <code>-EvolutionJournal</code> to keep your saved feature selection. Keep using the same save directory.</p></li>
+    </ol>
+    <details><summary>Do I need a PlayStation BIOS file?</summary><p>The default build includes OpenBIOS, so the commands above do not require a console BIOS file. However, OpenBIOS has only been checked through language selection; it has not completed the same gameplay smoke tests as the optional console BIOS backend.</p><p>The more extensively tested backend requires your own matching SCPH-1001 BIOS, supplied to <em>both</em> build and launch commands with <code>-RetailBios 'C:\path\to\bios.bin'</code>. See the <a class="prose-link" href="https://github.com/JohnnySn0w/dmw2003-shinka/blob/main/docs/windows-baseline.md#bios-controls-and-profiles">BIOS requirements</a>. A disc-only installer needs that OpenBIOS testing completed before release.</p></details>
+    <details><summary>Where is the executable?</summary><p>Inside your Shinka folder: <code>build-windows\Release\dmw2003-shinka.exe</code>. Keep the surrounding build files. For now, use the launch command: it supplies the disc, configuration and save paths. Double-clicking an unconfigured executable can exit before showing a window.</p><p>Manual shortcut and saved-path instructions are in the <a class="prose-link" href="https://github.com/JohnnySn0w/dmw2003-shinka/blob/main/docs/windows-baseline.md#launching-the-executable-directly">direct-launch guide</a>. The planned installer will create a working shortcut.</p></details>
+    <p><a class="prose-link" href="https://github.com/JohnnySn0w/dmw2003-shinka/blob/main/docs/windows-baseline.md">Full build guide, optional performance builds and limitations ↗</a></p>
+  </section>
+
+  <section class="setup-section" id="saves">
+    <p class="eyebrow">03 / Optional</p><h2>Keep your progress.</h2>
+    <p>Starting fresh? Skip this section. Shinka creates cards in the selected save profile.</p><p>To bring a DuckStation save, close DuckStation and Shinka first. Find the game's <strong>.mcd memory card</strong> in DuckStation's configured memory-card folder. A <strong>.sav savestate</strong> will not work here.</p>
+    <p>From the Shinka folder, import into a new profile. Replace the source path with your card's path:</p>
+    <pre><code>python tools/save_profiles.py import-card 'C:\path\to\your-card.mcd' 'output/imported-save'
+./tools/launch_windows.ps1 -DiscCue 'C:\Games\My disc dump\game.cue' -SaveDirectory 'output/imported-save'</code></pre>
+    <p>The import copies the card and checks the copy. It leaves the original alone and refuses to overwrite an existing destination profile. If that folder already exists, choose a new name. Add your usual BIOS argument if you built with that backend.</p><p>In the game, choose <strong>Continue</strong> and load your save. Keep launching with <code>output/imported-save</code> to use these cards. In-game saves live in <code>card1.mcd</code> and <code>card2.mcd</code> inside that profile.</p>
+    <a class="prose-link" href="https://github.com/JohnnySn0w/dmw2003-shinka/blob/main/docs/save-profiles.md">More about cards, profiles and backups ↗</a>
+  </section>
+
+  <section class="setup-section" id="controls">
+    <p class="eyebrow">04 / First session</p><h2>You're at the title screen.</h2>
+    <div class="setup-columns"><div><h3>Start or continue</h3><p>At language selection, press <strong>Start</strong> to confirm. Use Start for a new game or Continue for a memory-card save.</p><p>Once in the world, open the Start menu. <strong>SETTINGS</strong> contains EXP, encounters, screen view, soundtrack and battle animation speed. Original music works without an extra music pack; alternate palettes need <a class="prose-link" href="https://github.com/JohnnySn0w/dmw2003-shinka/blob/main/docs/music-live.md#local-build">local music-pack setup</a>.</p><p><a class="prose-link" href="https://github.com/JohnnySn0w/dmw2003-shinka/blob/main/docs/field-menu.md">Settings guide ↗</a></p></div><div class="setup-card"><h3>Keyboard defaults</h3><dl class="control-list"><dt>Move</dt><dd>Arrow keys</dd><dt>Start</dt><dd>Enter</dd><dt>Cross / confirm</dt><dd>X</dd><dt>Triangle / back</dt><dd>A</dd><dt>Circle / Square</dt><dd>S / Z</dd><dt>L1 / R1</dt><dd>Q / W</dd><dt>View / speedup toggle</dt><dd>E / R</dd></dl><p>Gamepad defaults: A/B/X/Y map to Cross/Circle/Square/Triangle. L2/LT changes view; R2/RT toggles speedup.</p><a class="prose-link" href="https://github.com/JohnnySn0w/dmw2003-shinka/blob/main/docs/controller-support.md">Controller setup ↗</a></div></div>
+  </section>
+
+  <section class="setup-section" id="help">
+    <p class="eyebrow">If something gets stuck</p><h2>Find the next step.</h2>
+    <details><summary>The window never opens</summary><p>Use the launch command in the terminal so any error remains visible. Confirm the build finished, the CUE exists, and the BIN it references has not moved. A bare executable does not configure itself yet.</p></details>
+    <details><summary>The disc is rejected</summary><p>Check the release and file format above. The build accepts one specific BIN hash. It will reject another region, a modified dump or a different image layout. Keep the error message; do not bypass the check or rename another format to BIN.</p></details>
+    <details><summary>Continue cannot find my save</summary><p>Check the <code>-SaveDirectory</code> path used for this launch. It should contain your imported <code>card1.mcd</code>. Load through the game's Continue option, not a DuckStation savestate. If you selected a different profile, its cards are separate.</p></details>
+    <details><summary>DIGIVOLUTIONS or SETTINGS is missing</summary><p>Close Shinka, run the first-launch command with <code>-EvolutionJournal</code>, and select English. Reopen menus carried over from an older Shinka savestate.</p></details>
+    <details><summary>I moved my disc folder</summary><p>Update the CUE path in your launch command or configured shortcut. Keep the CUE and BIN together. The current launcher does not have a Locate disc repair screen yet.</p></details>
+  </section>
+
+  <section class="setup-section setup-proposal" id="installer">
+    <p class="eyebrow">Planned / Not yet available</p><h2>The installer we're working toward.</h2>
+    <p class="setup-lead">One guided setup, then a Shinka shortcut. No hand-edited paths, command-line arguments or separate development-tool setup.</p>
+    <ol class="setup-steps"><li><h3>Install Shinka</h3><p>Install for your Windows account and create a Start-menu shortcut.</p></li><li><h3>Choose your disc dump</h3><p>Use a file picker to select your CUE where it already lives. Setup finds the BIN, checks the supported game version and remembers the path. Your original files stay in place.</p></li><li><h3>Prepare the game</h3><p>Handle local preparation automatically, with visible progress and a retry option if setup is interrupted.</p></li><li><h3>Bring a save, or start fresh</h3><p>Optionally copy a DuckStation memory card into Shinka. Show where saves live and keep them through updates.</p></li><li><h3>Play</h3><p>Launch from the shortcut next time. If disc files move, offer to locate them again.</p></li></ol>
+    <p>This is the proposed flow, not a shipped feature. Disc-only startup, local game preparation and clean-PC installation must be validated before a download appears here.</p>
+    <a class="prose-link" href="https://github.com/JohnnySn0w/dmw2003-shinka/blob/main/docs/installer-plan.md">Installer design and release checklist ↗</a>
+  </section>
+</main>
+<footer><a class="wordmark" href="index.html">SHINKA <span>進化</span></a><p>Experimental Windows project.<br>Use your own supported disc dump.</p><a href="index.html#world">Back to the gameplay showcase ↗</a></footer>
+</body>
+</html>

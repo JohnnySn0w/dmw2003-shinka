@@ -31,12 +31,16 @@ runtime and interpreter fallback, with optional improvements to the original gam
 | [Controller shortcuts](docs/controller-support.md#trigger-shortcuts) | L2/LT toggles 4:3 and 16:9 in supported scenes; R2/RT toggles speedup. Tab remains hold-to-speedup. |
 
 See the [website source and gameplay showcase](website/README.md) for captures,
-feature GIFs, the current travel map and an audible, chapter-based demonstration
+feature videos, the current travel map and an audible, chapter-based demonstration
 of all four soundtrack settings. Recordings are dated; the older audio clip
 demonstrates switching rather than the final mix.
 The [publishing guide](docs/website-publishing.md) covers GitHub Pages and custom domains.
 
 ## Build and play
+
+Start with the [website setup guide](website/dist/get-started.html) for disc files,
+launching, controls and existing saves. A guided Windows installer is
+[being planned](docs/installer-plan.md); there is no installer download yet.
 
 Follow the [Windows build and launch guide](docs/windows-baseline.md). You need
 Windows x64, the C++ build tools and your own supported disc data. The guide pins

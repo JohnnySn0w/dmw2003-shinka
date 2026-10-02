@@ -1,0 +1,26 @@
+.setup-page h1 {font-size:clamp(3rem,7vw,6rem);line-height:1.04;letter-spacing:-.045em;margin:0 0 1.5rem}
+.setup-hero {display:grid;grid-template-columns:1fr 1fr;gap:5vw;align-items:center;padding:5rem var(--gutter) 3rem}
+.setup-hero img {display:block;width:100%;height:auto;image-rendering:pixelated}
+.setup-lead {font-size:1.15rem;max-width:52rem;color:var(--muted)}
+.setup-status {margin:0 var(--gutter);padding:1.25rem 1.5rem;border-left:4px solid var(--cyan);background:var(--panel);max-width:75rem}
+.setup-status strong {display:block;color:var(--cyan)}
+.setup-contents {display:flex;flex-wrap:wrap;padding:2rem var(--gutter);gap:.6rem 1.5rem;border-bottom:1px solid var(--line)}
+.setup-contents a {text-decoration:underline;text-underline-offset:5px}
+.setup-section {padding:4rem var(--gutter);border-bottom:1px solid var(--line)}
+.setup-section>p {max-width:70rem}
+.setup-columns {display:grid;grid-template-columns:1.15fr 1fr;gap:3rem}
+.setup-card {background:var(--panel);padding:1.5rem;align-self:start;border:1px solid var(--line)}
+.setup-page h3 {margin-top:0}
+.setup-page p {margin:1rem 0}
+.setup-page .eyebrow {margin:0 0 1rem}
+.setup-steps {padding-left:1.6rem;max-width:76rem}
+.setup-steps>li {padding-left:.8rem;margin:2rem 0}
+.setup-steps>li::marker {color:var(--cyan);font-weight:bold}
+.setup-page pre {max-width:100%;overflow-x:auto;padding:1.2rem;background:#03091a;border:1px solid var(--line);line-height:1.7;font-size:.9rem;white-space:pre-wrap;overflow-wrap:anywhere}
+.setup-page code {font-family:Consolas,"Courier New",monospace;overflow-wrap:anywhere;color:var(--cyan)}
+.file-hash {display:block;word-break:break-all}
+.control-list {display:grid;grid-template-columns:1fr 1fr;gap:.5rem 1rem}
+.control-list dt {color:var(--muted)}
+.control-list dd {margin:0}
+.setup-proposal {background:var(--panel)}
+@media(max-width:800px){.setup-hero,.setup-columns{grid-template-columns:1fr}.setup-hero{padding-top:3rem;gap:2rem}.setup-section{padding-top:3rem;padding-bottom:3rem}.setup-page nav{flex-wrap:wrap}.setup-page header{gap:1rem}.setup-page header nav{gap:.5rem 1rem}.setup-page .setup-card{min-width:0}}

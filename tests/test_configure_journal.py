@@ -39,7 +39,8 @@ multiplier = "1"
         for idle, action in [('1', '2'), ('1.25', '1.5'), ('2', '1.25')]:
             with self.subTest(idle=idle, action=action):
                 original = select_journal('', True) + (
-                    f'[feature.values]\nbattle_idle_rate = "{idle}"\nbattle_action_rate = "{action}"\n')
+                    f'[feature.values]\nbattle_idle_rate = "{idle}"\nbattle_action_rate = "{action}"\n'
+                    'battle_wait_rate = "1.5"\n')
                 result = select_journal(select_journal(original, False), True)
                 self.assertEqual(tomllib.loads(result)['feature'][0]['values'],
-                                 {'battle_idle_rate': idle, 'battle_action_rate': action})
+                                 {'battle_idle_rate': idle, 'battle_action_rate': action, 'battle_wait_rate': '1.5'})

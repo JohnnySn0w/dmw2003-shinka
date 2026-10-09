@@ -25,7 +25,7 @@ SETTINGS has eight rows:
 - **Soundtrack:** Original, DS, Sampled, Chip; switches live instruments.
 - **Screen view:** separate battle and field 4:3 / 16:9 controls. The experimental Field setting also controls supported menus, shops, gyms, Card Folders and the portable Lab; see the [screen coverage guide](camera.md#current-screen-coverage).
 - **Battle zoom:** 100%, 90%, 80% (experimental).
-- **Battle motion:** opens separate Idle poses and Action poses speed controls.
+- **Battle motion:** opens Idle poses, Action poses and experimental Pause pace controls.
 - **BACK:** return to the field menu. Triangle also returns.
 
 Left/right cycle a value; confirm also advances it. Each successful change is
@@ -58,12 +58,16 @@ story checks to pass. **Travel not added here** describes an unsupported source;
 do not necessarily mean a story event is blocking progress. Use the current
 [destination list](menu-map.md) rather than assuming every visible icon is enabled.
 
-**Battle motion** offers **100%, 125%, 150% or 200%** for each category, both defaulting to 100% (original speed).
+**Battle motion** offers **100%, 125%, 150% or 200%** for each category, all defaulting to 100% (original speed).
 Idle follows each combatant's own default pose. Action includes attacks,
 reactions, entrances and victory poses; the rates replace one another, never
-multiply. Camera speed, sound pitch and explicit script delays are not scaled,
-so a faster casting loop can still occupy the same amount of time. Faster
-animation can change which random roll an attack receives by changing timing.
+multiply. **Pause pace** separately shortens deliberate script waits: at 200%,
+eligible waits last about half as long. It keeps a wait at its original length
+if the camera is already interpolating. Camera speed and sound pitch retain
+their own clocks, although the next camera or sound cue can start earlier.
+Pause pace is experimental; coverage currently includes a basic attack and Air
+Blast, not every technique. Faster animation can change which random roll an
+attack receives by changing timing.
 See [motion behavior and validation](battle-animation-speed.md). Left/right or
 confirm changes a rate; BACK/Triangle returns to Battle motion in Settings.
 

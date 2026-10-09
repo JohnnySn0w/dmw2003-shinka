@@ -1,8 +1,9 @@
 # Battle animation speed
 
-Status: independent 1x, 1.25x, 1.5x and 2x Idle poses and Action poses controls in
-**SETTINGS > Battle motion**, 2026-09-11. Both default to original speed and
-persist separately. The game menu displays 100%, 125%, 150% and 200%.
+Status: independent 1x, 1.25x, 1.5x and 2x Idle poses, Action poses and
+experimental Pause pace controls in **SETTINGS > Battle motion**, 2026-10-09.
+All default to original speed and persist separately. The game menu displays
+100%, 125%, 150% and 200%.
 The [battle geometry optimization](performance.md) reduces
 execution cost independently of these animation rates.
 
@@ -18,13 +19,13 @@ in Settings. Loading a savestate retains the current saved preferences.
 For diagnostic comparisons only, `SHINKA_BATTLE_MOTION=2` forces both rates to 2x
 for the process. Unset/other values use the menu preferences. This override is
 not saved. The debug command `shinka_nav` with `op: "motion"` reads the rates;
-optional `option` (0 idle, 1 action) and `value` (100, 125, 150 or 200) use the
+optional `option` (0 idle, 1 action, 2 pause pace) and `value` (100, 125, 150 or 200) use the
 same validated setting/persistence path as the menu. Legacy diagnostic values
 1 and 2 remain accepted; replies report numeric multipliers such as 1.25.
 Persisted keys retain the strings `"1"` and `"2"`, with `"1.25"` and `"1.5"`
 added as manifest choices. Existing settings need no migration or reinterpretation.
 
-The owned interpreter copy intercepts only the cycle-aware load of `0x800a4464`
+The pose hook in the owned interpreter copy intercepts the cycle-aware load of `0x800a4464`
 at `0x80083d30`. It preserves that load's timing/hazard accounting and subsequent
 PGXP processing, then substitutes the model-local step. It never writes the
 shared delta, advances the battle script itself, or changes camera interpolation,
@@ -38,7 +39,7 @@ guards generated from the supported owned `FIGHTSTG.PRO`. It rejects ambiguous
 ownership, unsupported overlays, out-of-bounds tables, completed clips, and
 unexpected elapsed steps. Scenery sharing the model callback is excluded.
 
-The experimental rates scale elapsed steps 1–4 and stop at the first loop/end
+The experimental rates scale elapsed steps 1â€“4 and stop at the first loop/end
 marker or final entry, leaving marker processing and completion notification to
 the original routine. Ordinary interpolation entries with the high bit set are
 not mistaken for exact `0x8000` loop markers.
@@ -53,6 +54,65 @@ fraction. The clip setup's final position store (`0x80083c14`, exact instruction
 `0xae220080`) clears it even for a same-clip restart or recycled allocation.
 Save loading and successful settings changes clear all fractions. These resets
 write no guest state. Returning to 100% uses the original elapsed step.
+
+## Experimental pause pacing â€” 2026-10-09
+
+Pose speed alone leaves timed casting/holding sections at their original length.
+The separate **Pause pace** setting scales a positive explicit-delay operand
+once, when the script starts that wait. It uses ceiling division
+`ceil(original_ticks * 100 / rate)`, retaining at least one tick. At 100%, the
+operand is unchanged; no fractional state or guest-memory patch is needed.
+
+This second hook intercepts the cycle-aware signed halfword load at
+`0x8008c254` (instruction `0x84650000`). It preserves load/hazard accounting and
+PGXP processing. It checks the supported live delay-handler code, battle mode,
+script callback/signature, initial wait state, operand pointer and value, and
+reachability from the current mode owner. A bounded, duplicate-aware object walk
+also requires a recognized camera and refuses acceleration if a camera's
+interpolation progress is not complete. Invalid pointers, oversized child
+tables, graph exhaustion, unknown code and nonpositive operands retain stock
+behavior. Completion polling, resource polling, damage/MP commits, effect and
+sound handlers are not repeated or scaled.
+
+Camera interpolation and audio playback clocks remain unchanged. Earlier script
+cues can still change shot timing, effect overlap and sound overlap; this is why
+the new control is labeled experimental and defaults to 100%. The camera guard
+protects a move already underway when the wait begins, not future cues. An old
+three-row motion-menu savestate keeps BACK selected at its new fourth-row
+position instead of accidentally changing Pause pace.
+
+Copied-save comparisons retained complete recorder totals and ordered writes:
+
+| Captured section | Original pauses, 100% poses | 200% pauses, 100% poses |
+| --- | --- | --- |
+| Basic attack's held clip 18 | 114 guest frames | 60 guest frames |
+| Air Blast cast clip 39 | 208 guest frames | 107 guest frames |
+
+These are individual sections, not whole-turn speed claims. Both runs retained
+one damage preparation and one HP subtraction/clamp. Air Blast retained one MP
+write. The complete basic captures had 8 sound and 3 effect commands each; the
+complete Air Blast captures had 4 sound and 7 effect commands each. These are
+script dispatch observations, not an audible waveform equivalence test.
+Faster timing changed the defender script's allocation, so its new address was
+identified from captured RAM and the comparison repeated with coverage of that
+allocation. The initial narrower Air Blast trace is not complete evidence for
+defender events.
+
+Local evidence is under `output/battle-motion-20261009/`: baseline and wait200
+traces/reports, the `wait200-air-complete` trace, and display recordings at normal
+and faster pacing. Three bounded 180-frame captures form each display recording;
+small gaps between chunks are retained in the frame metadata. Digivolution to
+Angemon was also exercised with action/pauses at 200%. Combined 150% settings
+completed Air Blast and returned to the field. These checks do not cover all
+techniques, multi-hit actions, misses, defeat, or a live interpolating-camera
+case. The latter guard has synthetic coverage.
+
+Validation: native battle-motion and journal-menu tests pass, as do all 229
+Python tests and repository Python lint. Live menu checks cycled all four pause
+rates, used left navigation and BACK, then retained 125% pauses / 150% actions
+through a savestate load and a full process restart. The test profile and its
+settings are separate from the player's profile; the normal build retains the
+new control's default of 100%.
 
 Scope remains experimental: the idle/action split follows the default-pose
 marker rather than universal attack clip IDs. Digivolution, multi-hit,
@@ -72,7 +132,7 @@ Live field and full-screen Status menus showed both percentages correctly
 and returned to the Battle motion row. The field menu cycled all four values
 and wrapped backward from 100% to 200%; native tests exercised cycling in both roots. Fractional preferences survived both slot-10 loading and a
 process restart. The native checks cover cumulative elapsed time with mixed
-1–4-frame steps, independent actors, loop/end boundaries, same-clip resets,
+1â€“4-frame steps, independent actors, loop/end boundaries, same-clip resets,
 state resets, changed identities/rates/positions and guard failures.
 
 Using the copied Patamon-versus-Kunemon checkpoint:
@@ -85,7 +145,7 @@ Using the copied Patamon-versus-Kunemon checkpoint:
 | Earlier 2x reference | 8 / 8 / 14 |
 
 The 1.25x and 1.5x basic attacks completed each of those clips once and returned
-to the field. Script-held clips remained about 52 and 112–114 frames. Air Blast
+to the field. Script-held clips remained about 52 and 112â€“114 frames. Air Blast
 at 1.5x still held clip 39 for 207 frames, with six loops rather than the original
 three. All three complete write captures passed recorder-integrity checks
 (10,784, 10,762 and 10,309 writes respectively), and all 7,904 saved party bytes
@@ -479,8 +539,8 @@ runtime was unchanged. The later menu integration is described at the top.
 3. Preserve events crossed by an accelerated timeline exactly once. Equality
    checks against a skipped frame can drop a hit or effect; repeating whole battle
    callbacks can duplicate damage or consume extra RNG. Neither is acceptable.
-4. Investigate shortening script-held sections separately from pose speed while
-   retaining camera trajectories and single-execution damage/MP commits.
+4. Expand the experimental pause control beyond the basic/Air Blast fixtures,
+   including interpolating cameras, effect/audio alignment and multi-hit moves.
 
 Verification should compare damage inputs, resource use, hit count and rewards
 at both rates, recording RNG draws to distinguish timing-dependent rolls from

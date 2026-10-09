@@ -148,3 +148,45 @@ uint32_t shinka_battle_motion_load(uint32_t model, uint32_t delta) {
     }
     return result;
 }
+
+/* Deliberate script delays are separate from pose advancement. Scale the
+ * positive operand once when a wait begins, never run the script twice or
+ * change the shared clock. A camera already travelling keeps the stock wait.
+ * This bounded ownership walk runs only at delay initialization. */
+uint32_t shinka_battle_wait_load(uint32_t script, uint32_t operand, uint32_t ticks) {
+    uint32_t pending[256], count = 1, root;
+    int found = 0, camera = 0, rate = shinka_motion_get(2);
+    if ((rate != 125 && rate != 150 && rate != 200) || !ticks || ticks > 32767)
+        return ticks;
+    root = R(0x8005ccbc);
+    if (R(0x8004b3f8) != 0x600 || !ram(script, 0xb4)
+        || !object(script, 0x8008c590) || R(script + 0x98) != 0
+        || operand != R(script + 0x8c) || (operand & 1)
+        || !ram(operand & ~3u, 4) || half(operand) != ticks
+        || !object(root, 0x80020b58)) return ticks;
+    for (unsigned i = 0; i < sizeof(battle_wait_code) / 4; ++i)
+        if (R(0x8008c230 + i * 4) != battle_wait_code[i]) return ticks;
+    pending[0] = root;
+    for (unsigned i = 0; i < count; ++i) {
+        uint32_t p = pending[i], children, table;
+        if (!ram(p, 0x50) || !object(p, R(p + 0x48))) return ticks;
+        if (p == script) found = 1;
+        if (R(p + 0x48) == 0x80091df4) {
+            if (!ram(p, 0x108) || R(p + 0xf0) != 4096) return ticks;
+            camera = 1;
+        }
+        children = R(p + 0x20); table = R(p + 0x24);
+        if (children > 64 || (children && !ram(table, children * 4))) return ticks;
+        for (unsigned j = 0; j < children; ++j) {
+            uint32_t candidate = R(table + j * 4);
+            unsigned seen = 0;
+            if (!candidate) continue;
+            for (; seen < count && pending[seen] != candidate; ++seen) {}
+            if (seen != count) continue;
+            if (count == 256) return ticks;
+            pending[count++] = candidate;
+        }
+    }
+    if (!found || !camera) return ticks;
+    return (ticks * 100u + (unsigned)rate - 1u) / (unsigned)rate;
+}

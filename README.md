@@ -26,7 +26,7 @@ runtime and interpreter fallback, with optional improvements to the original gam
 | [Live soundtrack switching](docs/music-live.md) | Switch between Original, DS, Sampled and Chip instruments mid-song. Alternate arrangements are provisional and use a locally built pack. |
 | [Map travel](docs/menu-map.md) | Press Cross on 16 supported, visited Asuka-server destinations, including Noise Desert, South Badland, North Badland W/E and Bullet Valley. Story checks protect the scenes audited so far. |
 | [Screen view](docs/camera.md) | Choose battle widescreen, battle zoom and an experimental field widescreen preview. The field setting also widens the title and save/load screens, gym/shop interfaces, both expanded Start-menu roots, Items, Sort, Map, Techniques, character Status, Card Album/Edit Folder and the portable Digimon Lab. |
-| [Battle motion](docs/battle-animation-speed.md) | Adjust idle and action pose speeds separately, from 1–2x, while camera and script timing retain their own rates. |
+| [Battle motion](docs/battle-animation-speed.md) | Adjust idle and action poses separately, from 1–2x. An experimental pause control also shortens scripted waits without speeding up the camera clock. |
 | [Faster memory-card transfers](docs/save-timing.md) | Batch repeated file requests while preserving per-sector checks, flushes and completion handling. The save/load bar follows acknowledged transfer progress. Existing card formats remain usable. |
 | [Controller shortcuts](docs/controller-support.md#trigger-shortcuts) | L2/LT toggles 4:3 and 16:9 in supported scenes; R2/RT toggles speedup. Tab remains hold-to-speedup. |
 

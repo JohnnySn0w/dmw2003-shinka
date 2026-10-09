@@ -14,10 +14,15 @@ def generate(data):
     # Clip setup, expanded timeline advance, and the model update callback.
     section = data[0x80083a54 - BASE:0x80084464 - BASE]
     words = struct.unpack(f'<{len(section) // 4}I', section)
+    waits = data[0x8008c230 - BASE:0x8008c2c4 - BASE]
+    wait_words = struct.unpack(f'<{len(waits) // 4}I', waits)
     return ('/* Generated from the owner\'s disc. Do not distribute. */\n'
             'static const uint32_t battle_motion_code[] = {\n' +
             ',\n'.join(','.join(f'0x{x:08x}u' for x in words[i:i + 8])
-                      for i in range(0, len(words), 8)) + '\n};\n')
+                      for i in range(0, len(words), 8)) + '\n};\n'
+            'static const uint32_t battle_wait_code[] = {\n' +
+            ',\n'.join(','.join(f'0x{x:08x}u' for x in wait_words[i:i + 8])
+                      for i in range(0, len(wait_words), 8)) + '\n};\n')
 
 
 if __name__ == '__main__':

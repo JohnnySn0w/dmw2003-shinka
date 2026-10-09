@@ -36,8 +36,16 @@ endif()
 string(REPLACE "${_old}"
     "        cpu->write_word(addr, cpu->gpr[rt]);\n        if (pc == 0x80083c14u && insn == 0xae220080u)\n            shinka_battle_motion_restart(cpu->gpr[17]);\n        psx_pgxp_store(cpu, insn, addr, cpu->gpr[rt]);"
     _text "${_text}")
+set(_old "        cpu->gpr[rt] = (uint32_t)(int32_t)(int16_t)psx_cyc_load_half(cpu, addr, rt, 1u << rs);\n        psx_pgxp_load(cpu, insn, addr, cpu->gpr[rt]);")
+string(FIND "${_text}" "${_old}" _site)
+if(_site EQUAL -1)
+    message(FATAL_ERROR "Review pinned interpreter LH path for battle waits")
+endif()
+string(REPLACE "${_old}"
+    "        cpu->gpr[rt] = (uint32_t)(int32_t)(int16_t)psx_cyc_load_half(cpu, addr, rt, 1u << rs);\n        if (pc == 0x8008c254u && insn == 0x84650000u)\n            cpu->gpr[rt] = shinka_battle_wait_load(cpu->gpr[16], addr, cpu->gpr[rt]);\n        psx_pgxp_load(cpu, insn, addr, cpu->gpr[rt]);"
+    _text "${_text}")
 file(CONFIGURE OUTPUT "${_generated}/dirty_ram_interp.c"
-    CONTENT "#include <stdint.h>\nextern uint32_t shinka_battle_motion_load(uint32_t, uint32_t);\nextern void shinka_battle_motion_restart(uint32_t);\n${_text}" @ONLY)
+    CONTENT "#include <stdint.h>\nextern uint32_t shinka_battle_motion_load(uint32_t, uint32_t);\nextern uint32_t shinka_battle_wait_load(uint32_t, uint32_t, uint32_t);\nextern void shinka_battle_motion_restart(uint32_t);\n${_text}" @ONLY)
 get_target_property(_sources shinka SOURCES)
 if(NOT "${_source}" IN_LIST _sources)
     message(FATAL_ERROR "Review interpreter source target before motion hook")

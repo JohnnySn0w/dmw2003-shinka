@@ -1,22 +1,26 @@
 /* Appended to a generated copy of the pinned mod runtime, on the emulator
  * thread. Use the existing validated package state and persistence code. */
 extern "C" void shinka_battle_motion_reset(void);
+static const char* motion_option(int option) {
+    static const char* names[] = {"battle_idle_rate", "battle_action_rate", "battle_wait_rate"};
+    return names[option];
+}
 extern "C" int shinka_motion_get(int option) {
-    if (option < 0 || option > 1) return 100;
+    if (option < 0 || option > 2) return 100;
     auto& manager = PSXRecompV4::state().manager;
     if (!manager.feature_enabled("shinka.evolution-journal", "menu-chart")) return 100;
     auto text = manager.feature_option_value("shinka.evolution-journal", "menu-chart",
-        option ? "battle_action_rate" : "battle_idle_rate");
+        motion_option(option));
     return text == "2" ? 200 : text == "1.5" ? 150 : text == "1.25" ? 125 : 100;
 }
 
 extern "C" int shinka_motion_set(int option, int value) {
-    if (option < 0 || option > 1 || (value != 100 && value != 125 && value != 150 && value != 200)) return 0;
+    if (option < 0 || option > 2 || (value != 100 && value != 125 && value != 150 && value != 200)) return 0;
     auto& runtime = PSXRecompV4::state();
     auto previous = runtime.manager;
     std::string error;
     bool ok = runtime.manager.set_feature_option("shinka.evolution-journal", "menu-chart",
-        option ? "battle_action_rate" : "battle_idle_rate",
+        motion_option(option),
         value == 200 ? "2" : value == 150 ? "1.5" : value == 125 ? "1.25" : "1", &error)
         && PSXRecompV4::mod_runtime_commit(runtime.disc_path, &error);
     if (!ok) {

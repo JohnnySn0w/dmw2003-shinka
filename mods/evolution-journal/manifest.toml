@@ -91,6 +91,19 @@ choice = [
     { value = "2", label = "2x (200%)" },
 ]
 
+[[option]]
+feature = "menu-chart"
+id = "battle_wait_rate"
+label = "Battle scripted pauses (experimental)"
+type = "choice"
+default = "1"
+choice = [
+    { value = "1", label = "Original" },
+    { value = "1.25", label = "1.25x pace" },
+    { value = "1.5", label = "1.5x pace" },
+    { value = "2", label = "2x pace" },
+]
+
 [[plugin]]
 feature = "menu-chart"
 id = "shinka.evolution-journal"

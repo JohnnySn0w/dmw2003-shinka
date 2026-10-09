@@ -6,12 +6,13 @@
 #define CHECK(x) do { if (!(x)) { fprintf(stderr, "line %d: %s\n", __LINE__, #x); exit(1); } } while (0)
 static unsigned char memory[0x200000], before[0x200000];
 static unsigned reads;
-static int rates[2] = {100, 100};
+static int rates[3] = {100, 100, 100};
 int shinka_motion_get(int option) { return rates[option]; }
 int shinka_battle_motion_category(uint32_t);
 void shinka_battle_motion_reset(void);
 void shinka_battle_motion_restart(uint32_t);
 uint32_t shinka_battle_motion_load(uint32_t, uint32_t);
+uint32_t shinka_battle_wait_load(uint32_t, uint32_t, uint32_t);
 #define MODEL 0x80100000u
 #define GROUP 0x800b0600u
 static void put(uint32_t p, uint32_t value) { memcpy(memory + p - 0x80000000u, &value, 4); }
@@ -111,7 +112,54 @@ static void fractions(void) {
         long_clip(); entry(marker, 0xffff); CHECK(step(4, 150) == marker - 10);
     }
 }
+static void waits(void) {
+    const uint32_t script = 0x80120000, camera = 0x80130000, operand = 0x80140002;
+    for (unsigned rate = 100; rate <= 200; rate += 25) {
+        fresh(); rates[2] = (int)rate;
+        object(0x800b0000, 0x80020b58, script);
+        put(0x800b0020, 2); put(0x800b01c4, camera);
+        object(script, 0x8008c590, 0); object(camera, 0x80091df4, 0);
+        put(camera + 0xf0, 4096); put(script + 0x8c, operand);
+        for (unsigned i = 0; i < sizeof(battle_wait_code) / 4; ++i)
+            put(0x8008c230 + i * 4, battle_wait_code[i]);
+        for (unsigned ticks = 1; ticks <= 32767; ticks = ticks * 2 + 1) {
+            put(operand & ~3u, ticks << 16);
+            memcpy(before, memory, sizeof(memory));
+            CHECK(shinka_battle_wait_load(script, operand, ticks)
+                == (rate == 175 ? ticks : (ticks * 100 + rate - 1) / rate));
+            CHECK(!memcmp(before, memory, sizeof(memory))); /* No camera/event/HP writes. */
+        }
+        put(operand & ~3u, 39u << 16);
+        for (unsigned i = 0; i < sizeof(battle_wait_code) / 4; ++i) {
+            put(0x8008c230 + i * 4, 0xdeadbeef);
+            CHECK(shinka_battle_wait_load(script, operand, 39) == 39);
+            put(0x8008c230 + i * 4, battle_wait_code[i]);
+        }
+        CHECK(shinka_battle_wait_load(script, operand, 0xffffffffu) == 0xffffffffu);
+        CHECK(shinka_battle_wait_load(script, operand, 0) == 0);
+        CHECK(shinka_battle_wait_load(script, operand, 38) == 38);
+        CHECK(shinka_battle_wait_load(script, operand + 1, 39) == 39);
+        put(camera + 0xf0, 4095);
+        CHECK(shinka_battle_wait_load(script, operand, 39) == 39);
+        put(camera + 0xf0, 4096); put(script + 0x98, 1);
+        CHECK(shinka_battle_wait_load(script, operand, 39) == 39);
+        put(script + 0x98, 0); put(script + 0x48, 0x80093e44);
+        CHECK(shinka_battle_wait_load(script, operand, 39) == 39);
+        put(script + 0x48, 0x8008c590); put(0x800b01c0, 0);
+        CHECK(shinka_battle_wait_load(script, operand, 39) == 39); /* Detached stale script. */
+        put(0x800b01c0, script); put(0x800b01c4, 0);
+        CHECK(shinka_battle_wait_load(script, operand, 39) == 39); /* No known camera. */
+        put(0x800b01c4, camera); put(0x8004b3f8, 0x200);
+        CHECK(shinka_battle_wait_load(script, operand, 39) == 39);
+        put(0x8004b3f8, 0x600); put(script + 0x20, 65);
+        CHECK(shinka_battle_wait_load(script, operand, 39) == 39);
+        put(script + 0x20, 1); put(script + 0x24, 0xfffffffc);
+        CHECK(shinka_battle_wait_load(script, operand, 39) == 39);
+    }
+    rates[2] = 100;
+}
 int main(void) {
+    waits();
     fresh(); CHECK(step(3, 100) == 3 && reads == 0);
     CHECK(step(3, 0) == 3 && step(3, 99) == 3 && reads == 0);
     CHECK(step(0, 200) == 0 && step(5, 200) == 5 && reads == 0);

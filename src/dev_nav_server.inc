@@ -24,8 +24,8 @@ static void handle_shinka_nav(int id,const char* json) {
         if ((option != -1 || value != -1) && !shinka_motion_set(option,value)) {
             send_err(id,"Invalid or unsaved motion setting");return;
         }
-        send_fmt("{\"id\":%d,\"ok\":true,\"idle\":%.2f,\"action\":%.2f}",
-            id,shinka_motion_get(0) / 100.0,shinka_motion_get(1) / 100.0);
+        send_fmt("{\"id\":%d,\"ok\":true,\"idle\":%.2f,\"action\":%.2f,\"wait\":%.2f}",
+            id,shinka_motion_get(0) / 100.0,shinka_motion_get(1) / 100.0,shinka_motion_get(2) / 100.0);
         return;
     }
     if (!strcmp(op,"view")) {

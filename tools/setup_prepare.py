@@ -63,6 +63,8 @@ def portable_environment(toolchain):
     for key in ('PYTHONHOME', 'PYTHONPATH', 'CC', 'CXX', 'INCLUDE', 'LIB', 'LIBPATH', 'CMAKE_PREFIX_PATH', 'ZLIB_ROOT', 'SDL3_DIR'):
         env.pop(key, None)
     env['PYTHONNOUSERSITE'] = '1'
+    env['PYTHONUTF8'] = '1'
+    env['PYTHONIOENCODING'] = 'utf-8'
     env['RETCOMM_TOOLCHAIN_DIR'] = str(toolchain)
     env['CCACHE_DISABLE'] = '1'
     return env
@@ -82,13 +84,21 @@ def extract_source(sdk, work, cancel):
     staging.rename(source)
 
 
-def run(command, cwd, env, cancel, log, notify, stage):
+def run(command, cwd, env, cancel, log, notify, stage, new_console=False):
     check_cancel(cancel)
     notify(stage, None, None)
     log.write('\n' + subprocess.list2cmdline(list(map(str, command))) + '\n')
     log.flush()
+    options = {}
+    if os.name == 'nt':
+        options['creationflags'] = subprocess.CREATE_NO_WINDOW
+        if new_console:
+            startup = subprocess.STARTUPINFO()
+            startup.dwFlags |= subprocess.STARTF_USESHOWWINDOW
+            startup.wShowWindow = subprocess.SW_HIDE
+            options.update(creationflags=subprocess.CREATE_NEW_CONSOLE, startupinfo=startup)
     proc = subprocess.Popen(list(map(str, command)), cwd=cwd, env=env, stdout=log,
-                            stderr=subprocess.STDOUT, creationflags=subprocess.CREATE_NO_WINDOW if os.name == 'nt' else 0)
+                            stderr=subprocess.STDOUT, **options)
     while proc.poll() is None:
         if cancel.wait(.15):
             if os.name == 'nt':
@@ -100,6 +110,41 @@ def run(command, cwd, env, cancel, log, notify, stage):
             raise Cancelled('Preparation cancelled. The last working installation and saves are unchanged.')
     if proc.returncode:
         raise RuntimeError(f'{stage} failed. Your existing installation and saves are unchanged. See the preparation log for details, then retry.')
+
+
+def configure_codegen_paths(framework):
+    """Use Unicode source lists and avoid Ninja's ANSI .bat hash wrappers.
+
+    Only the extracted setup copy is patched. The canonical source list and
+    hashing algorithm stay unchanged, so overlay compatibility is preserved.
+    """
+    framework = Path(framework)
+    edits = (
+        ('runtime/check_generated_sources.cmake',
+         'file(STRINGS "${SOURCES_FILE}" _sources)',
+         'file(STRINGS "${SOURCES_FILE}" _sources ENCODING UTF-8)'),
+        ('recompiler/CMakeLists.txt', '"-DSRCS=${PSXRECOMP_CODEGEN_HASH_SRCS}"',
+         '"-DSHINKA_CODEGEN_ROOT=${CMAKE_CURRENT_SOURCE_DIR}/.."'),
+        ('runtime/runtime.cmake', '"-DSRCS=${_codegen_srcs}"',
+         '"-DSHINKA_CODEGEN_ROOT=${PSXRECOMP_ROOT}"'),
+        ('runtime/hash_codegen.cmake', 'set(_cat "")',
+         'if(DEFINED SHINKA_CODEGEN_ROOT)\n'
+         '    set(PSXRECOMP_CODEGEN_HASH_ROOT "${SHINKA_CODEGEN_ROOT}")\n'
+         '    include("${SHINKA_CODEGEN_ROOT}/runtime/codegen_hash_sources.cmake")\n'
+         '    set(SRCS ${PSXRECOMP_CODEGEN_HASH_SRCS})\n'
+         'endif()\n\nset(_cat "")'),
+    )
+    pending = []
+    for name, old, new in edits:
+        path = framework/name
+        text = path.read_text(encoding='utf-8')
+        if text.count(new) == 1:
+            continue
+        if text.count(old) != 1:
+            raise ValueError('The setup codegen path hook changed: ' + name)
+        pending.append((path, text.replace(old, new)))
+    for path, text in pending:
+        path.write_text(text, encoding='utf-8')
 
 
 def prepare(cue, sdk, root, cancel=None, notify=lambda *args: None, toolchain=None):
@@ -132,6 +177,7 @@ def prepare(cue, sdk, root, cancel=None, notify=lambda *args: None, toolchain=No
     notify('Preparing local game files', None, None)
     extract_source(sdk, work, cancel)
     source, framework = work/'source/shinka', work/'source/framework'
+    configure_codegen_paths(framework)
     cmake, python = toolchain/'bin/cmake.exe', toolchain/'python/python.exe'
     compiler_args = ['-G', 'Ninja', '-DCMAKE_BUILD_TYPE=Release',
                      f'-DCMAKE_C_COMPILER={toolchain / "bin/clang.exe"}',
@@ -140,7 +186,10 @@ def prepare(cue, sdk, root, cancel=None, notify=lambda *args: None, toolchain=No
     log_path = work/'prepare.log'
     with log_path.open('w', encoding='utf-8') as log:
         def execute(command, stage, cwd=source):
-            run(command, cwd, env, cancel, log, notify, stage)
+            build = command[0] == cmake and '--build' in command
+            if build:
+                command = [python, source/'tools/setup_build_console.py', *command]
+            run(command, cwd, env, cancel, log, notify, stage, new_console=build)
         emitter_build = work/'emitters'
         execute([cmake, '-S', framework/'recompiler', '-B', emitter_build, *compiler_args,
                  f'-DCMAKE_PROJECT_PSXRecomp_INCLUDE={source / "tools/setup_emitter_paths.cmake"}',

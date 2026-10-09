@@ -189,60 +189,34 @@ The runtime currently writes some settings beside the executable and shares
 ownership explicit before packaging; an installer cannot simply change folder
 names and assume persistence still works.
 
-## Work required before a downloadable installer
+## Remaining release checks
 
-### 1. Prove disc-only boot
+The portable toolchain, source-only SDK, setup/repair launcher and per-user
+installer are implemented. They replace the developer prerequisites for the
+installer route; the source-build instructions remain available separately.
 
-The default source build includes OpenBIOS. The October 8 installer probe also
-reached intro playback, the title/load menus and Pelche Oasis from an imported
-card. The earlier battle/save/savestate checks used the optional SCPH-1001 backend.
-Validate a clean OpenBIOS run through
-new game, field, battle, in-game save, full restart and Continue. Fix failures
-before claiming the player's disc dump is the only input needed.
+Before publishing a download:
 
-### 2. Make local preparation self-contained
+- Complete a fresh OpenBIOS new-game-to-battle run. Imported-card loading and
+  an in-game save/full restart/Continue cycle already pass; earlier battle
+  coverage used the optional retail BIOS backend.
+- Test in a clean Windows x64 environment without developer tools or maintainer
+  paths, using a standard user account. Reboot, reinstall and check the installed
+  shortcut with retained settings and cards.
+- Exercise missing/incorrect dumps, relocated discs, interrupted downloads and
+  builds, low disk space and update recovery through the packaged UI. Unit tests
+  cover several of these cases; they do not replace the installed-app checks.
+- Broaden DuckStation discovery checks: no installation, redirected and custom
+  folders, external card paths, duplicate candidates, denied access and a card
+  changing during import.
+- Decide signing and publish the exact version, integrity hashes, supported
+  Windows versions and notices. The installer currently targets Windows 10 1903
+  or later, x64.
 
-`tools/build_windows.ps1` currently needs Visual Studio 2022 C++/Windows SDK,
-CMake, Git and Python. It builds a recompiler, generates local game code and then
-builds the runtime. The optional optimized build additionally uses local overlay
-captures. `CMakeLists.txt` explicitly rejects a build without generated game code.
+Keep game-derived code/assets, retail BIOS, music packs and player saves outside
+public release inputs. Package only the explicit source allowlist. The prepared
+runtime has battle/movie native units and interpreter fallback elsewhere; do not
+promise the development build's complete native-overlay coverage.
 
-Select and validate a redistributable preparation toolchain or an alternative
-runtime/package design. A player should not need to choose compiler components,
-edit PATH or open a developer terminal. Do not quietly install Visual Studio as
-an undocumented substitute for this requirement. Account for licenses, notices,
-download size, disk space, supported Windows versions and offline retries when
-selecting the packaging approach.
-
-Keep generated game code, extracted assets, retail BIOS, local music packs and
-player saves outside public release inputs, consistent with current repository
-boundaries. Build the release from an explicit allowlist, never by archiving the
-maintainer's working runtime directory. The current optimized development build
-must not be promised as the fresh-install build until it is reproducible from
-the player's disc without private fixtures.
-
-### 3. Implement setup and repair
-
-Add a startup entry point that validates inputs before initializing disc-dependent
-mods. Persist paths atomically, preserve unrelated preferences and show the chosen
-save profile. Add backup/import, disk-space checks, interrupted-setup recovery
-and duplicate-instance handling. Package the launcher and authored resources
-with a normal Windows installer. Choose the installer technology only after the
-payload and preparation strategy are proven.
-
-### 4. Release checks
-
-Validate in a clean Windows x64 environment without developer tools or maintainer
-paths. Cover a standard user account, fresh install, existing-save import,
-non-ASCII paths, missing/incorrect dump, low disk space, interrupted setup,
-relocated disc, update rollback and uninstall/reinstall with retained saves.
-Exercise discovery with no DuckStation installation, default and redirected user
-folders, portable/custom folders, configured external card paths, duplicate
-candidates, invalid cards, denied access and a card changing during import.
-Confirm the shortcut launches the selected profile after a reboot. Include a
-signing/reputation plan and publish exact version, integrity hashes, supported
-Windows versions and notices with the installer.
-
-Only add an installer download button after that artifact exists and has passed
-these checks. Until then, the website should call it planned and keep the current
-source-build guide available.
+Only add a download button when the release checks pass. Until then, describe
+the installer as in local testing and retain the source-build guide.

@@ -4,8 +4,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#ifdef SHINKA_HAS_BASE_NATIVE
 extern int shinka_base_overlay_dispatch(CPUState *, uint32_t);
 extern void shinka_base_overlay_stats(uint64_t *, uint64_t *, uint64_t *, uint64_t *);
+#endif
 #ifdef SHINKA_HAS_BATTLE_NATIVE
 extern int shinka_battle_overlay_dispatch(CPUState *, uint32_t);
 extern void shinka_battle_overlay_stats(uint64_t *, uint64_t *, uint64_t *, uint64_t *);
@@ -44,13 +46,19 @@ int psx_overlay_dispatch(CPUState *cpu, uint32_t addr) {
 #ifdef SHINKA_HAS_BATTLE_NATIVE
     if (battle_native_enabled() && shinka_battle_overlay_dispatch(cpu, addr)) return 1;
 #endif
+#ifdef SHINKA_HAS_BASE_NATIVE
     return shinka_base_overlay_dispatch(cpu, addr);
+#else
+    return 0;
+#endif
 }
 
 void psx_overlay_static_get_stats(uint64_t *checks, uint64_t *hits,
                                   uint64_t *variant_misses, uint64_t *address_misses) {
-    uint64_t base[4], battle[4] = {0}, movie[4] = {0};
+    uint64_t base[4] = {0}, battle[4] = {0}, movie[4] = {0};
+#ifdef SHINKA_HAS_BASE_NATIVE
     shinka_base_overlay_stats(&base[0], &base[1], &base[2], &base[3]);
+#endif
 #ifdef SHINKA_HAS_BATTLE_NATIVE
     shinka_battle_overlay_stats(&battle[0], &battle[1], &battle[2], &battle[3]);
 #endif

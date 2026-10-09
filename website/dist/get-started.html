@@ -20,7 +20,7 @@
     <div><p class="eyebrow">Your copy. Your progress.</p><h1>Get Shinka<br>running.</h1><p class="setup-lead">Start with your own disc dump of Digimon World 2003. Keep your original files and bring your existing save if you have one.</p><div class="badge-line"><span class="badge">Windows x64</span><span class="badge">European SLES-03936</span><span class="badge">English menus</span></div></div>
     <figure class="capture"><div class="frame-label"><span>Ready to play</span><span>Shinka title screen</span></div><img src="media/title-wide.png?v=20260929" width="426" height="240" alt="Shinka title screen with Start and Continue options"><figcaption>Your disc data stays on your computer.</figcaption></figure>
   </section>
-  <div class="setup-status" role="note"><strong>Installer in planning.</strong> There is no installer download yet. Today's version requires a source build. The instructions below describe that route; the planned installer will handle setup for you.</div>
+  <div class="setup-status" role="note"><strong>Installer in local testing.</strong> A Windows setup package now builds, with a disc picker and optional DuckStation card import. It is not publicly released yet. The instructions below cover the available source-build route.</div>
   <nav class="setup-contents" aria-label="On this page"><a href="#disc">1. Check your files</a><a href="#build">2. Build &amp; launch</a><a href="#saves">3. Bring your save</a><a href="#controls">4. Start playing</a><a href="#help">Troubleshooting</a><a href="#installer">Installer plan</a></nav>
 
   <section class="setup-section" id="disc">
@@ -73,10 +73,10 @@ git -C ../audit-recomp submodule update --init psxrecomp</code></pre></li>
   </section>
 
   <section class="setup-section setup-proposal" id="installer">
-    <p class="eyebrow">Planned / Not yet available</p><h2>The installer we're working toward.</h2>
+    <p class="eyebrow">In local testing / Not yet released</p><h2>A guided setup for your own disc.</h2>
     <p class="setup-lead">One guided setup, then a Shinka shortcut. No hand-edited paths, command-line arguments or separate development-tool setup.</p>
     <ol class="setup-steps"><li><h3>Install Shinka</h3><p>Install for your Windows account and create a Start-menu shortcut.</p></li><li><h3>Choose your disc dump</h3><p>Use a file picker to select your CUE where it already lives. Setup finds the BIN, checks the supported game version and remembers the path. Your original files stay in place.</p></li><li><h3>Prepare the game</h3><p>Handle local preparation automatically, with visible progress and a retry option if setup is interrupted.</p></li><li><h3>Bring a save, or start fresh</h3><p>Tick <strong>Search for existing emulator data</strong> to look for DuckStation cards in common locations, or use <strong>Choose folder…</strong> for a custom setup. Review the cards found and choose one to copy into Shinka. Leave the originals untouched, or skip this step and start fresh.</p></li><li><h3>Play</h3><p>Launch from the shortcut next time. If disc files move, offer to locate them again.</p></li></ol>
-    <p>This is the proposed flow, not a shipped feature. Disc-only startup, local game preparation and clean-PC installation must be validated before a download appears here.</p>
+    <p>The local prototype downloads about 200 MiB of preparation tools and asks for 6 GiB of free space. It builds the game on your computer and keeps your disc files in place. Gameplay, save recovery and clean-PC release checks must pass before a public download appears here.</p>
     <a class="prose-link" href="https://github.com/JohnnySn0w/dmw2003-shinka/blob/main/docs/installer-plan.md">Installer design and release checklist ↗</a>
   </section>
 </main>

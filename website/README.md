@@ -2,8 +2,8 @@
 
 `dist/get-started.html` is the player setup guide: supported disc files, the
 current build/launch route, save import, controls and common startup failures.
-It marks the Windows installer as planned, with no placeholder download button.
-The implementation proposal is in [installer-plan.md](../docs/installer-plan.md).
+It marks the Windows installer as in local testing, with no placeholder download button.
+Implementation and release checks are in [installer-plan.md](../docs/installer-plan.md).
 
 A scrolling feature showcase with the user's title artwork. All gameplay stills,
 video posters and aspect comparison images were recaptured on September 29.

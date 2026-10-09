@@ -129,7 +129,7 @@ string(REPLACE "${_field_backend}" "${_field_gl}\n${_field_backend}" _hud_gl_cod
 string(REPLACE "${_field_rect}" "${_field_rect}\n    if (shinka_field_gl_rect(x,y,w,h,u,v)) return;" _hud_gl_code "${_hud_gl_code}")
 string(REPLACE "${_field_batch}" "    hr_begin(1);\n    p_glUseProgram(s_tex_prog);\n    p_glActiveTexture(PSXGL_TEXTURE0);\n    glBindTexture(GL_TEXTURE_2D, shinka_field_raw_texture ? shinka_field_raw_texture : s_raw_tex);" _hud_gl_code "${_hud_gl_code}")
 string(REPLACE "void gl_renderer_shutdown(void) {" "void gl_renderer_shutdown(void) {\n    flush_tex_batch();\n    shinka_field_gl_reset();" _hud_gl_code "${_hud_gl_code}")
-file(CONFIGURE OUTPUT "${_generated}/gpu_gl_renderer.c" CONTENT "#include \"battle_hud.h\"\n#include \"field_tiles.h\"\nstatic unsigned int shinka_field_raw_texture;\n${_hud_gl_code}" @ONLY)
+file(CONFIGURE OUTPUT "${_generated}/gpu_gl_renderer.c" CONTENT "#include \"view.h\"\n#include \"battle_hud.h\"\n#include \"field_tiles.h\"\nstatic unsigned int shinka_field_raw_texture;\n${_hud_gl_code}" @ONLY)
 get_target_property(_hud_sources shinka SOURCES)
 if(NOT "${_hud_gl}" IN_LIST _hud_sources)
     message(FATAL_ERROR "Review pinned GL source target")

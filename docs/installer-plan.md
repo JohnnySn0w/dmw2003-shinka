@@ -1,10 +1,56 @@
 # Windows installer and first-run setup
 
-Status: proposed, October 1, 2026. No installer has been built or released.
+Status: local installer prototype built October 8, 2026; not publicly released.
 The user requested a setup experience requiring only their own supported disc
 dump, with installer behavior discussed before implementation. The public
 [getting-started page](../website/dist/get-started.html) distinguishes this plan
-from the existing source-build route.
+from the existing source-build route. The implementation now lives in
+`tools/shinka_launcher.py`, `tools/setup_core.py`, `tools/setup_prepare.py`,
+`tools/package_setup_sdk.py`, `tools/build_installer.py` and `packaging/shinka.iss`.
+
+## Implemented prototype
+
+- Per-user Inno Setup package, with Play and Setup Start-menu shortcuts and an
+  optional desktop shortcut. Uninstall retains `%LOCALAPPDATA%/Shinka`.
+- Frozen Python/Tk launcher; players do not install Python, Visual Studio, SDL or
+  separate compiler DLLs. Setup downloads a SHA-256-pinned 200 MiB portable
+  LLVM-MinGW/UCRT toolchain. The generated game imports only Windows system DLLs.
+- Local preparation from the checked European single-BIN CUE, using included
+  OpenBIOS. The SDK contains allowlisted source and authored assets; generated
+  game code and extracted data stay on the player's machine.
+- Battle/movie native units are generated directly from the player's disc.
+  Other overlays use interpreter fallback; a maintainer capture archive is not
+  required. This is not the same native-overlay coverage as the development build.
+- Opt-in DuckStation search, redirected Documents support, custom folder/card
+  pickers, explicit card selection, and verified copies into new save profiles.
+- Named preparation stages, cancellation, resumable completed extraction, 6 GiB
+  free-space check, duplicate-instance lock, atomic activation, disc relocation
+  repair, and retained previous runtime/profile during updates.
+- Original soundtrack initially; alternate music preparation remains separate.
+  The expanded menu is enabled, with original progression/view defaults.
+
+Local validation includes a source-only portable build with host development
+tools excluded from PATH, OpenBIOS language selection and intro playback, a
+packaged wizard inspection, and synthetic disc/import/update/cancellation tests.
+The full release checks below still apply: this is not yet a clean-machine
+certification or a signed public release.
+
+### Building a local installer
+
+Use a packaging venv with `PyInstaller==6.16.0`, the pinned source dependencies
+from the Windows build guide, and an Inno Setup compiler (tested with 7.1.0).
+Commit source changes before packaging so the SDK revision identifies its inputs.
+
+```powershell
+python tools/package_setup_sdk.py --candidate 'PATH\TO\dmw2003' --output output/setup/sdk.zip
+python tools/build_installer.py --sdk output/setup/sdk.zip --output output/setup/package --iscc 'PATH\TO\ISCC.exe' --version 0.1.0
+```
+
+The result and SHA-256 file are under `output/setup/package/release/`. Build
+outputs are ignored and must not be committed. A maintainer can test isolated
+settings with `Shinka.exe --settings --data 'PATH\TO\test-data'`; normal players
+use the installed shortcuts. Preparation logs live inside each data-folder
+`builds/<version>/` directory, and game logs under `logs/`.
 
 ## Player experience
 
@@ -79,7 +125,7 @@ Implement DuckStation support first; do not imply every emulator is supported.
 
 ### Application storage
 
-Proposed locations, not the current runtime layout:
+Prototype installer locations (the source-build layout remains separate):
 
 - Application files: `%LOCALAPPDATA%/Programs/Shinka`.
 - Writable data: `%LOCALAPPDATA%/Shinka`, with separate generated-data,
@@ -104,8 +150,8 @@ names and assume persistence still works.
 
 ### 1. Prove disc-only boot
 
-The default source build includes OpenBIOS. Existing evidence only confirms it
-through language selection. The more complete movie, gameplay and savestate
+The default source build includes OpenBIOS. The October 8 installer probe also
+reached intro playback and the title/load menus. The earlier gameplay and savestate
 checks used the optional SCPH-1001 backend. Validate a clean OpenBIOS run through
 new game, field, battle, in-game save, full restart and Continue. Fix failures
 before claiming the player's disc dump is the only input needed.

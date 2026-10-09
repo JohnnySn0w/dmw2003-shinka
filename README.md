@@ -40,7 +40,7 @@ The [publishing guide](docs/website-publishing.md) covers GitHub Pages and custo
 
 Start with the [website setup guide](website/dist/get-started.html) for disc files,
 launching, controls and existing saves. A guided Windows installer is
-[being planned](docs/installer-plan.md); there is no installer download yet.
+[in local testing](docs/installer-plan.md); there is no public installer download yet.
 
 Follow the [Windows build and launch guide](docs/windows-baseline.md). You need
 Windows x64, the C++ build tools and your own supported disc data. The guide pins

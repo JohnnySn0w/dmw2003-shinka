@@ -33,6 +33,7 @@ set_property(TARGET shinka PROPERTY SOURCES "${_sources}")
 # and do not benefit from making every incremental link optimize the game.
 # Cross-module inlining removes call boundaries in the word-paced DMA path
 # without changing device deadlines, memory visibility, or interrupt ordering.
+include("${CMAKE_CURRENT_SOURCE_DIR}/tools/movie_perf.cmake")
 include("${CMAKE_CURRENT_SOURCE_DIR}/tools/cd_deadline.cmake")
 get_target_property(_sources shinka SOURCES)
 option(SHINKA_DEVICE_LTO "Link-time optimization for the Windows device scheduler" ON)

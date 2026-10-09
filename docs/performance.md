@@ -11,12 +11,87 @@ tested in that section, not necessarily the current implementation.
 - **Memory cards:** see the separate [read/write timing report](save-timing.md).
 - **Movies:** native decoder/transfer work and fewer redundant scheduling checks
   improved short samples to about 50 guest updates/sec; longer stutter remains.
+  The October 9 frame-by-frame audit below also finds short processing overruns
+  hidden by that average. Its three optimization experiments were not retained.
 - **Memory:** default-off retrospective history avoids a 128 MiB allocation;
   repeated tests did not establish a CPU speedup from that change.
 - **Background use:** [minimizing suspends offline gameplay](minimized-pause.md).
 
 For measurement tools and subsystem relationships, see [host stack profiling](host-stack-profiling.md)
 and the [runtime timing map](runtime-timing-map.md).
+
+## Opening-movie frame delivery — 2026-10-09
+
+**The small stutters are not fixed by this pass.** The retained change is better
+measurement, not another unproven scheduling shortcut. Isolated copies of the
+retail-BIOS movie checkpoint used seven seconds warmup followed by 30 seconds
+of playback, with no builds, screenshots, stack sampling, or diagnostic polling
+during the measurement window. Existing native movie routines, device LTO,
+precise pacing, and default-off display history were enabled in every run.
+
+The two control runs bracketed the experiments:
+
+| Build/run | CPU seconds / 30 s | Delivery p95 | Delivery p99 | Longest interval |
+| --- | ---: | ---: | ---: | ---: |
+| Original behavior, first control | 25.922 | 23.762 ms | 24.917 ms | 29.516 ms |
+| Single-tick timer, first | 25.531 | 24.317 ms | 25.957 ms | 31.463 ms |
+| Single-tick timer, repeat | 25.984 | 24.047 ms | 25.192 ms | 28.438 ms |
+| Larger compiler inlining budget | 25.609 | 24.057 ms | 25.903 ms | 33.351 ms |
+| Original behavior, final control | 26.281 | 24.270 ms | 25.904 ms | 28.297 ms |
+
+All these windows averaged about 20 ms per delivered update (50 Hz), with no
+new host audio underruns or overflow drops. The controls' processing intervals
+between presentation callbacks had p99 values of 24.228–25.183 ms, already over
+the 20 ms budget. Swap blocking averaged about 0.10 ms, with p99 below 0.20 ms.
+This points to uneven emulation/device workload in these samples, rather than
+the GPU swap or audio starvation. It does not identify every source of stutter,
+measure physical monitor scanout, or distinguish duplicate from new movie images.
+
+A separate 1,631-stack diagnostic sample placed the largest active paths in
+instruction-cycle charging and device servicing, with the movie queue consumer
+`0x8002BF5C` and native transfer routine `0x8008780C` as prominent callers.
+Inclusive stack residency includes pacing and nested callbacks; it is not CPU
+percentage and must not be added across callers.
+
+Three experiments were removed:
+
+- Gating already-disabled movie memory trace calls at their callers did not
+  show a reliable improvement (25.859 CPU seconds; delivery p99 25.341 ms).
+- Reusing the exact one-tick timer path passed exhaustive counter/boundary and
+  IRQ-state comparisons, but repeated live measurements did not establish a
+  stutter improvement.
+- Raising MSVC's inlining budget for the movie-transfer and queue-consumer
+  translation units did not improve the tail intervals.
+
+### Capturing short stalls without disturbing playback
+
+`tools/profile_movie.py` reads the existing timestamp history **after** playback.
+Shinka's generated debug server now returns up to all 4,096 entries; the old
+16 KiB response silently stopped after roughly 120 entries. An additional
+callback-entry timestamp survives the input resample after pacing, separating
+processing between callbacks from time inside the callback. No new clock read,
+GPU readback, or per-frame disk write is needed. The tool rejects truncated or
+nonconsecutive histories and excludes diagnostic-request boundary frames.
+
+Run against an isolated profile and its actual process ID:
+
+```powershell
+python tools/profile_movie.py --pid <pid> --port 4383 --slot 0 --seconds 30 `
+  --output output/movie-check.json
+```
+
+Omit `--slot` to observe current playback. A slot load explicitly changes the
+test process; do not use the player's live session without intending that.
+Use `PSX_GL_PERF=0`, disable display history, and keep compilation/stack sampling
+separate. These measurements cover host delivery, not source-video frame rate
+or display-refresh judder.
+
+Local evidence: `output/movie-stutter-20261009/`, including per-frame timestamps,
+audio counters, original/candidate executable maps, and the separate stack trace.
+The next optimization needs to reduce the heavy processing intervals themselves
+while retaining intermediate DMA visibility and interrupt timing; merely keeping
+the average at 50 Hz is insufficient. See [the movie queue audit](movie-queue-audit.md)
+before attempting a wait-loop shortcut.
 
 ## Opt-in retrospective RAM history — 2026-09-11
 

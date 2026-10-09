@@ -95,9 +95,35 @@ The source SDK SHA-256 is
 The 15 focused setup tests pass. Build, installation and launch evidence remains
 local under `output/installer-20261008/release2/` and `output/setup-final-é進/`.
 
-The full release checks below still apply. A fresh Windows VM, reboot/reinstall
-and a new-game-to-battle flow remain outstanding. The preview is unsigned and
-has not been uploaded as a public release.
+The full release checks below still apply. A fresh Windows VM and reboot/reinstall
+remain outstanding. The preview is unsigned and has not been uploaded as a
+public release.
+
+### October 9: fresh OpenBIOS game through the first battle
+
+The runtime prepared from SDK revision `40d6962` started with a separate empty
+memory-card directory and only Windows directories on PATH. Its log confirms
+OpenBIOS and creation of two blank cards. No imported card, savestate restore,
+warp, story edit, stat cheat or encounter override was used during this run.
+
+Normal controller inputs progressed through the street opening, account/name
+registration, Balanced Pack selection, login movie, Digital World arrival and
+the upstairs partner-service interaction. Kotemon, Renamon and Patamon appeared,
+and the story triggered Tamer Genji's tutorial battle outside the lobby.
+
+The battle loaded Kuwagamon and Kotemon, accepted the Tech command and Hot Head,
+displayed 165 damage and defeated Kuwagamon. The results screen awarded Kotemon
+4 EXP and 50 BIT, then returned to Genji's post-battle dialogue in Asuka City
+(field `0x200`, story 3). This covers the first scripted battle; broader random
+encounters, partner changes and late-game combat on OpenBIOS remain separate
+checks. It does not substitute for clean-machine or sustained-performance testing.
+
+Screenshots, state records, launcher inputs and the boot log remain local under
+`output/installer-20261009/new-game/`. In particular, `battle-tech.png`,
+`battle-result.png`, `victory-ready.png`, `rewards-applied.png` and
+`battle-return.png` record command selection, damage, rewards and field return.
+A diagnostic checkpoint was created in slot 0 after this run for later checks;
+it was not restored during validation.
 
 ### Building a local installer
 
@@ -218,9 +244,6 @@ installer route; the source-build instructions remain available separately.
 
 Before publishing a download:
 
-- Complete a fresh OpenBIOS new-game-to-battle run. Imported-card loading and
-  an in-game save/full restart/Continue cycle already pass; earlier battle
-  coverage used the optional retail BIOS backend.
 - Test in a clean Windows x64 environment without developer tools or maintainer
   paths, using a standard user account. Reboot, reinstall and check the installed
   shortcut with retained settings and cards.

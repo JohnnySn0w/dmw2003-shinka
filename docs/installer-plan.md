@@ -73,10 +73,31 @@ An executable regression exercises Unicode command-line arguments, C++ file
 reads and C-style file writes with both MSVC and the portable Clang toolchain.
 Evidence stays under `output/installer-20261008/roundtrip/` and `unicode/`.
 
-The full release checks below still apply. A fresh Windows VM, full preparation
-under non-ASCII paths, reboot/reinstall and a new-game-to-battle flow remain
-outstanding. The preview is unsigned and has not been uploaded as a public
-release. The original preview artifact above predates the Unicode fix.
+The original preview artifact above predates the Unicode fixes. A refreshed
+`0.1.1-preview` uses source revision `40d6962` and completed fresh preparation
+under `output/setup-final-é進` using the previously verified portable toolchain.
+No staged source edits were needed. The first extraction attempt encountered a
+Windows access-denied error renaming its staging directory; retrying completed
+the entire preparation. This retry used a new extraction directory.
+
+The refreshed installer also installed successfully into `installed-é進`. Its
+installed launcher starts the freshly prepared game with only Windows folders
+on PATH and a copied save profile under `José 進化`. Continue read the new
+59:53:06 save and reached Pelche Oasis's area load-in (stage `0x249`, story 20);
+both card hashes remained unchanged during loading. Uninstalling this test
+installation succeeded and retained the separate settings and save profile.
+
+Local artifact: `output/installer-20261008/release2/package/release/` contains
+`Shinka-Setup-0.1.1-preview-windows-x64.exe` (21,156,667 bytes), with SHA-256
+`1e81b3d46528e5d31f3e2d854268436fbed09ef315cce6c02772876253a4350e`.
+The source SDK SHA-256 is
+`c60cc7544d416b7a5cfcdb4424285c63908e807116679e284ae13adce4847ed1`.
+The 15 focused setup tests pass. Build, installation and launch evidence remains
+local under `output/installer-20261008/release2/` and `output/setup-final-é進/`.
+
+The full release checks below still apply. A fresh Windows VM, reboot/reinstall
+and a new-game-to-battle flow remain outstanding. The preview is unsigned and
+has not been uploaded as a public release.
 
 ### Building a local installer
 

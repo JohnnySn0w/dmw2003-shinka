@@ -1,4 +1,6 @@
 from pathlib import Path
+import io
+import json
 import os
 import sys
 import tempfile
@@ -12,6 +14,99 @@ import setup_prepare as setup
 
 
 class PreparationTests(unittest.TestCase):
+    def test_staging_rename_recovers_from_windows_lock(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            source, target = root/'staging', root/'ready'
+            source.mkdir()
+            (source/'payload').write_text('complete')
+            rename = Path.rename
+            locked = PermissionError('scanner lock')
+            locked.winerror = 32
+            attempts = []
+            def transient(path, destination):
+                attempts.append(path)
+                if len(attempts) < 3:
+                    raise locked
+                return rename(path, destination)
+            cancel = threading.Event()
+            with patch.object(Path, 'rename', transient), patch.object(cancel, 'wait', return_value=False):
+                setup.rename_staged(source, target, cancel)
+            self.assertEqual(len(attempts), 3)
+            self.assertEqual((target/'payload').read_text(), 'complete')
+            self.assertFalse(source.exists())
+
+    def test_staging_rename_is_cancellable_and_permanent_failures_are_bounded(self):
+        with tempfile.TemporaryDirectory() as directory:
+            source, target = Path(directory)/'staging', Path(directory)/'ready'
+            source.mkdir()
+            cancel = threading.Event()
+            locked = PermissionError('access denied')
+            locked.winerror = 5
+            with patch.object(Path, 'rename', side_effect=locked) as rename:
+                with patch.object(cancel, 'wait', side_effect=lambda delay: cancel.set()):
+                    with self.assertRaises(setup.Cancelled):
+                        setup.rename_staged(source, target, cancel)
+                self.assertEqual(rename.call_count, 1)
+                cancel.clear()
+                rename.reset_mock()
+                with patch.object(cancel, 'wait', return_value=False):
+                    with self.assertRaises(PermissionError):
+                        setup.rename_staged(source, target, cancel)
+                self.assertEqual(rename.call_count, 5)
+            with patch.object(Path, 'rename', side_effect=FileExistsError('destination exists')) as rename:
+                with self.assertRaises(FileExistsError):
+                    setup.rename_staged(source, target, cancel)
+                self.assertEqual(rename.call_count, 1)
+            self.assertTrue(source.is_dir())
+            self.assertFalse(target.exists())
+
+    def test_corrupt_tool_marker_repairs_from_verified_cache_without_download(self):
+        for marker_text in ('{broken', '[]', '{"sha256":"wrong"}'):
+            with self.subTest(marker=marker_text), tempfile.TemporaryDirectory() as directory:
+                root = Path(directory)
+                installed = root/'toolchains/test'
+                installed.mkdir(parents=True)
+                (installed/'shinka-verified.json').write_text(marker_text)
+                (installed/'old-file').write_text('retain for diagnosis')
+                (root/'cache').mkdir()
+                archive = root/'cache/toolchain-test.zip'
+                with zipfile.ZipFile(archive, 'w') as zipped:
+                    for name in ('bin/cmake.exe', 'bin/clang.exe', 'bin/clang++.exe', 'bin/ninja.exe', 'python/python.exe'):
+                        zipped.writestr(name, 'test tool')
+                config = dict(version='test', sha256=setup.hash_file(archive))
+                with patch.object(setup, 'TOOLCHAIN', config), patch.object(setup.urllib.request, 'urlopen') as download:
+                    result = setup.ensure_toolchain(root, threading.Event(), lambda *args: None)
+                download.assert_not_called()
+                self.assertEqual(result, installed)
+                self.assertTrue((result/'bin/clang++.exe').is_file())
+                self.assertEqual(json.loads((result/'shinka-verified.json').read_text())['sha256'], config['sha256'])
+                backups = list((root/'toolchains').glob('replaced-*'))
+                self.assertEqual(len(backups), 1)
+                self.assertEqual((backups[0]/'old-file').read_text(), 'retain for diagnosis')
+
+    def test_cancelled_download_keeps_existing_tools_and_settings(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            installed = root/'toolchains/test'
+            installed.mkdir(parents=True)
+            (installed/'old-file').write_bytes(b'old tools')
+            (root/'launcher.json').write_bytes(b'active settings')
+            cancel = threading.Event()
+            class InterruptedDownload(io.BytesIO):
+                def read(self, size=-1):
+                    block = super().read(size)
+                    cancel.set()
+                    return block
+            config = dict(version='test', bytes=10, sha256='unused', url='https://example.invalid/tools.zip')
+            with patch.object(setup, 'TOOLCHAIN', config), patch.object(setup.urllib.request, 'urlopen', return_value=InterruptedDownload(b'test')):
+                with self.assertRaises(setup.Cancelled):
+                    setup.ensure_toolchain(root, cancel, lambda *args: None)
+            self.assertEqual((root/'launcher.json').read_bytes(), b'active settings')
+            self.assertEqual((installed/'old-file').read_bytes(), b'old tools')
+            self.assertFalse(list((root/'cache').glob('*.part')))
+            self.assertFalse(list((root/'toolchains').glob('.staging-*')))
+
     def test_codegen_path_hook_is_repeatable_and_checks_all_sites_first(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)

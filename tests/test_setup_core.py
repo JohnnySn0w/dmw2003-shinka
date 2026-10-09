@@ -111,6 +111,27 @@ class SetupTests(unittest.TestCase):
         self.assertEqual((Path(second['runtime'])/'settings.toml').read_text(), 'my settings')
         self.assertEqual(updated['sdk'], second['sdk'])
 
+    def test_relocated_disc_repair_preserves_runtime_profile_and_card(self):
+        prepared = self.prepared('runtime')
+        state = setup.activate(self.root, prepared)
+        card = Path(state['profile'])/'card1.mcd'
+        card.write_bytes(b'player progress')
+        moved = self.root/'Moved disc'
+        moved.mkdir()
+        self.binary.rename(moved/self.binary.name)
+        self.cue.rename(moved/self.cue.name)
+        with patch.object(setup, 'DISC_SHA1', state['disc']['sha1']):
+            with self.assertRaisesRegex(FileNotFoundError, 'moved or changed'):
+                setup.launch_command(state)
+            self.assertEqual(setup.read_settings(self.root), state)
+            prepared['disc'] = setup.validate_disc(moved/self.cue.name)
+            repaired = setup.activate(self.root, prepared)
+            command = setup.launch_command(repaired)
+        self.assertEqual(repaired['runtime'], state['runtime'])
+        self.assertEqual(repaired['profile'], state['profile'])
+        self.assertEqual(card.read_bytes(), b'player progress')
+        self.assertIn(str(moved/self.cue.name), command)
+
     def test_bad_import_and_failed_commit_keep_active_install(self):
         state = setup.activate(self.root, self.prepared('first'))
         second = self.prepared('second')

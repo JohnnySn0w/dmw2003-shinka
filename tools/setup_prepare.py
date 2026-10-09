@@ -14,12 +14,31 @@ from setup_core import (TOOLCHAIN, Cancelled, atomic_json, check_cancel, hash_fi
 from configure_journal import select_journal
 
 
+def rename_staged(source, target, cancel):
+    """Allow short Windows scanner locks to clear without discarding staging."""
+    for attempt in range(5):
+        check_cancel(cancel)
+        try:
+            source.rename(target)
+            return
+        except OSError as exc:
+            if getattr(exc, 'winerror', None) not in (5, 32, 33) or attempt == 4:
+                raise
+            # Event.wait keeps Cancel responsive during the bounded backoff.
+            cancel.wait(.2 * 2**attempt)
+
+
 def ensure_toolchain(root, cancel, notify):
+    check_cancel(cancel)
     root = Path(root)
     installed = root / 'toolchains' / TOOLCHAIN['version']
     marker = installed / 'shinka-verified.json'
-    if marker.is_file() and json.loads(marker.read_text()).get('sha256') == TOOLCHAIN['sha256']:
-        if all((installed / p).is_file() for p in ('bin/cmake.exe', 'bin/clang.exe', 'bin/ninja.exe', 'python/python.exe')):
+    try:
+        record = json.loads(marker.read_text(encoding='utf-8'))
+    except (OSError, ValueError):
+        record = None
+    if isinstance(record, dict) and record.get('sha256') == TOOLCHAIN['sha256']:
+        if all((installed / p).is_file() for p in ('bin/cmake.exe', 'bin/clang.exe', 'bin/clang++.exe', 'bin/ninja.exe', 'python/python.exe')):
             return installed
     cache = root / 'cache'
     cache.mkdir(parents=True, exist_ok=True)
@@ -47,11 +66,12 @@ def ensure_toolchain(root, cancel, notify):
     staging = root / 'toolchains' / ('.staging-' + uuid.uuid4().hex)
     staging.mkdir(parents=True)
     safe_extract(archive, staging, cancel)
+    check_cancel(cancel)
     atomic_json(staging / 'shinka-verified.json', dict(sha256=TOOLCHAIN['sha256']))
     if installed.exists():
         # Retain a damaged prior installation for diagnosis; never merge versions.
-        installed.rename(installed.with_name('replaced-' + uuid.uuid4().hex))
-    staging.rename(installed)
+        rename_staged(installed, installed.with_name('replaced-' + uuid.uuid4().hex), cancel)
+    rename_staged(staging, installed, cancel)
     return installed
 
 
@@ -80,8 +100,8 @@ def extract_source(sdk, work, cancel):
     check_cancel(cancel)
     atomic_json(staging/'.sdk-ready.json', dict(complete=True))
     if source.exists():
-        source.rename(work/('source-interrupted-' + uuid.uuid4().hex[:8]))
-    staging.rename(source)
+        rename_staged(source, work/('source-interrupted-' + uuid.uuid4().hex[:8]), cancel)
+    rename_staged(staging, source, cancel)
 
 
 def run(command, cwd, env, cancel, log, notify, stage, new_console=False):

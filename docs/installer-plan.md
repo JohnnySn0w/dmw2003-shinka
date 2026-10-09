@@ -125,6 +125,27 @@ Screenshots, state records, launcher inputs and the boot log remain local under
 A diagnostic checkpoint was created in slot 0 after this run for later checks;
 it was not restored during validation.
 
+### October 9: preparation recovery
+
+Source/toolchain staging now retries Windows access-denied and sharing-lock
+rename failures up to five attempts, with at most three seconds of cancellable
+backoff. Other errors return immediately; permanent locks still report an error
+and retain the staging data. This addresses the transient extraction failure
+seen during the Unicode preparation check without retrying indefinitely.
+
+Malformed or mismatched tool-cache markers now trigger verified re-extraction
+instead of preventing Retry. The cache check also requires the C++ compiler.
+An invalid prior tool directory is retained separately after successful
+extraction; it is never merged into the replacement.
+
+Twenty focused setup tests pass, including transient/permanent locks,
+cancellation during the retry wait and download, repair from a verified cached
+archive, and disc relocation preserving the runtime, save profile and card
+bytes. A separate Windows process test confirmed Cancel terminates both a
+disposable worker and its child. Its evidence is local under
+`output/installer-20261009/recovery/`. These checks cover the recovery code;
+the packaged-UI failure matrix and clean-machine tests below remain outstanding.
+
 ### Building a local installer
 
 Use a packaging venv with `PyInstaller==6.16.0`, the pinned source dependencies

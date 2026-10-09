@@ -154,9 +154,9 @@ static void story_policy(void) {
     }
 }
 static void east_surface_policy(void) {
-    const unsigned stages[]={0x220,0x227,0x229}, icons[]={18,23,24};
-    const unsigned x[]={1196,1186,1096}, y[]={806,874,248};
-    for(unsigned i=0;i<3;++i) {
+    const unsigned stages[]={0x220,0x227,0x229,0x21f,0x22c}, icons[]={18,23,24,33,31};
+    const unsigned x[]={1196,1186,1096,778,900}, y[]={806,874,248,152,352};
+    for(unsigned i=0;i<5;++i) {
         fresh();watching=0;target(icons[i]);watching=1;
         select_icon();shinka_map_present();
         CHECK(R(RETURN)==stages[i] && R(0x8004b3fc)==stages[i]);
@@ -185,6 +185,27 @@ static void east_surface_policy(void) {
             else W(0x8004b370,bad==1 ? 0 : bad==2 ? 37 : 0x105);
             watching=1;writes=0;select_icon();CHECK(!writes);
         }
+    }
+    /* East Station's story-5 controls must run before travel releases at 6.
+     * Both directions and both deferred paths must recheck the story. */
+    for(unsigned story=4;story<=6;++story) for(unsigned from=0;from<2;++from) {
+        fresh();watching=0;W(0x8004b370,story);
+        if(from) W(RETURN,0x22c);else target(31);
+        watching=1;writes=0;select_icon();
+        if(story==5) CHECK(!writes);
+        else {shinka_map_present();CHECK(R(RETURN)==(from ? 0x21du : 0x22cu));}
+        CHECK(R(0x8004b370)==story);
+    }
+    for(unsigned legacy=0;legacy<2;++legacy) for(unsigned from=0;from<2;++from) {
+        fresh();watching=0;W(0x8004b370,6);
+        if(from) W(RETURN,0x22c);else target(31);
+        watching=1;
+        if(legacy) {legacy_request();W(PARENT+0x7c,from ? 30 : 31);root_close();}
+        else select_icon();
+        watching=0;W(0x8004b370,5);watching=1;
+        if(legacy) transition();else shinka_map_present();
+        CHECK(R(RETURN)==(from ? 0x22cu : 0x249u) && !gpu_count && !R(PARENT+0x78));
+        CHECK(R(0x8004b370)==5);
     }
     /* Teddy's completion and both local-event bits are independent. Neighbor
      * bits, including the preceding quest byte, cannot release a pending scene. */

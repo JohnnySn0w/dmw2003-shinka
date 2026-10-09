@@ -9,7 +9,7 @@ scripted exits, temporary closures and transport unlocks. A previously visited
 area can become inaccessible later. Both departure and arrival need checks.
 
 This is an implementation scope and test plan, not a completed campaign safety
-certification. The 19-destination network now guards Seiryu's pending departure
+certification. The 21-destination network now guards Seiryu's pending departure
 scene, adjusts Asuka's early arrival, gates three South Sector stops behind the
 completed first arrival, and admits Phoenix Bay only after its exact surface field
 has been visited. Suzaku has event-aware arrivals and departures, and Asuka's
@@ -20,9 +20,60 @@ until it completes. Noise Desert now uses its native Pelche Oasis entrance;
 both directions wait for its story-15 conversation when that scene is pending.
 Plug Cape and Divermon's Lake use native surface entrances. Wind Prairie keeps
 both directions closed while Teddy's announcement or its local encounter is pending.
+Shell Beach uses its native park entrance; East Station retains its story-5 scene.
 The network retains the broad story range
 described in [map travel](menu-map.md). That range does not prove the remaining
 events below are safe.
+
+## Shell Beach and East Station — 2026-10-09
+
+Shell Beach (`0x21f`, icon 33) and East Station (`0x22c`, icon 31) bring the
+network to 21 destinations. Each requires its exact field visit bit. The
+Asuka-server and story 1–36 limits remain unchanged; neither destination grants
+access to transport, underwater routes or Kicking Forest fast travel.
+
+### Native route evidence
+
+Offsets below are in the original module; coordinates are field units, multiplied
+by 256 for runtime position words. Both directions were exercised through the
+original trigger and Cross on an isolated copy of the progressed profile.
+
+| Module / action offset | Route | Arrival | Facing |
+| --- | --- | --- | --- |
+| `WSTAG330` / `0x1f40` | Central Park → Shell Beach | `(778, 152)` | 1 |
+| `WSTAG340` / `0xd14` | Shell Beach → Central Park | `(258, 940)` | 5 |
+| `WSTAG400` / `0x22a0` | Kicking Forest → East Station | `(900, 352)` | 3 |
+| `WSTAG410` / `0xe3c` | East Station → Kicking Forest | `(208, 764)` | 7 |
+
+The new map landings use the two forward-route positions. Walking after both
+arrivals changed the player's position normally. Shell Beach's separate action
+at `0xd2c` retains its native `0x7093` underwater condition.
+
+East Station's action at `0xe54` runs event `0x5a` at story 5. Its completion
+callback at `0xa8..0xb4` writes story 6. **Follow the station route** blocks both
+arrival and departure at 5; this is separate from South Station's completed
+first-gondola gate. A synthetic story-5 fixture at the original station trigger
+ran the conversation, advanced to 6 and returned to Kicking Forest using the
+native scene. No completion flag or story advancement was manufactured. This
+controlled fixture is not a naturally earned early-campaign playthrough.
+
+### Validation and limits
+
+The rebuilt player map completed Central Park → Shell Beach → East Station →
+Central Park through ordinary cursor selection and Cross. Checked story/quest
+bytes stayed unchanged. Live map checks also refused both directions at story 5
+and allowed arrival at 6. Exact visit revocation, unsupported server/story values,
+same-location refusal and story-5 station guards are covered by the native map
+policy test, including both deferred commit paths. The complete native suite
+passes all 21 tests. Local screenshots, state dumps and route logs are under
+`output/surface-travel-20261009/`; no save data or original modules are published.
+
+| Original module | SHA-256 |
+| --- | --- |
+| `WSTAG330.PRO` | `3540ac36658cad4ef957f85a2592dc8c1929ef0a2c0b87be7c68149a11a15b2d` |
+| `WSTAG340.PRO` | `db06ea6e295b4b551a029b02e07da86144916d53a3294a395c05b582871b0dcb` |
+| `WSTAG400.PRO` | `143863baa0863b76ac2a92112031b7561c7ad2873cab72943d6a7601eddb82e1` |
+| `WSTAG410.PRO` | `b7f5315d2bfc8e055d18e38057a0f54f6287f48a0fb800fc30cbffbf3aebcf36` |
 
 ## East surface additions — 2026-10-09
 

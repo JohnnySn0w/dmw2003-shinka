@@ -36,10 +36,12 @@ static const struct { uint32_t icon, stage, x, y; } destinations[] = {
     {20, 0x202, 0x2dda8, 0xf760}, /* Asuka City bridge */
     {30, 0x21d, 225700, 164434}, /* Central Park */
     {22, 0x21e, 111434, 91323},  /* Wire Forest Entrance */
+    {33, 0x21f, 778*256, 152*256}, /* Shell Beach, native Central Park entry */
     {18, 0x220, 1196*256, 806*256}, /* Plug Cape, native Central Park entry */
     {21, 0x222, 87454, 66170},   /* Wire Forest */
     {23, 0x227, 1186*256, 874*256}, /* Divermon's Lake, native Wind Prairie entry */
     {24, 0x229, 1096*256, 248*256}, /* Wind Prairie, native Seiryu entry */
+    {31, 0x22c, 900*256, 352*256}, /* East Station, native Kicking Forest entry */
     {15, 0x22e, 0x21fda, 0x1d3d8}, /* Seiryu City */
     {32, 0x232, 0x15ade, 0x111cd}, /* South Station, outside the gondola */
     {43, 0x234, 0x3dc56, 0x1f77c}, /* Bulk Bridge */
@@ -115,6 +117,9 @@ static const char* prairie_blocked(uint32_t story) {
     return NULL;
 }
 static const char* departure(uint32_t stage, uint32_t story) {
+    /* WSTAG410's station trigger runs event 0x5a at story 5. Its native
+     * completion advances to 6; keep arrival and departure on that route. */
+    if (stage == 0x22c && story == 5) return "Follow the station route";
     if (stage == 0x229) return prairie_blocked(story);
     if (stage == 0x248 && noise_pending(story))
         return "Follow the desert route";
@@ -184,6 +189,8 @@ static const char* plan(uint32_t parent, uint32_t icon, struct arrival* out) {
     blocked=departure(stage,story);
     if (blocked) return blocked;
     if (i < 0) return "No travel point yet";
+    if (destinations[i].stage == 0x22c && story == 5)
+        return "Follow the station route";
     if (destinations[i].stage == 0x229 && (blocked=prairie_blocked(story)))
         return blocked;
     if (destinations[i].stage == 0x248 && noise_pending(story))

@@ -14,17 +14,19 @@ without stretching the artwork or icons. Cursor snapping and travel checks are
 unchanged; vertical scrolling remains. See [camera coverage](camera.md) for
 implementation and verification details.
 
-The initial travel network connects these 19 Asuka locations:
+The initial travel network connects these 21 Asuka locations:
 
 | Map icon | Arrival |
 | --- | --- |
 | Asuka City | Bridge, outside the plot-dependent Main Lobby entrance |
 | Central Park | Paved plaza |
 | Wire Forest Entrance | Open path |
+| Shell Beach | Native entrance from Central Park |
 | Plug Cape | Native entrance from Central Park |
 | Wire Forest | Clearing near the path |
 | Divermon's Lake | Native entrance from Wind Prairie |
 | Wind Prairie | Native entrance from Seiryu City; pending local events keep travel on the ordinary route |
+| East Station | Native entrance from Kicking Forest; story-5 station scene must finish first |
 | Seiryu City | Outdoor city path |
 | South Station | Walkway beside the gondola controls |
 | Bulk Swamp / Bulk Bridge | Bulk Bridge's wooden crossing |
@@ -71,6 +73,12 @@ Teddy's Wind Prairie conversation finishes. Returning to Seiryu remains allowed.
 Wind Prairie itself blocks arrivals and departures while that conversation is
 pending, or while its separate local encounter has started but not completed.
 The map explains **Follow the prairie route** or **Finish the local encounter**.
+
+East Station blocks arrival and departure during its story-5 station scene.
+The original scene advances the story to 6; this is separate from the first
+gondola trip that unlocks South Station. Shell Beach uses its native park
+entrance; travel does not unlock its underwater route.
+
 Plug Cape and Divermon's Lake use their ordinary surface entrances; their
 underground and underwater transport requirements remain unchanged.
 Asuka uses the outer bridge approach while Keith's early encounter is unfinished,

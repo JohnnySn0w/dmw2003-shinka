@@ -12,10 +12,10 @@ local files, not prerequisites already supplied by cloning the repository.
 
 ## Current feature guide
 
-The player-facing summaries below reflect the September 21, 2026 updates:
+The player-facing summaries below include the October 9, 2026 travel updates:
 
-- **Travel:** 19 exact arrival fields, including Plug Cape, Divermon's Lake and
-  Wind Prairie. Visitation, source-area support and story checks all apply;
+- **Travel:** 21 exact arrival fields, including Shell Beach and East Station.
+  Visitation, source-area support and story checks all apply;
   Noise Desert preserves its pending conversation. Map visibility alone does
   not imply travel support.
 - **Menus:** widescreen adjustments cover supported Status, card and Lab screens,

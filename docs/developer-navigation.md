@@ -135,8 +135,9 @@ coordinate deltas for that step; collisions and path bends limit extrapolation.
 Cross is explicit (`press cross 4`): automatic confirmation near water can start
 fishing instead of taking an exit.
 
-The fifteen built-in points cover the original eleven travel destinations, the
-outer Asuka bridge approach, and Plug Cape, Divermon's Lake and Wind Prairie.
+The seventeen built-in points cover the original eleven travel destinations, the
+outer Asuka bridge approach, Plug Cape, Divermon's Lake, Wind Prairie, Shell
+Beach and East Station.
 This developer bookmark set is separate from
 the current player destination table in `src/map_travel.c`: later Badland and
 Bullet Valley additions do not automatically become named developer points.

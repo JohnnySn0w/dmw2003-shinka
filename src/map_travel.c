@@ -14,6 +14,8 @@ extern int shinka_journal_enabled(void);
 #define CUT 0x53484354u
 #define PAGE 5u
 #define TEDDY_COMPLETE 0x8004b3e0u /* flag 0x4011, bit 1 */
+#define PRAIRIE_STARTED 0x8004b3b0u /* flag 0x1a27, bit 7 */
+#define PRAIRIE_COMPLETE 0x8004b3b1u /* flag 0x1a28, bit 0 */
 #define KEITH_COMPLETE 0x8004b3e0u /* flag 0x4016, bit 6 */
 #define PHOENIX_COMPLETE 0x8004b3bfu /* flag 0x1c51, bit 1 */
 #define ZANBAMON_REMOVED 0x8004b3b6u /* flag 0x1c09, bit 1 */
@@ -34,7 +36,10 @@ static const struct { uint32_t icon, stage, x, y; } destinations[] = {
     {20, 0x202, 0x2dda8, 0xf760}, /* Asuka City bridge */
     {30, 0x21d, 225700, 164434}, /* Central Park */
     {22, 0x21e, 111434, 91323},  /* Wire Forest Entrance */
+    {18, 0x220, 1196*256, 806*256}, /* Plug Cape, native Central Park entry */
     {21, 0x222, 87454, 66170},   /* Wire Forest */
+    {23, 0x227, 1186*256, 874*256}, /* Divermon's Lake, native Wind Prairie entry */
+    {24, 0x229, 1096*256, 248*256}, /* Wind Prairie, native Seiryu entry */
     {15, 0x22e, 0x21fda, 0x1d3d8}, /* Seiryu City */
     {32, 0x232, 0x15ade, 0x111cd}, /* South Station, outside the gondola */
     {43, 0x234, 0x3dc56, 0x1f77c}, /* Bulk Bridge */
@@ -99,7 +104,18 @@ static int noise_pending(uint32_t story) {
      * desert route while pending; a visit alone does not complete the scene. */
     return story == 15 && !(B(NOISE_SCENE_COMPLETE) & 0x10);
 }
+static const char* prairie_blocked(uint32_t story) {
+    /* WSTAG395's entry callback starts Teddy's event 0x50 at story 5,
+     * or resumes event 0x519 for 0x1a27 && !0x1a28. Keep both trips on
+     * the native route while pending, without manufacturing completion. */
+    if (story == 5 && !(B(TEDDY_COMPLETE) & 2))
+        return "Follow the prairie route";
+    if ((B(PRAIRIE_STARTED) & 0x80) && !(B(PRAIRIE_COMPLETE) & 1))
+        return "Finish the local encounter";
+    return NULL;
+}
 static const char* departure(uint32_t stage, uint32_t story) {
+    if (stage == 0x229) return prairie_blocked(story);
     if (stage == 0x248 && noise_pending(story))
         return "Follow the desert route";
     if (stage == 0x247 && south_badland_pending())
@@ -168,6 +184,8 @@ static const char* plan(uint32_t parent, uint32_t icon, struct arrival* out) {
     blocked=departure(stage,story);
     if (blocked) return blocked;
     if (i < 0) return "No travel point yet";
+    if (destinations[i].stage == 0x229 && (blocked=prairie_blocked(story)))
+        return blocked;
     if (destinations[i].stage == 0x248 && noise_pending(story))
         return "Follow the desert route";
     if (destinations[i].stage == 0x247 && south_badland_pending())

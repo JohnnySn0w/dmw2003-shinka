@@ -14,8 +14,8 @@ local files, not prerequisites already supplied by cloning the repository.
 
 The player-facing summaries below reflect the September 21, 2026 updates:
 
-- **Travel:** 16 exact arrival fields, including Noise Desert, South Badland and
-  Bullet Valley. Visitation, source-area support and story checks all apply;
+- **Travel:** 19 exact arrival fields, including Plug Cape, Divermon's Lake and
+  Wind Prairie. Visitation, source-area support and story checks all apply;
   Noise Desert preserves its pending conversation. Map visibility alone does
   not imply travel support.
 - **Menus:** widescreen adjustments cover supported Status, card and Lab screens,

@@ -14,14 +14,17 @@ without stretching the artwork or icons. Cursor snapping and travel checks are
 unchanged; vertical scrolling remains. See [camera coverage](camera.md) for
 implementation and verification details.
 
-The initial travel network connects these Asuka locations:
+The initial travel network connects these 19 Asuka locations:
 
 | Map icon | Arrival |
 | --- | --- |
 | Asuka City | Bridge, outside the plot-dependent Main Lobby entrance |
 | Central Park | Paved plaza |
 | Wire Forest Entrance | Open path |
+| Plug Cape | Native entrance from Central Park |
 | Wire Forest | Clearing near the path |
+| Divermon's Lake | Native entrance from Wind Prairie |
+| Wind Prairie | Native entrance from Seiryu City; pending local events keep travel on the ordinary route |
 | Seiryu City | Outdoor city path |
 | South Station | Walkway beside the gondola controls |
 | Bulk Swamp / Bulk Bridge | Bulk Bridge's wooden crossing |
@@ -65,6 +68,11 @@ flag. See the [Noise Desert audit](travel-story-audit.md#noise-desert--2026-09-2
 
 After the Seiryu badge, travel out of Seiryu shows **Use the city exit** until
 Teddy's Wind Prairie conversation finishes. Returning to Seiryu remains allowed.
+Wind Prairie itself blocks arrivals and departures while that conversation is
+pending, or while its separate local encounter has started but not completed.
+The map explains **Follow the prairie route** or **Finish the local encounter**.
+Plug Cape and Divermon's Lake use their ordinary surface entrances; their
+underground and underwater transport requirements remain unchanged.
 Asuka uses the outer bridge approach while Keith's early encounter is unfinished,
 then resumes its usual bridge landing. Both arrivals remain outside the city
 entrance, preserving the original gate during the later lockdown.

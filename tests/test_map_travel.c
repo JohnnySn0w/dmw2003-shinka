@@ -153,6 +153,77 @@ static void story_policy(void) {
         CHECK(psx_mod_read_byte(p)==0);
     }
 }
+static void east_surface_policy(void) {
+    const unsigned stages[]={0x220,0x227,0x229}, icons[]={18,23,24};
+    const unsigned x[]={1196,1186,1096}, y[]={806,874,248};
+    for(unsigned i=0;i<3;++i) {
+        fresh();watching=0;target(icons[i]);watching=1;
+        select_icon();shinka_map_present();
+        CHECK(R(RETURN)==stages[i] && R(0x8004b3fc)==stages[i]);
+        CHECK(R(RETURN+4)==x[i]*256 && R(RETURN+8)==y[i]*256);
+        fresh();watching=0;W(RETURN,stages[i]);watching=1;
+        select_icon();shinka_map_present();CHECK(R(RETURN)==0x21d);
+        fresh();watching=0;W(RETURN,stages[i]);target(icons[i]);watching=1;writes=0;
+        select_icon();CHECK(!writes); /* same location */
+        for(unsigned legacy=0;legacy<2;++legacy) for(unsigned deferred=0;deferred<2;++deferred) {
+            fresh();watching=0;target(icons[i]);watching=1;
+            if(deferred) {
+                if(legacy) {legacy_request();W(PARENT+0x7c,icons[i]);root_close();}
+                else select_icon();
+            }
+            watching=0;
+            unsigned bit=stages[i]&255;
+            psx_mod_write_byte(0x8004b3c0+bit/8,(uint8_t)(255 & ~(1u<<(bit%8))));
+            watching=1;writes=0;
+            if(deferred) {if(legacy) transition();else shinka_map_present();}
+            else {select_icon();CHECK(!writes);}
+            CHECK(R(RETURN)==0x249 && !gpu_count && !R(PARENT+0x78));
+        }
+        for(unsigned bad=0;bad<4;++bad) {
+            fresh();watching=0;target(icons[i]);
+            if(bad==0) W(RETURN,stages[i]+0x100); /* other server */
+            else W(0x8004b370,bad==1 ? 0 : bad==2 ? 37 : 0x105);
+            watching=1;writes=0;select_icon();CHECK(!writes);
+        }
+    }
+    /* Teddy's completion and both local-event bits are independent. Neighbor
+     * bits, including the preceding quest byte, cannot release a pending scene. */
+    for(unsigned story=4;story<=6;++story) for(unsigned flags=0;flags<8;++flags)
+    for(unsigned from=0;from<2;++from) for(unsigned neighbors=0;neighbors<2;++neighbors) {
+        fresh();watching=0;W(0x8004b370,story);
+        unsigned teddy=(flags&1 ? 2 : 0)|(neighbors ? 0xfd : 0);
+        unsigned started=(flags&2 ? 0x80 : 0)|(neighbors ? 0x7f : 0);
+        unsigned done=(flags&4 ? 1 : 0)|(neighbors ? 0xfe : 0);
+        psx_mod_write_byte(0x8004b3e0,(uint8_t)teddy);
+        psx_mod_write_byte(0x8004b3b0,(uint8_t)started);
+        psx_mod_write_byte(0x8004b3b1,(uint8_t)done);
+        if(from) W(RETURN,0x229);else target(24);
+        watching=1;writes=0;select_icon();
+        if((story==5 && !(flags&1)) || ((flags&6)==2)) CHECK(!writes);
+        else {shinka_map_present();CHECK(R(RETURN)==(from ? 0x21du : 0x229u));}
+        CHECK(psx_mod_read_byte(0x8004b3e0)==teddy);
+        CHECK(psx_mod_read_byte(0x8004b3b0)==started && psx_mod_read_byte(0x8004b3b1)==done);
+    }
+    /* Revocation at the deferred cut, including old pending savestates. */
+    for(unsigned legacy=0;legacy<2;++legacy) for(unsigned from=0;from<2;++from)
+    for(unsigned change=0;change<3;++change) {
+        fresh();watching=0;W(0x8004b370,5);
+        psx_mod_write_byte(0x8004b3e0,2);
+        psx_mod_write_byte(0x8004b3b0,change==2 ? 0x80 : 0);
+        psx_mod_write_byte(0x8004b3b1,change==2 ? 1 : 0);
+        if(from) W(RETURN,0x229);else target(24);
+        watching=1;
+        if(legacy) {legacy_request();W(PARENT+0x7c,from ? 30 : 24);root_close();}
+        else select_icon();
+        watching=0;
+        if(change==0) psx_mod_write_byte(0x8004b3e0,0);
+        else if(change==1) psx_mod_write_byte(0x8004b3b0,0x80);
+        else psx_mod_write_byte(0x8004b3b1,0);
+        watching=1;
+        if(legacy) transition();else shinka_map_present();
+        CHECK(R(RETURN)==(from ? 0x229u : 0x249u) && !gpu_count && !R(PARENT+0x78));
+    }
+}
 static void badland_policy(void) {
     const unsigned stages[]={0x24a,0x24b,0x24c},icons[]={29,27,17};
     const unsigned x[]={128,144,168},y[]={376,208,1020};
@@ -502,6 +573,7 @@ int main(void) {
     badland_policy();
     south_badland_policy();
     noise_policy();
+    east_surface_policy();
     fresh();cpu.gpr[31]=0x80099aa4;cpu.gpr[4]=0x80099894;cpu.gpr[5]=0x78;cpu.gpr[6]=8;
     shinka_map_allocate(&cpu);CHECK(cpu.gpr[5]==0x88 && cpu.gpr[6]==12 && writes==0);
     fresh();select_icon();CHECK(R(MAP+0xc)==1 && R(RETURN)==0x249);

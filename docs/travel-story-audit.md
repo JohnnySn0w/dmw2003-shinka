@@ -9,7 +9,7 @@ scripted exits, temporary closures and transport unlocks. A previously visited
 area can become inaccessible later. Both departure and arrival need checks.
 
 This is an implementation scope and test plan, not a completed campaign safety
-certification. The 16-destination network now guards Seiryu's pending departure
+certification. The 19-destination network now guards Seiryu's pending departure
 scene, adjusts Asuka's early arrival, gates three South Sector stops behind the
 completed first arrival, and admits Phoenix Bay only after its exact surface field
 has been visited. Suzaku has event-aware arrivals and departures, and Asuka's
@@ -18,9 +18,81 @@ South Badland block travel while their local encounters are pending. Bullet
 Valley preserves its native story-16 entry conversation and blocks departure
 until it completes. Noise Desert now uses its native Pelche Oasis entrance;
 both directions wait for its story-15 conversation when that scene is pending.
+Plug Cape and Divermon's Lake use native surface entrances. Wind Prairie keeps
+both directions closed while Teddy's announcement or its local encounter is pending.
 The network retains the broad story range
 described in [map travel](menu-map.md). That range does not prove the remaining
 events below are safe.
+
+## East surface additions — 2026-10-09
+
+Plug Cape (`0x220`, icon 18), Divermon's Lake (`0x227`, icon 23), and Wind
+Prairie (`0x229`, icon 24) support arrivals and departures. Each needs its own
+visit bit; neighboring fields or visible icons do not unlock it. The existing
+Asuka-server and story 1–36 limits remain. These are surface stops: transport
+actions, underwater passages, underground passages and Kicking Forest remain
+outside this expansion.
+
+The original field descriptor's action-table pointer at `0x80099d94` was traced
+to these records, then compared against the owner's extracted modules:
+
+| Module / offset | Native transition | Landing, before multiplication by 256 |
+| --- | --- | --- |
+| `WSTAG330` / `0x1f58` | Central Park → Plug Cape | `(1196, 806)` |
+| `WSTAG345` / `0xfac` | Plug Cape → Central Park | `(466, 146)` |
+| `WSTAG395` / `0x1494` | Wind Prairie → Divermon's Lake | `(1186, 874)` |
+| `WSTAG380` / `0x1300` | Divermon's Lake → Wind Prairie | `(154, 116)` |
+| `WSTAG420` / `0x1fbc` | Seiryu → Wind Prairie | `(1096, 248)` |
+| `WSTAG395` / `0x14c4` | Wind Prairie → Seiryu | `(336, 616)` |
+
+All six are unconditional action-1 connections. The first, third and fifth
+provide the new fast-travel coordinates. Plug Cape and the Lake have ordinary
+entry callbacks; their transport actions retain the native `0x7093`/`0x7094`
+conditions. Travel neither invokes those actions nor grants their capabilities.
+
+Wind Prairie's `WSTAG395` entry callback also starts event `0x50` when story is
+5 and flag `0x4011` is clear. Both arrival and departure show **Follow the prairie
+route** until that flag is set by the original conversation. Seiryu's existing
+**Use the city exit** guard remains. Separately, the same callback resumes event
+`0x519` for `0x1a27 == 1 && 0x1a28 == 0`; both directions show **Finish the local
+encounter** while that predicate holds. The callback at `0x160..0x1bc` sets
+`0x1a28`. The resident flag reader at `0x80016494..0x800164a8` establishes class
+`0x1a` storage at `0x8004b3ac`: start is byte `0x8004b3b0`, mask `0x80`, and
+completion is byte `0x8004b3b1`, mask `1`. The encounter's identity is not assumed.
+
+Validation used a copied progressed profile at story 20. Developer positioning
+placed the party on traced native exit regions; Cross exercised all six
+connections above. Walking worked at all three new landings. Native map cursor
+navigation and Cross exercised Central Park → Plug Cape → Divermon's Lake →
+Wind Prairie → Central Park. Story and checked quest bytes were unchanged across
+those map trips. This is bounded route validation, not a full campaign replay.
+
+A separate synthetic early-story fixture changed story to 5 and cleared only
+Teddy's completion flag on the copied profile. Wind Prairie's map instruction
+blocked Cross. Taking Seiryu's ordinary exit then ran the original conversation;
+the game changed flag byte `0xc5` to `0xc7`, with story still 5. Travel from Wind
+Prairie to the Lake worked afterward, without a manual completion write. A
+checkpoint save/load retained that Lake landing and story. The progressed test
+checkpoint was restored afterward. The separate `0x519` event has code and policy
+test coverage here, not a new live completion replay.
+
+The native policy suite covers exact visits, same-location rejection, unsupported
+servers and phases, neighboring flag bits, all combinations of Wind Prairie's
+three event bits, and both directions across story 4/5/6. It rechecks revoked
+visits and completion bits at both the direct cut and legacy pending-state
+commit. The write guard rejects any attempt to alter progression. All 21 native
+suites and eight navigation-tool tests passed.
+
+Local captures and logs are under `output/east-travel-20261009/`; memory cards
+belonging to the player were not modified. Original module hashes:
+
+| Module | SHA-256 |
+| --- | --- |
+| `WSTAG330.PRO` | `3540ac36658cad4ef957f85a2592dc8c1929ef0a2c0b87be7c68149a11a15b2d` |
+| `WSTAG345.PRO` | `db668295d69f80c755dd54c385474ac68d756a5736182a6d1e0423950bb82418` |
+| `WSTAG380.PRO` | `4945af069a29d40bdcf50d930cf0fd5cb88c36efedea66fe35a687451a5b6c42` |
+| `WSTAG395.PRO` | `c39fddb86ea006d3b6feded40ca7fb6e7a54cd184db0e6537690ef907851c87a` |
+| `WSTAG420.PRO` | `613cf3d7c5a39bfbf38fe9c6ced49dd33406ba3e7f3a49537448a20002a5a0b4` |
 
 ## Evidence and version boundaries
 

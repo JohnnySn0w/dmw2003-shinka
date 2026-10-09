@@ -29,11 +29,34 @@ from the existing source-build route. The implementation now lives in
 - Original soundtrack initially; alternate music preparation remains separate.
   The expanded menu is enabled, with original progression/view defaults.
 
-Local validation includes a source-only portable build with host development
-tools excluded from PATH, OpenBIOS language selection and intro playback, a
-packaged wizard inspection, and synthetic disc/import/update/cancellation tests.
-The full release checks below still apply: this is not yet a clean-machine
-certification or a signed public release.
+Local validation at implementation revision `2397080`:
+
+- A second, fresh SDK preparation completed without source edits or a toolchain
+  override. It verified/unpacked the cached official toolchain archive and built
+  all conversion tools and the game with host development tools excluded from PATH.
+- OpenBIOS played the intro, reached the title/Continue menus, loaded a verified
+  copy of a DuckStation card, reached Pelche Oasis and opened the expanded menu.
+- The frozen launcher and optional save-search controls were inspected. The
+  installed Play button launched the final build with only Windows directories
+  on PATH and passed the selected save-profile path explicitly.
+- Installation and uninstallation succeeded in a dedicated test directory.
+  After uninstall, the separate launcher settings remained and the selected
+  memory card's SHA-256 was unchanged.
+- 223 Python tests passed, including 14 new setup tests; Ruff passed. The existing
+  MSVC game build and native view, overlay-guard and title-logo checks passed.
+- PE import inspection found only Windows system DLLs in the prepared game.
+
+Local artifact: `output/installer-20261008/final/package/release/` contains
+`Shinka-Setup-0.1.0-preview-windows-x64.exe` (21,141,873 bytes), with SHA-256
+`f9d541165f0d5804aef31d0cefbc17d9404f424060bdc8c8b9a8164828344845`.
+The source SDK SHA-256 is
+`5adc4195b142454679a3dccf8be6dd53fe243386c50375cecda9a30e730c681d`.
+Evidence, copied profiles and logs remain local under `output/installer-20261008/`.
+
+The full release checks below still apply. In particular, a fresh Windows VM,
+non-ASCII runtime paths, reboot/reinstall, a new-game-to-battle flow and an
+OpenBIOS in-game save/restart/Continue round trip are not yet certified. The
+preview is unsigned and has not been uploaded as a public release.
 
 ### Building a local installer
 
@@ -151,8 +174,9 @@ names and assume persistence still works.
 ### 1. Prove disc-only boot
 
 The default source build includes OpenBIOS. The October 8 installer probe also
-reached intro playback and the title/load menus. The earlier gameplay and savestate
-checks used the optional SCPH-1001 backend. Validate a clean OpenBIOS run through
+reached intro playback, the title/load menus and Pelche Oasis from an imported
+card. The earlier battle/save/savestate checks used the optional SCPH-1001 backend.
+Validate a clean OpenBIOS run through
 new game, field, battle, in-game save, full restart and Continue. Fix failures
 before claiming the player's disc dump is the only input needed.
 

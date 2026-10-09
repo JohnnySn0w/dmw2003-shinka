@@ -79,7 +79,7 @@ updating the shortcut arguments or these local settings.
 
 ### BIOS, controls and profiles
 
-The default build includes the framework's OpenBIOS. An optional locally supplied SCPH-1001 BIOS with MD5 `924e392ed05558ffdb115408c263dccf` can be compiled and selected by passing `-RetailBios 'PATH\TO\bios.bin'` to **both** scripts. No retail BIOS is included. The completed movie/savestate probes used that optional backend; OpenBIOS reached language selection but has not had the same full smoke test.
+The default build includes the framework's OpenBIOS. An optional locally supplied SCPH-1001 BIOS with MD5 `924e392ed05558ffdb115408c263dccf` can be compiled and selected by passing `-RetailBios 'PATH\TO\bios.bin'` to **both** scripts. No retail BIOS is included. The earlier movie/savestate probes used that optional backend. The October 8 [installer test](installer-plan.md) also verified OpenBIOS intro playback, Continue from an imported card, Pelche Oasis arrival and the expanded menu; a full OpenBIOS battle/save/restart round trip remains outstanding.
 
 Keyboard defaults: arrows = D-pad, Enter = Start, X/S/Z/A = Cross/Circle/Square/Triangle, Q/W/E/R = L1/R1/L2/R2, right Shift = Select. At language selection use **Start** to confirm. Default gamepad face buttons map A/B/X/Y to Cross/Circle/Square/Triangle.
 

@@ -13,8 +13,10 @@ int shinka_battle_hud_portrait(int left, int top, int right, int bottom, int mar
 }
 
 int shinka_battle_hud_cursor(int sx, int sy, int dx, int dy, int w, int h, int margin) {
-    /* Twelve animation tiles occupy the strip immediately below the display. */
-    return active(margin) && sx>=0 && sx<=132 && sx%12==0 && sy==244 && w==12 && h==12
+    /* Twelve pulse frames plus the inactive tile at x=144. Moving the cursor
+     * copies that thirteenth tile over the old selection in both display bands;
+     * it must follow the same wide anchor as the animated frames. */
+    return active(margin) && sx>=0 && sx<=144 && sx%12==0 && sy==244 && w==12 && h==12
         && dx>=0 && dx<=308 && dy>=0 && dy<496 && (dy&255)>=60 && (dy&255)<=224;
 }
 

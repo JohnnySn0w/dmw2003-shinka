@@ -79,7 +79,8 @@ alone. Submenu panels move together, including Tag bars and DV choices that
 cross the old midpoint. The portrait's separate viewport, origin and backdrop
 move together to the right. Generated GPU/GL copies retain its horizontal clip
 and wide target in both vertical framebuffer bands. The animated cursor uses
-twelve 12x12 CopyImage tiles at VRAM y=244; `src/battle_hud_gpu.inc` draws those
+twelve 12x12 pulse tiles and an inactive tile at VRAM y=244;
+`src/battle_hud_gpu.inc` draws those
 through the renderer facade so a negative left-margin destination cannot wrap
 into texture memory. These hooks are gated on ordinary battle mode and an
 active native-wide view.
@@ -144,6 +145,29 @@ Regression checks cover every palette, both framebuffer bands, margins 1..160,
 unchanged 4:3 placement, and rejection of unrelated textures/palettes. The view
 suite passed. Local packet and screenshot evidence is in ignored
 `output/dialogue-indicator-01/`.
+
+### Battle selection clearing tile — 2026-10-08
+
+Moving between battle commands briefly drew a dark cursor box over the command
+bar at its old 4:3 anchor. Idle pulse captures did not expose it: changing the
+selection copies a thirteenth tile from `(144,244)` over the previous cursor,
+while the pulse itself uses sources `(0,244)` through `(132,244)`. The wide hook
+previously excluded that inactive tile. It now moves through the same renderer
+path as the pulse, retaining the battle-mode, dimensions and destination guards.
+
+Captured Fight-to-Tech packets use destination `(17,110)` in both framebuffer
+bands. The regression suite covers this clearing tile, technique and DV cursor
+positions, both bands and margins 1–160, and rejects adjacent unrelated tiles,
+incorrect sizes and zero wide margin. Local frame and packet evidence is under
+ignored `output/battle-hud-20261008/`.
+
+The view suite passed. After rebuilding, consecutive-frame recordings cover
+movement through all six command rows, Tag selection changes, Tech/DV idle
+pulses, the empty Item list, and a 4:3 control. The former stray box is absent
+on the selection-change frames and the previous cursor clears at its correct
+wide position. Item movement was not exercised because this fixture has no
+items. Each recording retains its raw frames; packet dumps identify clearing
+operations in both display bands.
 
 ## Field expansion audit
 

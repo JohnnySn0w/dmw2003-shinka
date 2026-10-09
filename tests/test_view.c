@@ -803,7 +803,16 @@ int main(void) {
         CHECK(!shinka_battle_hud_portrait(261,band+76,359,band+135,53));
         for(int tile=0;tile<12;++tile)
             CHECK(shinka_battle_hud_cursor(tile*12,244,14,band+69,12,12,53));
-        CHECK(!shinka_battle_hud_cursor(144,244,14,band+69,12,12,53));
+        /* Captured Fight -> Tech movement clears the previous cursor with the
+         * inactive tile, separately from the twelve idle pulse frames. */
+        for(int margin=1;margin<=160;++margin) {
+            CHECK(shinka_battle_hud_cursor(144,244,17,band+110,12,12,margin));
+            CHECK(shinka_battle_hud_cursor(144,244,14,band+69,12,12,margin));
+            CHECK(shinka_battle_hud_cursor(144,244,168,band+147,12,12,margin));
+        }
+        CHECK(!shinka_battle_hud_cursor(156,244,14,band+69,12,12,53));
+        CHECK(!shinka_battle_hud_cursor(144,244,17,band+110,12,12,0));
+        CHECK(!shinka_battle_hud_cursor(144,244,17,band+110,13,12,53));
         CHECK(!shinka_battle_hud_cursor(13,244,14,band+69,12,12,53));
         CHECK(!shinka_battle_hud_cursor(48,240,14,band+69,12,12,53));
         CHECK(shinka_battle_hud_cursor(48,244,168,band+147,12,12,53));

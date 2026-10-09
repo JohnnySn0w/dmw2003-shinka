@@ -21,7 +21,8 @@ DisableProgramGroupPage=yes
 PrivilegesRequired=lowest
 ArchitecturesAllowed=x64compatible
 ArchitecturesInstallIn64BitMode=x64compatible
-MinVersion=10.0
+; Per-process UTF-8 paths require Windows 10 1903 or newer.
+MinVersion=10.0.18362
 OutputDir={#Release}
 OutputBaseFilename=Shinka-Setup-{#Version}-windows-x64
 SetupIconFile=..\assets\shinka.ico

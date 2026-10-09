@@ -143,6 +143,7 @@ def prepare(cue, sdk, root, cancel=None, notify=lambda *args: None, toolchain=No
             run(command, cwd, env, cancel, log, notify, stage)
         emitter_build = work/'emitters'
         execute([cmake, '-S', framework/'recompiler', '-B', emitter_build, *compiler_args,
+                 f'-DCMAKE_PROJECT_PSXRecomp_INCLUDE={source / "tools/setup_emitter_paths.cmake"}',
                  '-DPSXRECOMP_ENABLE_CHD=OFF', '-DBUILD_TESTING=OFF', '-DPSXRECOMP_STATIC_CLI=ON'], 'Preparing conversion tools')
         execute([cmake, '--build', emitter_build, '--target', 'psxrecomp-game', 'psxrecomp-bios', '--parallel', '2'], 'Building conversion tools')
         # Stamp the same source hash as the emitter before compiling overlays.

@@ -26,6 +26,8 @@ psxrecomp_add_game_runtime(shinka
     GEN_MARKER "output/recompiled/SLES_039.36_dispatch.c"
     GEN_FULL_GLOB "output/recompiled/SLES_039.36_full_*.c"
 )
+include(tools/windows_utf8.cmake)
+shinka_windows_utf8(shinka)
 # The no-launcher path commits mods before resolving --disc in the pinned
 # frontend. Generate a local corrected copy; never edit the dependency checkout.
 set(_frontend "${PSXRECOMP_ROOT}/runtime/src/main.cpp")
@@ -84,6 +86,13 @@ if(SHINKA_OVERLAY_SOURCE)
 endif()
 option(SHINKA_BUILD_TESTS "Build Shinka native regression tests" ON)
 if(SHINKA_BUILD_TESTS)
+    if(WIN32)
+        add_executable(shinka_windows_paths_test tests/test_windows_paths.cpp)
+        target_compile_features(shinka_windows_paths_test PRIVATE cxx_std_17)
+        shinka_windows_utf8(shinka_windows_paths_test)
+        add_test(NAME windows_paths COMMAND shinka_windows_paths_test
+            "${CMAKE_CURRENT_BINARY_DIR}/path-check/José 進化")
+    endif()
     add_executable(shinka_trigger_shortcuts_test tests/test_trigger_shortcuts.cpp)
     target_include_directories(shinka_trigger_shortcuts_test PRIVATE src)
     add_test(NAME trigger_shortcuts COMMAND shinka_trigger_shortcuts_test)

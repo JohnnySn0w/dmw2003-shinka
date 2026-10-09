@@ -53,10 +53,30 @@ The source SDK SHA-256 is
 `5adc4195b142454679a3dccf8be6dd53fe243386c50375cecda9a30e730c681d`.
 Evidence, copied profiles and logs remain local under `output/installer-20261008/`.
 
-The full release checks below still apply. In particular, a fresh Windows VM,
-non-ASCII runtime paths, reboot/reinstall, a new-game-to-battle flow and an
-OpenBIOS in-game save/restart/Continue round trip are not yet certified. The
-preview is unsigned and has not been uploaded as a public release.
+### October 8: cold save roundtrip and Unicode paths
+
+The installer-built OpenBIOS runtime loaded an isolated copy of the imported
+Pelche Oasis card, entered Guardromon's save screen through ordinary movement
+and dialogue, overwrote that disposable slot and displayed Saved. After a full
+process exit, a fresh process loaded the newly written file through Continue and
+returned to Pelche Oasis with the same story and party. The card hash changed
+on saving and remained identical across the cold reload. The original imported
+card and the player's source card were not used as writable targets.
+
+A separate runtime/profile copy under `José 進化` exposed a launch failure:
+the existing `game.toml` was reported missing. The runtime now embeds a
+per-process UTF-8 manifest, and that same path reaches the field through Continue.
+The conversion tools receive the same manifest during setup. This uses the
+[Windows per-process code-page declaration](https://learn.microsoft.com/en-us/windows/apps/design/globalizing/use-utf8-code-page),
+without changing system locale. Setup requires Windows 10 1903 or later.
+An executable regression exercises Unicode command-line arguments, C++ file
+reads and C-style file writes with both MSVC and the portable Clang toolchain.
+Evidence stays under `output/installer-20261008/roundtrip/` and `unicode/`.
+
+The full release checks below still apply. A fresh Windows VM, full preparation
+under non-ASCII paths, reboot/reinstall and a new-game-to-battle flow remain
+outstanding. The preview is unsigned and has not been uploaded as a public
+release. The original preview artifact above predates the Unicode fix.
 
 ### Building a local installer
 

@@ -803,6 +803,14 @@ int main(void) {
         CHECK(!shinka_battle_hud_portrait(261,band+76,359,band+135,53));
         for(int tile=0;tile<12;++tile)
             CHECK(shinka_battle_hud_cursor(tile*12,244,14,band+69,12,12,53));
+        /* Captured populated Item rows and all four Tag form rows. Check the
+         * entire pulse and erase bank at every wide margin, not only row one. */
+        for(int margin=1;margin<=160;++margin) for(int tile=0;tile<=12;++tile) {
+            for(int row=0;row<7;++row)
+                CHECK(shinka_battle_hud_cursor(tile*12,244,14,band+69+14*row,12,12,margin));
+            for(int row=0;row<4;++row)
+                CHECK(shinka_battle_hud_cursor(tile*12,244,168,band+147+19*row,12,12,margin));
+        }
         /* Captured Fight -> Tech movement clears the previous cursor with the
          * inactive tile, separately from the twelve idle pulse frames. */
         for(int margin=1;margin<=160;++margin) {

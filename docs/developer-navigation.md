@@ -307,3 +307,33 @@ display surfaces produce zero-sized records rather than invented pixels. These
 are consecutive vblank observations, not a count of unique guest animation
 poses. Pair them with `present_ring` and `gl_present_ring` when investigating
 aspect changes: those record the presentation decision and window fit.
+
+### Battle cursor pixel checks
+
+`tools/check_battle_cursor_capture.py` checks the copied battle command/list
+cursor against its actual RGB555 source tiles. It examines every recorded frame
+at both the widened position and the former 4:3 position. A single pulse or erase
+tile found at the old anchor makes the check fail. It reports which source tiles,
+rendered tiles, positions and framebuffer bands were covered. This does not
+certify other cursor types or all battle animations.
+
+Capture with raw screen colors, native resolution and a copied save profile:
+
+1. Save `menu_capture` output as `frames.bin` in a new local capture directory.
+2. Query `gpu_frame_dump` for the captured frame numbers before the ring expires.
+   Save the `0x80` entries as `copies.json`, adding each entry's `frame` number.
+3. Save a JSON array of `vram_peek` replies for `(x=0,y=244,w=120,h=12)` and
+   `(x=120,y=244,w=36,h=12)` as `cursor-tiles.json`. These cover all twelve pulse
+   tiles and the thirteenth inactive tile. Read them in the same battle.
+
+```powershell
+python tools/check_battle_cursor_capture.py output/cursor-run --tiles output/cursor-tiles.json
+```
+
+The checker writes `cursor-check.json` next to the capture. `--margin 0` checks
+a 4:3 control; the default is the 53-pixel margin of 426×240 output. It accounts
+for the different RGB555 expansion in native scanout and GPU wide readback.
+Missing tiles, invalid geometry, mixed view sizes and absent cursor evidence
+are errors rather than successful checks. Inspect reported coverage as well as
+the result: an attack may close the list for most of a recording. Keep original
+frames for reviewing entry, exit, target markers and other uncaptured effects.

@@ -169,6 +169,38 @@ wide position. Item movement was not exercised because this fixture has no
 items. Each recording retains its raw frames; packet dumps identify clearing
 operations in both display bands.
 
+### Cursor and highlight audit — 2026-10-09
+
+An isolated progressed-profile run on game revision `9a3095c` recorded sixteen
+180-frame sequences: 2,880 consecutive display observations. Fifteen sequences
+stayed at 426×240; a battle Item control stayed at 320×240. Each sequence retains
+raw capture data, numbered images, metadata and GPU copy packets locally under
+`output/cursor-audit-20261009/`. No new widescreen cursor defect was reproduced
+in these cases; this pass adds coverage and tooling, not a rendering workaround.
+
+| Check | Evidence and result |
+| --- | --- |
+| Battle Items | Populated seven-row list, both pages, row changes, cancellation and item execution. All twelve pulse tiles and the inactive tile appeared at the correct anchor across the applicable sequences. |
+| Battle Tech, DV and Tag | Tech cancellation/execution, Patamon's DV choices, partner selection and Guilmon's four-row form chooser. Both framebuffer bands supplied cursor copies. The Tech fixture had one entry, so longer technique lists remain to be checked. |
+| 4:3 control | Item movement, paging and cancellation retained native cursor positions, covering all thirteen tiles. |
+| Card folders and Album | Folder changes covered all sixteen outline palettes. Grid movement, Album selection/page input and folder-edit cancellation were inspected from consecutive captures without a repeated split or displaced highlight. |
+| Evolution chart | Locked-node idle and movement, plus page-change frames. All four cursor palettes appeared. Every one of the 180 idle frames retained yellow pixels in all four corners (at least 26 per corner). A dark empty-page placeholder also appears in settled 4:3 and freshly opened charts; it was not classified as a widescreen regression. |
+
+The battle pixel check compares the actual 12×12 VRAM tiles with every captured
+image at the correct and former 4:3 anchors. None of the nine wide battle
+sequences contained a matching cursor/erase tile at the old anchor. The original
+control uses native RGB555 scanout expansion rather than GPU full-range color.
+`tools/check_battle_cursor_capture.py` preserves this check for later changes;
+its tests inject a single misplaced clearing frame and verify that it fails.
+See [capture instructions](developer-navigation.md#battle-cursor-pixel-checks).
+
+The native view regression now exercises all seven Item rows and all four Tag
+form rows with every pulse/erase tile, both framebuffer bands and margins 1–160.
+The view suite, six Python capture/checker tests and changed-file lint pass.
+Remaining coverage includes longer battle Tech lists, enemy/ally target markers,
+other battle types, and fresh gym/shop selection transitions. These recordings
+do not establish that every menu animation in the game is correct.
+
 ## Field expansion audit
 
 The field is a layered tile renderer, not the battle's 3D projection. Independent

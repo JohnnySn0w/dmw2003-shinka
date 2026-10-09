@@ -146,6 +146,16 @@ disposable worker and its child. Its evidence is local under
 `output/installer-20261009/recovery/`. These checks cover the recovery code;
 the packaged-UI failure matrix and clean-machine tests below remain outstanding.
 
+The source-only SDK and local installer were rebuilt at revision `c298664`.
+`output/installer-20261009/recovery/package/release/` contains
+`Shinka-Setup-0.1.2-preview-windows-x64.exe` (21,158,004 bytes), SHA-256
+`d1bd16f19dfa19180de8a56290eb220c8fa15d1c3b46c40c571160909fa3fb95`.
+SDK SHA-256:
+`7ddbdcb5b62e7f4e41fd319a9df892e47d1e3d34c3fe1ec7d2c8b8526c1cf8c6`.
+This preview includes the recovery changes; the earlier full preparation and
+gameplay results identify their respective tested revisions above. No new
+public installer download has been published.
+
 ### Building a local installer
 
 Use a packaging venv with `PyInstaller==6.16.0`, the pinned source dependencies

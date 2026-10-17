@@ -178,6 +178,18 @@ test. Evidence: `output/installer-recovery-20261017/ui-results.json` and
 `output/installer-recovery-tests-20261017.log`. Packaged failure-path testing and
 the release checks below remain open.
 
+Local preview `0.1.3-preview` packages source revision `323e670`. The frozen
+launcher was opened with isolated missing-runtime settings: the repair message,
+**Repair Shinka** action and disabled Play button rendered correctly. This was
+a packaged-launcher smoke check, not an install/uninstall or full repair run.
+Artifact: `output/installer-recovery-20261017/package/release/`
+`Shinka-Setup-0.1.3-preview-windows-x64.exe` (21,160,808 bytes).
+Installer SHA-256:
+`a30179bb58cfb6014b1a38a867454ec0fdccda4e5c156277d55ff690a0b043f8`.
+SDK SHA-256:
+`7abaff6ecab671d460abfe7cf551c595ff9891fa6241daa61cf436651c479e53`.
+The installer remains local; no public download was added.
+
 ### Building a local installer
 
 Use a packaging venv with `PyInstaller==6.16.0`, the pinned source dependencies

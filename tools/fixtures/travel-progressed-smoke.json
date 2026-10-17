@@ -1,0 +1,103 @@
+{
+  "schema": 1,
+  "cases": [
+    {
+      "name": "surface-map-loop",
+      "slot": 7,
+      "source": "0x21d",
+      "legs": [
+        {
+          "kind": "map",
+          "icon": 33,
+          "stage": "0x21f",
+          "x": 199168,
+          "y": 38912,
+          "move": {
+            "button": "down",
+            "frames": 8
+          }
+        },
+        {
+          "kind": "map",
+          "icon": 31,
+          "stage": "0x22c",
+          "x": 230400,
+          "y": 90112,
+          "move": {
+            "button": "down",
+            "frames": 8
+          }
+        },
+        {
+          "kind": "map",
+          "icon": 30,
+          "stage": "0x21d",
+          "x": 225700,
+          "y": 164434,
+          "move": {
+            "button": "down",
+            "frames": 8
+          }
+        }
+      ],
+      "story": 20
+    },
+    {
+      "name": "station-native-exit",
+      "slot": 7,
+      "source": "0x21d",
+      "legs": [
+        {
+          "kind": "native-exit",
+          "position": {
+            "stage": "0x22c",
+            "x": 233472,
+            "y": 90112,
+            "facing": 7
+          },
+          "stage": "0x22a",
+          "x": 53248,
+          "y": 195584
+        }
+      ],
+      "story": 20
+    },
+    {
+      "name": "forest-valley-roundtrip",
+      "slot": 7,
+      "source": "0x21d",
+      "legs": [
+        {
+          "kind": "native-exit",
+          "position": {
+            "stage": "0x22a",
+            "x": 407552,
+            "y": 45056,
+            "facing": 5
+          },
+          "stage": "0x22b",
+          "x": 45056,
+          "y": 325632,
+          "move": {
+            "button": "up",
+            "frames": 8
+          }
+        },
+        {
+          "kind": "native-exit",
+          "position": {
+            "stage": "0x22b",
+            "x": 36864,
+            "y": 323584,
+            "facing": 1
+          },
+          "stage": "0x22a",
+          "x": 411648,
+          "y": 53248
+        }
+      ],
+      "story": 20
+    }
+  ],
+  "fixture_note": "Slot 7: copied progressed Asuka save at story 20, Central Park. All three map destinations must already be visited."
+}

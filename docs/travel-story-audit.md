@@ -25,6 +25,41 @@ The network retains the broad story range
 described in [map travel](menu-map.md). That range does not prove the remaining
 events below are safe.
 
+## Batched route checks — 2026-10-17
+
+The reusable [travel batch runner](developer-navigation.md#repeatable-travel-batches)
+now restores copied checkpoints, drives the real map cursor, checks arrival and
+movement, compares watched progression bytes and saves evidence automatically.
+Its companion inventory follows trigger indices into the loaded action table,
+so only referenced records are decoded. Native exit probes are explicitly
+separate from player-map trips. The committed fixture recipe is
+`tools/fixtures/travel-progressed-smoke.json`.
+
+Live validation on the story-20 copied profile covered:
+
+| Check | Result |
+| --- | --- |
+| Central Park → Shell Beach → East Station → Central Park | Real map input reached all three expected coordinates; eight-frame movement probes worked at every landing. Watched story/quest bytes were unchanged. |
+| East Station → Kicking Forest | Developer positioning on the native exit followed by Cross reached `(208,764)`, facing 7. This is an exit check, not Kicking Forest fast-travel authorization. |
+| Kicking Forest → Tyranno Valley (`0x22b`) | The native exit reached `(176,1272)`, facing 5; walking worked. The arrival inventory found the return trigger without manually reading a guessed table length. |
+| Tyranno Valley → Kicking Forest | Trigger byte 32 (index 0, bank 1), sampled at `(144,1264)`, runs an unconditional action-1 record at RAM `0x800a6d00`. Cross returned to `(1608,208)`, facing 1. |
+
+Coordinates in this table are field units; runtime x/y words multiply them by
+256. Both directions of the valley route and the station exit preserved the
+50 watched story/quest bytes. Each case restored the baseline afterward.
+Screenshots, RAM snapshots, exact manifests and reports remain local under
+`output/travel-batch-20261017/`, with passing batches in `run-02/` and
+`return-check/`. The first batch exposed a harness timing problem: the field mode
+changes before the loading ribbon releases input. The runner now waits for a
+usable quick-menu controller instead of relying on a fixed delay.
+
+The player network remains at **21 destinations**. Tyranno Valley's entry/event
+behavior and Kicking Forest's optional-activity cleanup still need review before
+admission. These progressed-save probes do not establish safety at other story
+phases or when hide-and-seek is active. The efficiency gain is repeatable route
+checks and automatic evidence collection; event-policy decisions still require
+their own original-script evidence.
+
 ## Shell Beach and East Station — 2026-10-09
 
 Shell Beach (`0x21f`, icon 33) and East Station (`0x22c`, icon 31) bring the

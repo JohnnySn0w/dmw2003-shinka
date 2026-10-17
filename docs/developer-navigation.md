@@ -61,7 +61,73 @@ cannot equal the native Boolean result. Predicates using other class-0x70
 readers remain unresolved. Without `--exe`, all class-0x70 predicates remain
 unresolved. The report records both input fingerprints.
 
-## Live navigation
+## Repeatable travel batches
+
+`tools/travel_audit.py` combines the map cursor driver, native exit probes,
+progression comparisons and field-trigger inventory. Use it with an already
+running hidden diagnostic and **copied** saves. It does not launch a process,
+change travel permissions, grant visits, or manufacture story/quest completion.
+
+```powershell
+python tools/travel_audit.py run tools/fixtures/travel-progressed-smoke.json output/travel-smoke-new --port 4389
+```
+
+The supplied manifest requires slot 7 to contain the progressed story-20 Asuka
+fixture in Central Park, with Shell Beach, East Station and Central Park already
+visited. Adjust the slot and cases for your own copied fixture; the JSON does
+not include save data. The output directory must be new. Each case restores its
+checkpoint before running and again afterward, including after a failed check.
+If restoration fails, the entire batch stops. Checkpoints are never overwritten.
+The whole manifest validates before any runtime input.
+
+Each `map` leg selects the specified icon through native directional input and
+confirms with Cross. It checks the actual field, optional exact x/y, and an
+optional short movement probe. The destination must differ from the source:
+already standing in a field cannot masquerade as a successful trip. Arrival
+readiness uses the real quick-menu input phase; the loader's mode change alone
+does not mean that the area-name animation has released player control.
+
+A `native-exit` leg explicitly uses a developer warp to place the party on a
+previously traced trigger sample, checks that positioning did not change watched
+progression, and presses Cross to exercise the native transition. It is labelled
+separately in the report and **does not certify player-map access** or the walking
+route to that trigger. The example includes East Station → Kicking Forest and
+Kicking Forest ↔ Tyranno Valley; Kicking Forest's optional-activity cleanup still
+needs investigation before enabling fast travel there.
+
+The runner saves `report.json`, the exact manifest, selected/arrival/movement
+screenshots, and a local 2 MiB arrival RAM dump per successful arrival. It compares
+story `0x8004b370` (4 bytes), event bytes `0x8004b3ac` (20 bytes), and quest bytes
+`0x8004b3de` (26 bytes), reporting every changed byte. Visitation is deliberately
+outside those regions, since a native first entrance may record a visit. This
+50-byte comparison is not an assertion that all game state is unchanged.
+Movement probes defer random encounters only in the disposable fixture; scripted
+events and travel guards remain active. A blocked landing, unexpected scene,
+coordinate mismatch, or watched progression change fails the case and leaves
+evidence for review. A report may contain both passing and failing cases; the
+command exits nonzero if any case fails.
+
+Arrival inventories join the field's trigger indices to their actual 24-byte
+action records and decode action-1 surface connections. This avoids reading an
+arbitrary fixed number of records past the table into unrelated data. The same
+inspection can run offline over several existing snapshots:
+
+```powershell
+python tools/travel_audit.py inventory output/field-a.ram output/field-b.ram --step 4
+```
+
+These reports include SHA-256 fingerprints, trigger samples, conditional records
+and native arrival coordinates. Sampling can miss small triggers; `--step 1`
+checks every pixel. Unresolved conditions remain unresolved. The tool does not
+decode entry callbacks, event scripts, collision, or activity cleanup, and does
+not automatically turn discovered connections into permitted destinations.
+
+Use a route loop to check arrivals and departures for many destinations in one
+run, then concentrate separate cases on story boundaries and local events. A
+passing progressed-save loop does not replace the native policy tests or the
+campaign-specific investigation in [travel-story-audit.md](travel-story-audit.md).
+
+## Field trigger inspection
 
 `tools/field_triggers.py SNAPSHOT.ram` decodes the original field's layer-7
 trigger map from a complete 2 MiB RAM snapshot. It resolves the loaded resource

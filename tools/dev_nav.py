@@ -8,7 +8,10 @@ import json
 from pathlib import Path
 import time
 
-from runtime_probe import request
+try:
+    from .runtime_probe import request
+except ImportError:
+    from runtime_probe import request
 
 ROOT = Path(__file__).resolve().parents[1]
 ROOKIES = ('Kotemon', 'Kumamon', 'Monmon', 'Agumon', 'Veemon', 'Guilmon', 'Renamon', 'Patamon')

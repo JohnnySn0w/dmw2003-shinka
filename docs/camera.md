@@ -201,6 +201,46 @@ Remaining coverage includes longer battle Tech lists, enemy/ally target markers,
 other battle types, and fresh gym/shop selection transitions. These recordings
 do not establish that every menu animation in the game is correct.
 
+### Battle, gym and shop animation follow-up — 2026-10-17
+
+This pass recorded 22 sequences of 180 consecutive display observations each
+(3,960 frames) on isolated copies of existing saves. Nineteen sequences stayed
+426×240; three 4:3 controls stayed 320×240. Raw frames, packet traces, contact
+sheets and reports remain local in `output/animation-audit-20261017/`.
+
+The Armory's small bottom-right **Back** hint had a real layout mismatch: its
+panel was stretched with the shop artwork while its icon and caption followed
+the left-anchored item-description rule. The six panel strips, Triangle glyph
+and caption now translate together to the right edge at native size. Matching
+uses the observed panel textures, row and dimensions; the full-width item
+description retains its existing layout. The animation path applies this same
+rule to each original rectangle before the native scale is applied.
+
+The rebuilt game was recorded through shop root movement, Buy/list return,
+closing to the Armory field, and quantity selection. Every opening and closing
+frame is retained and the hint's complete frame contact sheets were reviewed.
+Across 214 settled hint frames, the panel-interior/caption crop matches the
+4:3 reference at its translated position (mean RGB-channel error below 1 after
+scanout color conversion). The before-fix capture fails that same comparison.
+Submission precedes scanout by a frame at the caption reveal, so the pixel
+comparison requires two consecutive settled packet frames; animated frames
+are covered by the contact sheets and native geometry tests instead.
+
+| Additional audit | Result and scope |
+| --- | --- |
+| Five-entry battle Tech list | Normal Tag and DV commands produced Growlmon's Double Power, Double Guard, Picking Claw, Metal Attack and Magic Missile list. Row movement, cancellation/reopening and a 4:3 control passed the cursor pixel checker. |
+| Battle form and skill activation | Form selection, self-targeted Double Power and enemy-targeted Magic Missile activation retained the correct copied-cursor anchor. These are single-opponent battle checks, not verification of every target-marker implementation. |
+| Leomon training menus | Training-choice movement, transition to TP selection, all three TP choices and backout captures showed no displaced highlight. The fixture has zero TP; training minigames and successful training purchases remain untested in this pass. |
+| Armory | Buy list movement/paging, quantity changes/cancellation, Sell categories and empty-category feedback were captured. This does not establish successful sell transactions or every merchant's dialogue. |
+
+All six battle recordings passed the per-frame copied-cursor check, covering all
+thirteen visible pulse/erase tiles and both framebuffer bands, with no old-anchor
+match in wide mode. Native regressions exercise every captured Back-hint strip,
+icon and representative glyph at 33 animation scales, margins 1–160 and both
+framebuffer bands, plus unchanged 4:3 sprites. The complete 21-test CTest suite
+passes. Remaining coverage includes other battle types, multi-page technique
+lists, training minigames and additional merchants/gyms.
+
 ## Field expansion audit
 
 The field is a layered tile renderer, not the battle's 3D projection. Independent

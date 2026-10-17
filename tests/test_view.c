@@ -103,6 +103,42 @@ static void animation_tests(void) {
         }
     }
     root_menu=0;items_menu=0;
+    /* Armory Back hint: native panel strips, button and letters share one
+     * right-edge anchor at every animation scale and supported margin. */
+    for(int band=0;band<=256;band+=256) for(int margin=1;margin<=160;++margin) {
+        static const struct { int x,y,w,h; unsigned uv; } hint[]={
+            {198,196,16,30,0x7eaa91b8},{214,196,28,30,0x7eaa73b4},
+            {242,196,28,30,0x7eaa73b4},{270,196,28,30,0x7eaa73b4},
+            {298,196,28,30,0x7eaa73b4},{326,196,28,30,0x7eaa73b4},
+            {212,204,12,12,0x38174ab4},{223,204,8,12,0x3a173c84},
+            {298,204,8,12,0x3a1721c0},{298,205,8,12,0x3a1721c0},
+        };
+        mode=0xf00;options[2]=1;shinka_view_tick();
+        for(unsigned k=0;k<sizeof(hint)/sizeof(*hint);++k) {
+            int x=hint[k].x,y=hint[k].y,w=hint[k].w,h=hint[k].h;
+            uint32_t rect[]={0x64808080,x|((unsigned)y<<16),hint[k].uv,w|((unsigned)h<<16)};
+            uint32_t moved[4];memcpy(moved,rect,sizeof(rect));
+            CHECK(!shinka_menu_wide_rect(moved,4,0,band,0,band,319,band+239,margin));
+            CHECK((int16_t)moved[1]==x+margin && moved[2]==rect[2] && moved[3]==rect[3]);
+            for(int scale=0;scale<=4096;scale+=128) {
+                uint32_t quad[]={0x2c808080,0,rect[2],0,0x6001f,0,0x1d0000,0,0x1d001f};
+                for(int v=0;v<4;++v)quad[1+v*2]=(uint16_t)(320+floor_scale(x+(v&1?w:0)-320,scale))
+                    |((unsigned)(y+(v&2?h:0))<<16);
+                uint32_t original[9];memcpy(original,quad,sizeof(quad));
+                shinka_menu_animation_tag(0x801d0004,quad,rect,320,scale);
+                shinka_menu_wide_quad(quad,9,0x1d0004,0,band,0,band,319,band+239,margin);
+                for(int v=0;v<4;++v) {
+                    CHECK((int16_t)quad[1+v*2]==(int16_t)original[1+v*2]+margin);
+                    CHECK(quad[1+v*2]>>16==original[1+v*2]>>16);
+                    CHECK(quad[2+v*2]==original[2+v*2]);
+                }
+            }
+            options[2]=0;shinka_view_tick();memcpy(moved,rect,sizeof(rect));
+            CHECK(!shinka_menu_wide_rect(moved,4,0,band,0,band,319,band+239,margin));
+            CHECK(!memcmp(moved,rect,sizeof(rect)));
+            options[2]=1;shinka_view_tick();
+        }
+    }
     for(int band=0;band<=256;band+=256) for(int wide=0;wide<=1;++wide) {
         mode=0xf00;options[2]=wide;shinka_view_tick();
         uint32_t fade[]={0x2a555555,0,320,0x01000000,0x01000140};

@@ -362,6 +362,15 @@ static int layout_rect(uint32_t* words, int count, int offset_x, int offset_y,
         } else if (clut == 0x3a17 && y >= 156 && y <= 168 && x >= 140 && x < 190)
             dest_x = x; /* whole page counter stays centered */
         else dest_x = x + ((x >= 160 || (y < 32 && x >= 150)) ? margin : -margin);
+    } else if (mode == 0xf00 && (
+        (y == 196 && h == 30 && x >= 198 && clut == 0x7eaa
+            && ((words[2] & 65535) == 0x91b8 || (words[2] & 65535) == 0x73b4))
+        || ((y == 204 || y == 205) && h == 12 && x >= 212
+            && (clut == 0x3a17 || words[2] == 0x38174ab4)))) {
+        /* The small Back hint is a right-edge widget, not the full-width
+         * item description. Keep its cap, body, icon and text together,
+         * including the unscaled rectangles used by opening/closing quads. */
+        dest_x = x + margin;
     } else if ((mode == 0xa00 && (clut == 0x7ba4 || clut == 0x7ba6))
         || (mode == 0xf00 && clut == 0x7eaa)) {
         dest_x = stretch_x(x, margin);

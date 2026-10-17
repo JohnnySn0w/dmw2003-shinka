@@ -9,7 +9,7 @@ scripted exits, temporary closures and transport unlocks. A previously visited
 area can become inaccessible later. Both departure and arrival need checks.
 
 This is an implementation scope and test plan, not a completed campaign safety
-certification. The 21-destination network now guards Seiryu's pending departure
+certification. The 22-destination network now guards Seiryu's pending departure
 scene, adjusts Asuka's early arrival, gates three South Sector stops behind the
 completed first arrival, and admits Phoenix Bay only after its exact surface field
 has been visited. Suzaku has event-aware arrivals and departures, and Asuka's
@@ -24,6 +24,59 @@ Shell Beach uses its native park entrance; East Station retains its story-5 scen
 The network retains the broad story range
 described in [map travel](menu-map.md). That range does not prove the remaining
 events below are safe.
+
+## Tyranno Valley — 2026-10-17
+
+Tyranno Valley (`0x22b`, icon 16) is the twenty-second destination. It uses the
+native Kicking Forest entrance `(176*256, 1272*256)` and requires the exact valley
+visit plus the original challenge reward flag `0x4010`. The existing Asuka-server
+and story 1–36 limits remain. Kicking Forest is still excluded in both directions;
+its optional activity cleanup is a separate unresolved item.
+
+### Entry-event evidence
+
+The extracted `WSTAG405.PRO` SHA-256 is
+`81fad82c8e2d290d102ffb6ce1929f09bebe650686216112e43ce209e566d83f`.
+Its first `0x4c8` bytes of code match the loaded valley module at `0x800a5de0`.
+At offsets `0x22c..0x288`, its entry callback runs event `0x3d` when story is 4,
+flag `0x400f` is set and `0x4010` is clear. The native callback at
+`0x360..0x3a8` sets `0x4010` and invokes the original reward setter `0x8699`.
+The separate callback at `0x314..0x35c` sets `0x400f` and `0x7400`.
+
+A disposable progressed-save fixture was set to story 4 with `0x4010` cleared
+and the existing `0x400f` retained. Entering the valley ran the original
+MasterTyranno conversation and moved the player to the native reward scene.
+Ordinary Cross input completed it; the game changed `0x8004b3e0` from `0xc6`
+to `0xc7`, leaving story at 4. Control returned at `(892,339)` field units.
+No test wrote the completion bit to one. This replays the reward boundary;
+it does not certify a naturally played first challenge or boss battle.
+
+Both arrival and departure show **Finish the valley challenge** until `0x4010`
+is set. This is deliberately stricter than merely checking the entry event's
+story-4 predicate: earlier visits or a win without collecting the reward cannot
+unlock travel. Later story values alone do not manufacture completion. The
+policy is checked again at both current and legacy deferred commits.
+
+### Route validation
+
+The copied story-20 profile completed Central Park → Tyranno Valley → Central
+Park through real map selection and Cross. Both landings accepted movement;
+all 50 watched story/quest bytes were unchanged. A second trip walked from the
+fast-travel landing to the native exit using ordinary directions and Cross,
+without developer repositioning, and returned to Kicking Forest at `(1608,208)`.
+The exit requires facing 1; a first Cross with facing 3 correctly did nothing.
+Live map checks also refused inbound and outbound travel with the reward bit
+cleared while the later story value remained 20. The ordinary valley/forest
+round trip was independently exercised through the original exit records in
+the batch audit below. Native policy regressions cover exact visits, same-area
+rejection, wrong-server and story limits, neighboring bits, reward revocation,
+both travel directions and both deferred formats. All 21 native tests pass.
+
+Local evidence is in `output/travel-batch-20261017/`: `valley-map/` contains the
+map round trip and RAM captures; `valley-event.json` and `valley-event-*.png`
+record the native reward replay. `valley-blocked.json` records the two refusal
+checks; `valley-walk-exit.json` records the walk and native return. These tests
+used copied saves exclusively.
 
 ## Batched route checks — 2026-10-17
 
@@ -53,9 +106,9 @@ Screenshots, RAM snapshots, exact manifests and reports remain local under
 changes before the loading ribbon releases input. The runner now waits for a
 usable quick-menu controller instead of relying on a fixed delay.
 
-The player network remains at **21 destinations**. Tyranno Valley's entry/event
-behavior and Kicking Forest's optional-activity cleanup still need review before
-admission. These progressed-save probes do not establish safety at other story
+At the end of this initial batch pass the player network remained at **21
+destinations**. The subsequent valley event audit above adds the twenty-second;
+Kicking Forest's optional-activity cleanup still needs review before admission. These progressed-save probes do not establish safety at other story
 phases or when hide-and-seek is active. The efficiency gain is repeatable route
 checks and automatic evidence collection; event-policy decisions still require
 their own original-script evidence.

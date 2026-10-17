@@ -25,6 +25,7 @@ extern int shinka_journal_enabled(void);
 #define NOISE_SCENE_COMPLETE 0x8004b3dfu /* flag 0x400c, bit 4 */
 #define SOUTH_BADLAND_STARTED 0x8004b3e2u /* flag 0x4027, bit 7 */
 #define SOUTH_BADLAND_COMPLETE 0x8004b3e3u /* flag 0x4028, bit 0 */
+#define TYRANNO_REWARD_COMPLETE 0x8004b3e0u /* flag 0x4010, bit 0 */
 
 struct arrival { uint32_t stage, x, y; };
 
@@ -41,6 +42,7 @@ static const struct { uint32_t icon, stage, x, y; } destinations[] = {
     {21, 0x222, 87454, 66170},   /* Wire Forest */
     {23, 0x227, 1186*256, 874*256}, /* Divermon's Lake, native Wind Prairie entry */
     {24, 0x229, 1096*256, 248*256}, /* Wind Prairie, native Seiryu entry */
+    {16, 0x22b, 176*256, 1272*256}, /* Tyranno Valley, native Kicking Forest entry */
     {31, 0x22c, 900*256, 352*256}, /* East Station, native Kicking Forest entry */
     {15, 0x22e, 0x21fda, 0x1d3d8}, /* Seiryu City */
     {32, 0x232, 0x15ade, 0x111cd}, /* South Station, outside the gondola */
@@ -117,6 +119,11 @@ static const char* prairie_blocked(uint32_t story) {
     return NULL;
 }
 static const char* departure(uint32_t stage, uint32_t story) {
+    /* WSTAG405 resumes reward event 0x3d at story 4 after flag 0x400f.
+     * Its native reward callback sets 0x4010. Keep this stop unavailable until
+     * that reward is complete, even if the field was visited before the fight. */
+    if (stage == 0x22b && !(B(TYRANNO_REWARD_COMPLETE) & 1))
+        return "Finish the valley challenge";
     /* WSTAG410's station trigger runs event 0x5a at story 5. Its native
      * completion advances to 6; keep arrival and departure on that route. */
     if (stage == 0x22c && story == 5) return "Follow the station route";
@@ -189,6 +196,8 @@ static const char* plan(uint32_t parent, uint32_t icon, struct arrival* out) {
     blocked=departure(stage,story);
     if (blocked) return blocked;
     if (i < 0) return "No travel point yet";
+    if (destinations[i].stage == 0x22b && !(B(TYRANNO_REWARD_COMPLETE) & 1))
+        return "Finish the valley challenge";
     if (destinations[i].stage == 0x22c && story == 5)
         return "Follow the station route";
     if (destinations[i].stage == 0x229 && (blocked=prairie_blocked(story)))

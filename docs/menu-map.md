@@ -14,7 +14,7 @@ without stretching the artwork or icons. Cursor snapping and travel checks are
 unchanged; vertical scrolling remains. See [camera coverage](camera.md) for
 implementation and verification details.
 
-The initial travel network connects these 21 Asuka locations:
+The initial travel network connects these 22 Asuka locations:
 
 | Map icon | Arrival |
 | --- | --- |
@@ -26,6 +26,7 @@ The initial travel network connects these 21 Asuka locations:
 | Wire Forest | Clearing near the path |
 | Divermon's Lake | Native entrance from Wind Prairie |
 | Wind Prairie | Native entrance from Seiryu City; pending local events keep travel on the ordinary route |
+| Tyranno Valley | Native entrance from Kicking Forest, after completing the valley challenge and receiving its reward |
 | East Station | Native entrance from Kicking Forest; story-5 station scene must finish first |
 | Seiryu City | Outdoor city path |
 | South Station | Walkway beside the gondola controls |
@@ -73,6 +74,11 @@ Teddy's Wind Prairie conversation finishes. Returning to Seiryu remains allowed.
 Wind Prairie itself blocks arrivals and departures while that conversation is
 pending, or while its separate local encounter has started but not completed.
 The map explains **Follow the prairie route** or **Finish the local encounter**.
+
+Tyranno Valley requires its exact visit and the original challenge reward.
+**Finish the valley challenge** blocks arrivals and departures until the native
+reward conversation completes. A battle win alone does not unlock this stop.
+Travel never grants the reward or enables Kicking Forest fast travel.
 
 East Station blocks arrival and departure during its story-5 station scene.
 The original scene advances the story to 6; this is separate from the first

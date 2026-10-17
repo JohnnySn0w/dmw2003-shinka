@@ -73,8 +73,9 @@ python tools/travel_audit.py run tools/fixtures/travel-progressed-smoke.json out
 ```
 
 The supplied manifest requires slot 7 to contain the progressed story-20 Asuka
-fixture in Central Park, with Shell Beach, East Station and Central Park already
-visited. Adjust the slot and cases for your own copied fixture; the JSON does
+fixture in Central Park, with Shell Beach, East Station, Tyranno Valley and
+Central Park already visited. The valley's native challenge reward must also be
+complete. Adjust the slot and cases for your own copied fixture; the JSON does
 not include save data. The output directory must be new. Each case restores its
 checkpoint before running and again afterward, including after a failed check.
 If restoration fails, the entire batch stops. Checkpoints are never overwritten.

@@ -50,6 +50,7 @@ static void fresh(void) {
     for(unsigned i=0;i<sizeof(map_stage_icons);++i) psx_mod_write_byte(0x8009b5fc+i,map_stage_icons[i]);
     memset(ptr(0x8004b3c0),255,30);
     psx_mod_write_byte(0x8004b3b6,2);
+    psx_mod_write_byte(0x8004b3e0,1); /* native Tyranno challenge reward complete */
     for(unsigned i=0;i<16;++i) psx_mod_write_byte(0x8004b874+i,(uint8_t)i);
     object(MAP,0x8009913c);W(MAP+0x50,PARENT);W(MAP+0x180,1);W(MAP+0x184,30);W(MAP+0xa8+29*4,1);
     object(PARENT,0x80099894);W(PARENT+0x20,3);W(PARENT+0x24,0x800af000);W(0x800af000,ROOT);
@@ -154,9 +155,9 @@ static void story_policy(void) {
     }
 }
 static void east_surface_policy(void) {
-    const unsigned stages[]={0x220,0x227,0x229,0x21f,0x22c}, icons[]={18,23,24,33,31};
-    const unsigned x[]={1196,1186,1096,778,900}, y[]={806,874,248,152,352};
-    for(unsigned i=0;i<5;++i) {
+    const unsigned stages[]={0x220,0x227,0x229,0x21f,0x22c,0x22b}, icons[]={18,23,24,33,31,16};
+    const unsigned x[]={1196,1186,1096,778,900,176}, y[]={806,874,248,152,352,1272};
+    for(unsigned i=0;i<sizeof(stages)/sizeof(stages[0]);++i) {
         fresh();watching=0;target(icons[i]);watching=1;
         select_icon();shinka_map_present();
         CHECK(R(RETURN)==stages[i] && R(0x8004b3fc)==stages[i]);
@@ -569,6 +570,45 @@ static void suzaku_policy(void) {
         else CHECK(R(RETURN)==initial && !gpu_count);
     }
 }
+static void tyranno_policy(void) {
+    /* A visit or battle-win flag alone cannot skip the native reward. Check
+     * both directions, adjacent bits, and both serialized request formats. */
+    const unsigned stories[]={1,3,4,5,20,36};
+    for(unsigned s=0;s<sizeof(stories)/sizeof(stories[0]);++s)
+    for(unsigned done=0;done<2;++done) for(unsigned won=0;won<2;++won)
+    for(unsigned from=0;from<2;++from) for(unsigned neighbors=0;neighbors<2;++neighbors)
+    for(unsigned legacy=0;legacy<2;++legacy) {
+        fresh();watching=0;W(0x8004b370,stories[s]);
+        unsigned win=(won<<7)|(neighbors?0x7f:0), reward=done|(neighbors?0xfe:0);
+        psx_mod_write_byte(0x8004b3df,(uint8_t)win);
+        psx_mod_write_byte(0x8004b3e0,(uint8_t)reward);
+        if(from) W(RETURN,0x22b);else target(16);
+        watching=1;writes=0;
+        if(legacy) {legacy_request();W(PARENT+0x7c,from?30:16);root_close();transition();}
+        else {select_icon();if(!done) CHECK(!writes);shinka_map_present();}
+        CHECK(R(RETURN)==(done?(from?0x21du:0x22bu):(from?0x22bu:0x249u)));
+        CHECK(gpu_count==(done&&!legacy?6u:0u));
+        CHECK(R(0x8004b370)==stories[s]);
+        CHECK(psx_mod_read_byte(0x8004b3df)==win && psx_mod_read_byte(0x8004b3e0)==reward);
+        if(done&&!from) CHECK(R(RETURN+4)==176*256 && R(RETURN+8)==1272*256);
+    }
+    /* Recheck completion after selection, without relying on a changed story. */
+    for(unsigned legacy=0;legacy<2;++legacy) for(unsigned from=0;from<2;++from) {
+        fresh();watching=0;
+        if(from) W(RETURN,0x22b);else target(16);
+        watching=1;
+        if(legacy) {legacy_request();W(PARENT+0x7c,from?30:16);root_close();}
+        else select_icon();
+        watching=0;psx_mod_write_byte(0x8004b3e0,0xfe);watching=1;
+        if(legacy) transition();else shinka_map_present();
+        CHECK(R(RETURN)==(from?0x22bu:0x249u) && !gpu_count && !R(PARENT+0x78));
+    }
+    /* The forest still owns an unaudited optional activity. Adding the valley
+     * must not admit the forest as a source or its neighboring map icon. */
+    fresh();watching=0;W(RETURN,0x22a);target(16);watching=1;writes=0;
+    select_icon();CHECK(!writes);
+    fresh();watching=0;target(25);watching=1;writes=0;select_icon();CHECK(!writes);
+}
 int main(void) {
     /* The native lobby front exit is closed throughout lockdown. Keep its
      * outside bridge usable, and recheck closure on both pending paths. */
@@ -595,6 +635,7 @@ int main(void) {
     south_badland_policy();
     noise_policy();
     east_surface_policy();
+    tyranno_policy();
     fresh();cpu.gpr[31]=0x80099aa4;cpu.gpr[4]=0x80099894;cpu.gpr[5]=0x78;cpu.gpr[6]=8;
     shinka_map_allocate(&cpu);CHECK(cpu.gpr[5]==0x88 && cpu.gpr[6]==12 && writes==0);
     fresh();select_icon();CHECK(R(MAP+0xc)==1 && R(RETURN)==0x249);
@@ -623,7 +664,7 @@ int main(void) {
     cpu.gpr[31]=0x800997ec;cpu.gpr[16]=PARENT;shinka_map_frame(&cpu);CHECK(writes==0);
     /* Every exposed icon must lead to its own area according to the original map. */
     {
-        const unsigned icons[]={20,30,22,21,15,26,32,43,44,46,42,29,27,17,28,35};
+        const unsigned icons[]={20,30,22,21,15,26,32,43,44,46,42,29,27,17,28,35,16};
         for(unsigned i=0;i<sizeof(icons)/sizeof(icons[0]);++i) {
             fresh();watching=0;W(RETURN,0x200);W(0x8004b370,24);
             W(MAP+0x184,icons[i]);W(MAP+0xa8+(icons[i]-1)*4,1);watching=1;

@@ -43,6 +43,36 @@
       "story": 20
     },
     {
+      "name": "valley-map-roundtrip",
+      "slot": 7,
+      "source": "0x21d",
+      "story": 20,
+      "legs": [
+        {
+          "kind": "map",
+          "icon": 16,
+          "stage": "0x22b",
+          "x": 45056,
+          "y": 325632,
+          "move": {
+            "button": "up",
+            "frames": 8
+          }
+        },
+        {
+          "kind": "map",
+          "icon": 30,
+          "stage": "0x21d",
+          "x": 225700,
+          "y": 164434,
+          "move": {
+            "button": "down",
+            "frames": 8
+          }
+        }
+      ]
+    },
+    {
       "name": "station-native-exit",
       "slot": 7,
       "source": "0x21d",
@@ -99,5 +129,5 @@
       "story": 20
     }
   ],
-  "fixture_note": "Slot 7: copied progressed Asuka save at story 20, Central Park. All three map destinations must already be visited."
+  "fixture_note": "Slot 7: copied progressed Asuka save at story 20, Central Park. Map destinations must already be visited; Tyranno Valley requires its native challenge reward flag 0x4010."
 }

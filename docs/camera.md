@@ -239,7 +239,47 @@ match in wide mode. Native regressions exercise every captured Back-hint strip,
 icon and representative glyph at 33 animation scales, margins 1–160 and both
 framebuffer bands, plus unchanged 4:3 sprites. The complete 21-test CTest suite
 passes. Remaining coverage includes other battle types, multi-page technique
-lists, training minigames and additional merchants/gyms.
+lists and additional merchants/gyms. The follow-up below covers actual Leomon
+training with a different partner from the same copied save.
+
+### Leomon exercise and result-animation audit — 2026-10-17
+
+Kumamon had no TP in the earlier fixture, but selecting Guilmon normally exposed
+five existing TP. Restoring that isolated fixture for each exercise allowed
+one-TP Punch, Defense, Yoga, Study and Jump Rope sessions without editing partner
+stats or the user's memory card. Captures cover exercise entry, action intervals,
+success/failure messages, results and return menus. Study has additional result
+acknowledgements; its first recording did not reach the chooser, so a separate
+completed-result return was recorded. These exercises remain in mode `0xa00`;
+they do not establish support for other gym overlays or trainers.
+
+The result dialogue exposed another misplaced animated widget: its **continue
+arrow** followed the left-anchored description text instead of the expanded
+panel's right edge. The observed 12×12 sprite at `(292,205)`, texture `0x3c54`,
+cycles through CLUTs `0x3057`, `0x3097`, `0x30d7`, `0x3117` and `0x3157`.
+All five now retain the native 16-pixel right inset. At 426×240, the sprite starts
+at output x=398 instead of x=315; its size, texture and palette animation stay
+unchanged. Ordinary result text and unrelated palette/texture combinations keep
+their existing anchors.
+
+The additional 28 recordings contain 5,040 consecutive frame observations in
+`output/animation-audit-20261017/gym-*/`. Each recording is bounded to 180 frames;
+the collection is **not** one uninterrupted recording of every exercise. Raw
+frames, GPU packet traces, contact sheets, `gym-capture-summary.json` and
+`gym-arrow-check.json` remain local. Three recordings are 320×240 controls; the
+others retain 426×240, including the final return to the field.
+
+All 180 frames of the settled rebuilt arrow recording match one of the five
+4:3 reference images at the corrected anchor (mean RGB-channel error below 1
+after scanout color conversion), with no match at the old anchor. The earlier
+capture fails this positional check. Initial frames before the result text
+finishes have no arrow and are not treated as missing animation frames. Native
+regressions cover all five palettes, margins 1–160, both framebuffer bands,
+unchanged 4:3 output and nearby nonmatching sprites. All 21 native tests pass.
+
+Remaining gym coverage includes five-/ten-TP purchases, other partners/trainers
+and any distinct later-game training modes. These capture runs use diagnostic
+readback and are not performance measurements.
 
 ## Field expansion audit
 

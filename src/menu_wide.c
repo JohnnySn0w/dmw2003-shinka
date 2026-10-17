@@ -362,6 +362,12 @@ static int layout_rect(uint32_t* words, int count, int offset_x, int offset_y,
         } else if (clut == 0x3a17 && y >= 156 && y <= 168 && x >= 140 && x < 190)
             dest_x = x; /* whole page counter stays centered */
         else dest_x = x + ((x >= 160 || (y < 32 && x >= 150)) ? margin : -margin);
+    } else if (mode == 0xa00 && y == 205 && x == 292 && w == 12 && h == 12
+        && (words[2] & 65535) == 0x3c54 && clut >= 0x3057 && clut <= 0x3157
+        && (clut - 0x3057) % 64 == 0) {
+        /* Training results use the shared pulsing advance icon. Retain its
+         * native right inset rather than following the left-anchored prose. */
+        dest_x = x + margin;
     } else if (mode == 0xf00 && (
         (y == 196 && h == 30 && x >= 198 && clut == 0x7eaa
             && ((words[2] & 65535) == 0x91b8 || (words[2] & 65535) == 0x73b4))

@@ -103,6 +103,31 @@ static void animation_tests(void) {
         }
     }
     root_menu=0;items_menu=0;
+    /* Leomon result acknowledgements: all five palette pulse frames keep
+     * the 16px right inset, including both buffers and original 4:3. */
+    mode=0xa00;
+    for(int band=0;band<=256;band+=256) for(int margin=1;margin<=160;++margin)
+    for(int wide=0;wide<=1;++wide) for(unsigned palette=0x3057;palette<=0x3157;palette+=64) {
+        options[2]=wide;shinka_view_tick();
+        uint32_t icon[]={0x64808080,0x00cd0124,(palette<<16)|0x3c54,0x000c000c};
+        uint32_t original[4];memcpy(original,icon,sizeof(icon));
+        shinka_menu_wide_rect(icon,4,0,band,0,band,319,band+239,margin);
+        CHECK((int16_t)icon[1]==292+(wide ? margin : 0));
+        CHECK(icon[1]>>16==205 && icon[2]==original[2] && icon[3]==original[3]);
+    }
+    options[2]=1;shinka_view_tick();
+    /* Neighbouring glyphs, textures and unrelated palette rows retain the
+     * ordinary description anchor; matching must not split result prose. */
+    for(int other=0;other<5;++other) {
+        uint32_t icon[]={0x64808080,0x00cd0124,0x30d73c54,0x000c000c};
+        if(other==0) icon[2]^=1;
+        if(other==1) icon[2]=0x30d63c54;
+        if(other==2) icon[2]=0x31973c54;
+        if(other==3) icon[3]=0x000c0008;
+        if(other==4) icon[1]+=1u<<16;
+        shinka_menu_wide_rect(icon,4,0,0,0,0,319,239,53);
+        CHECK((int16_t)icon[1]==262);
+    }
     /* Armory Back hint: native panel strips, button and letters share one
      * right-edge anchor at every animation scale and supported margin. */
     for(int band=0;band<=256;band+=256) for(int margin=1;margin<=160;++margin) {

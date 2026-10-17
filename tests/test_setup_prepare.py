@@ -14,6 +14,33 @@ import setup_prepare as setup
 
 
 class PreparationTests(unittest.TestCase):
+    def test_incomplete_activated_build_is_not_reused_or_overwritten(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            sdk = root/'sdk.zip'
+            sdk.write_bytes(b'test sdk')
+            metadata = {'sdk_sha256': setup.hash_file(sdk), 'revision': 'test-revision'}
+            sdk.with_suffix('.json').write_text(json.dumps(metadata))
+            old = root/'builds/active'
+            (old/'runtime').mkdir(parents=True)
+            (old/'runtime/dmw2003-shinka.exe').write_bytes(b'old executable')
+            (old/'runtime/settings.toml').write_text('keep preferences')
+            (old/'source').mkdir()
+            (old/'source/.sdk-ready.json').write_text('{}')
+            marker = old/'preparation.json'
+            marker.write_text(json.dumps(dict(state='ready', runtime=str(old/'runtime'), sdk=metadata)))
+            original = marker.read_bytes()
+            with patch.object(setup, 'validate_disc', return_value={'cue': 'test.cue'}), \
+                    patch.object(setup.shutil, 'disk_usage') as usage, \
+                    patch.object(setup, 'extract_source', side_effect=setup.Cancelled('stop before compiling')) as extract:
+                usage.return_value.free = 7 * 1024**3
+                with self.assertRaises(setup.Cancelled):
+                    setup.prepare('test.cue', sdk, root, toolchain=root/'tools')
+            self.assertNotEqual(extract.call_args.args[1], old)
+            self.assertEqual(marker.read_bytes(), original)
+            self.assertEqual((old/'runtime/settings.toml').read_text(), 'keep preferences')
+            self.assertEqual((old/'runtime/dmw2003-shinka.exe').read_bytes(), b'old executable')
+
     def test_staging_rename_recovers_from_windows_lock(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)

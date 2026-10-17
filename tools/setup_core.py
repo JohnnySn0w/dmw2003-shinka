@@ -140,6 +140,28 @@ def emulator_running():
     return any(row and row[0].lower().startswith('duckstation') for row in csv.reader(result.stdout.splitlines()))
 
 
+RUNTIME_FILES = ('dmw2003-shinka.exe', 'game.toml', 'bios/openbios.bin',
+                 'extracted/audit/SLES_039.36')
+
+
+def runtime_ready(runtime):
+    """Check the required launch inputs, including locally extracted game data."""
+    return bool(runtime) and all((Path(runtime)/name).is_file() for name in RUNTIME_FILES)
+
+
+def launch_problem(settings):
+    """One readiness check shared by setup, automatic launch and manual Play."""
+    if not settings.get('runtime'):
+        return 'Choose your CUE, then select Prepare Shinka to begin.'
+    if not runtime_ready(settings['runtime']):
+        return 'Required game files are missing. Choose Repair Shinka to rebuild them. Your save profile will be kept.'
+    if not remembered_disc_ok(settings.get('disc', {})):
+        return 'The selected disc has moved or changed. Choose its CUE again, then select Save setup (or Update Shinka).'
+    if not settings.get('profile') or not Path(settings['profile']).is_dir():
+        return 'Your save-profile folder is missing. Restore it before playing; a blank replacement will not be created.'
+    return None
+
+
 def activate(root, prepared, card=None, slot=1):
     """Commit only after a complete build and successful exclusive card import."""
     import shutil
@@ -147,7 +169,7 @@ def activate(root, prepared, card=None, slot=1):
     root = Path(root)
     settings = read_settings(root)
     runtime = Path(prepared['runtime'])
-    if not (runtime/'dmw2003-shinka.exe').is_file():
+    if not runtime_ready(runtime):
         raise FileNotFoundError('The prepared game is missing. Run preparation again.')
     previous = Path(settings['runtime']) if settings.get('runtime') else None
     if previous and previous != runtime:
@@ -171,11 +193,10 @@ def activate(root, prepared, card=None, slot=1):
 
 
 def launch_command(settings):
+    problem = launch_problem(settings)
+    if problem:
+        raise FileNotFoundError(problem)
     runtime = Path(settings['runtime'])
-    if not remembered_disc_ok(settings['disc']):
-        raise FileNotFoundError('The selected disc has moved or changed. Choose its CUE again to repair the path.')
-    if not Path(settings['profile']).is_dir():
-        raise FileNotFoundError('Your save-profile folder is missing. Restore it before playing; a blank replacement will not be created.')
     return [str(runtime/'dmw2003-shinka.exe'), '--game', str(runtime/'game.toml'),
             '--disc', settings['disc']['cue'], '--bios', str(runtime/'bios/openbios.bin'),
             '--memcard-dir', settings['profile'], '--no-launcher']

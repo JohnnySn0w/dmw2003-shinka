@@ -156,6 +156,28 @@ This preview includes the recovery changes; the earlier full preparation and
 gameplay results identify their respective tested revisions above. No new
 public installer download has been published.
 
+### October 17: incomplete installations and launcher recovery
+
+Readiness now checks the executable, game configuration, OpenBIOS and extracted
+game executable together. Missing inputs disable Play and show **Repair Shinka**;
+a moved disc shows the CUE-selection recovery steps, and a missing save folder
+asks for restoration instead of reporting that the installation is ready.
+Automatic launch and manual Play use the same checks.
+
+Repair skips incomplete builds previously marked ready and stages a separate
+replacement. It does not reuse their source directory or overwrite the active
+runtime during preparation. Activation rejects incomplete replacements before
+copying preferences or changing the remembered installation.
+
+All 240 Python tests pass, including 23 setup tests. Ten local checks against the
+actual Tk widgets cover fresh setup, ready state, each missing launch input,
+disc relocation, missing/restored save folders, and the threaded Save setup
+callback. Relocation preserved the runtime, profile and card bytes. Disposable
+fixtures were used; this was not a new full disc preparation or clean Windows VM
+test. Evidence: `output/installer-recovery-20261017/ui-results.json` and
+`output/installer-recovery-tests-20261017.log`. Packaged failure-path testing and
+the release checks below remain open.
+
 ### Building a local installer
 
 Use a packaging venv with `PyInstaller==6.16.0`, the pinned source dependencies

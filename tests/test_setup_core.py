@@ -95,8 +95,48 @@ class SetupTests(unittest.TestCase):
     def prepared(self, name):
         runtime = self.root/name
         runtime.mkdir()
-        (runtime/'dmw2003-shinka.exe').write_bytes(b'fake executable')
+        for relative in setup.RUNTIME_FILES:
+            path = runtime/relative
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_bytes(b'test launch input')
         return dict(runtime=str(runtime), revision=name, disc=self.disc(), sdk={'sdk_sha256': name})
+
+    def test_missing_runtime_inputs_cannot_launch_or_replace_active_install(self):
+        state = setup.activate(self.root, self.prepared('active'))
+        card = Path(state['profile'])/'card1.mcd'
+        card.write_bytes(b'player progress')
+        candidate = self.prepared('candidate')
+        for name in setup.RUNTIME_FILES:
+            with self.subTest(name=name):
+                path = Path(candidate['runtime'])/name
+                path.unlink()
+                broken = dict(state, runtime=candidate['runtime'])
+                self.assertIn('Repair Shinka', setup.launch_problem(broken))
+                with self.assertRaisesRegex(FileNotFoundError, 'Repair Shinka'):
+                    setup.launch_command(broken)
+                with self.assertRaises(FileNotFoundError):
+                    setup.activate(self.root, candidate)
+                self.assertEqual(setup.read_settings(self.root), state)
+                self.assertEqual(card.read_bytes(), b'player progress')
+                path.write_bytes(b'restored launch input')
+
+    def test_readiness_tracks_disc_and_save_folder_recovery_without_writes(self):
+        self.assertIn('Prepare Shinka', setup.launch_problem({'schema': 1}))
+        state = setup.activate(self.root, self.prepared('runtime'))
+        before = (self.root/'launcher.json').read_bytes()
+        with patch.object(setup, 'DISC_SHA1', state['disc']['sha1']):
+            self.assertIsNone(setup.launch_problem(state))
+            original = self.cue.read_bytes()
+            self.cue.unlink()
+            self.assertIn('Choose its CUE', setup.launch_problem(state))
+            self.cue.write_bytes(original)
+            profile = Path(state['profile'])
+            profile.rmdir()
+            self.assertIn('Restore it', setup.launch_problem(state))
+            self.assertFalse(profile.exists())
+            profile.mkdir()
+            self.assertIsNone(setup.launch_problem(state))
+        self.assertEqual((self.root/'launcher.json').read_bytes(), before)
 
     def test_update_preserves_profile_preferences_and_settings(self):
         first = self.prepared('first')

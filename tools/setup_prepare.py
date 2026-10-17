@@ -10,7 +10,7 @@ import urllib.request
 import uuid
 
 from setup_core import (TOOLCHAIN, Cancelled, atomic_json, check_cancel, hash_file,
-                        safe_extract, validate_disc)
+                        runtime_ready, safe_extract, validate_disc)
 from configure_journal import select_journal
 
 
@@ -185,8 +185,12 @@ def prepare(cue, sdk, root, cancel=None, notify=lambda *args: None, toolchain=No
         try:
             previous = json.loads(marker.read_text(encoding='utf-8'))
             if previous.get('sdk', {}).get('sdk_sha256') == metadata['sdk_sha256']:
-                if previous.get('state') == 'ready' and (Path(previous['runtime'])/'dmw2003-shinka.exe').is_file():
-                    return dict(previous, disc=disc)
+                if previous.get('state') == 'ready':
+                    if runtime_ready(previous.get('runtime')):
+                        return dict(previous, disc=disc)
+                    # Repair beside an activated build, never overwrite its preferences
+                    # or partially rebuild the installation recorded in launcher.json.
+                    continue
                 if (marker.parent/'source/.sdk-ready.json').is_file():
                     work = marker.parent
                     break

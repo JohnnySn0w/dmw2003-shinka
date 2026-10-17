@@ -15,7 +15,7 @@ from tkinter import filedialog, messagebox, ttk
 from setup_core import (TOOLCHAIN, Cancelled, SetupLock, activate,
                         data_root, default_duckstation_roots, describe_card,
                         discover_cards, emulator_running, launch_command,
-                        read_settings, remembered_disc_ok, validate_disc)
+                        launch_problem, read_settings, runtime_ready, validate_disc)
 from setup_prepare import prepare
 
 
@@ -76,7 +76,7 @@ class Launcher:
         self.import_frame.grid_remove()
         self.note = ttk.Label(body, wraplength=730)
         self.note.grid(row=8, column=0, sticky='ew', pady=(12, 8))
-        self.status = tk.StringVar(value='Choose your CUE to begin.' if not self.settings.get('runtime') else 'Your existing installation and save profile are ready.')
+        self.status = tk.StringVar(value=launch_problem(self.settings) or 'Your existing installation and save profile are ready.')
         ttk.Label(body, textvariable=self.status, wraplength=730).grid(row=9, column=0, sticky='ew', pady=6)
         self.progress = ttk.Progressbar(body, mode='determinate')
         self.progress.grid(row=10, column=0, sticky='ew', pady=(2, 12))
@@ -98,9 +98,10 @@ class Launcher:
         window.after(80, self.poll)
 
     def refresh(self):
-        ready = self.settings.get('runtime') and (Path(self.settings['runtime'])/'dmw2003-shinka.exe').is_file()
-        self.play_button.configure(state='normal' if ready and not self.busy and remembered_disc_ok(self.settings.get('disc', {})) else 'disabled')
-        self.prepare_button.configure(text=('Save setup' if self.current_version() else 'Update Shinka') if ready else 'Prepare Shinka', state='disabled' if self.busy else 'normal')
+        ready = runtime_ready(self.settings.get('runtime'))
+        self.play_button.configure(state='normal' if not self.busy and not launch_problem(self.settings) else 'disabled')
+        action = ('Save setup' if self.current_version() else 'Update Shinka') if ready else ('Repair Shinka' if self.settings.get('runtime') else 'Prepare Shinka')
+        self.prepare_button.configure(text=action, state='disabled' if self.busy else 'normal')
         for control in (self.browse, self.check):
             control.configure(state='disabled' if self.busy else 'normal')
         self.cancel_button.configure(state='normal' if self.busy else 'disabled')
@@ -119,7 +120,7 @@ class Launcher:
         path = filedialog.askopenfilename(title='Choose your disc CUE', filetypes=[('PlayStation cue sheet', '*.cue')])
         if path:
             self.disc.set(path)
-            self.status.set('Choose Prepare Shinka / Save setup to check this disc.')
+            self.status.set(f"Select {self.prepare_button['text']} to check this disc.")
 
     def toggle_search(self):
         if self.search.get():
@@ -193,7 +194,7 @@ class Launcher:
         def work():
             if card and emulator_running():
                 raise ValueError('DuckStation is still running. Close it before importing a card.')
-            if self.current_version() and self.settings.get('runtime') and (Path(self.settings['runtime'])/'dmw2003-shinka.exe').is_file():
+            if self.current_version() and runtime_ready(self.settings.get('runtime')):
                 prepared = dict(runtime=self.settings['runtime'], revision=self.settings['revision'],
                     sdk=self.settings.get('sdk', {}),
                     disc=validate_disc(cue, self.cancel, lambda done, total: self.notify('Checking your disc', done, total)))
@@ -256,7 +257,7 @@ class Launcher:
                         return
                     else:
                         self.settings = value
-                        self.status.set('Ready to play. Load an imported card with Continue in the game.')
+                        self.status.set(launch_problem(self.settings) or 'Ready to play. Load an imported card with Continue in the game.')
                     self.refresh()
         except queue.Empty:
             pass
@@ -296,7 +297,7 @@ def main():
     try:
         with SetupLock(root):
             launcher = Launcher(window, root, sdk)
-            if not args.settings and launcher.current_version() and launcher.settings.get('runtime') and remembered_disc_ok(launcher.settings.get('disc', {})):
+            if not args.settings and launcher.current_version() and not launch_problem(launcher.settings):
                 window.after(50, launcher.play)
             else:
                 window.deiconify()

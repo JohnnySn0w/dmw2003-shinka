@@ -27,9 +27,10 @@ class Launcher:
         self.busy, self.cards = False, []
         window.title('Shinka')
         window.geometry('820x780')
-        window.minsize(740, 760)
+        window.minsize(740, 780)
         window.configure(bg='#101c32')
-        icon = Path(getattr(sys, '_MEIPASS', Path(__file__).resolve().parents[1]))/'assets/shinka.ico'
+        assets = Path(getattr(sys, '_MEIPASS', Path(__file__).resolve().parents[1]))/'assets'
+        icon = assets/'shinka.ico'
         if icon.is_file():
             window.iconbitmap(str(icon))
         style = ttk.Style(window)
@@ -41,11 +42,16 @@ class Launcher:
         style.map('TCheckbutton', background=[('active', '#1c3150')])
         style.configure('Title.TLabel', font=('Segoe UI', 26, 'bold'), foreground='#49bdff')
         style.configure('Accent.TButton', font=('Segoe UI', 11, 'bold'), padding=(16, 8))
-        body = ttk.Frame(window, padding=24)
+        body = ttk.Frame(window, padding=(24, 14))
         body.pack(fill='both', expand=True)
         body.columnconfigure(0, weight=1)
-        ttk.Label(body, text='SHINKA', style='Title.TLabel').grid(row=0, column=0, sticky='w')
-        ttk.Label(body, text='Set up your disc and memory card.', font=('Segoe UI', 12)).grid(row=1, column=0, sticky='w', pady=(2, 18))
+        header = ttk.Frame(body)
+        header.grid(row=0, column=0, sticky='ew', pady=(0, 18))
+        try:
+            self.logo = tk.PhotoImage(master=window, file=str(assets/'branding/shinka-title.png')).subsample(6)
+            ttk.Label(header, image=self.logo).grid(row=0, column=0, sticky='w')
+        except tk.TclError:
+            ttk.Label(header, text='SHINKA', style='Title.TLabel').grid(row=0, column=0, sticky='w')
         ttk.Label(body, text='1  Choose your Digimon World 2003 (Europe) disc').grid(row=2, column=0, sticky='w')
         self.disc = tk.StringVar(value=self.settings.get('disc', {}).get('cue', ''))
         row = ttk.Frame(body)

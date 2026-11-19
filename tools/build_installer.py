@@ -26,6 +26,7 @@ def build(sdk, output, iscc, version):
                     '--onedir', '--windowed', '--name', 'Shinka',
                     '--icon', str(repo/'assets/shinka.ico'),
                     '--add-data', str(repo/'assets/shinka.ico') + ';assets',
+                    '--add-data', str(repo/'assets/branding/shinka-title.png') + ';assets/branding',
                     '--distpath', str(output/'dist'), '--workpath', str(output/'work'),
                     '--specpath', str(output), str(repo/'tools/shinka_launcher.py')], check=True, cwd=repo)
     stage = output/'dist/Shinka'

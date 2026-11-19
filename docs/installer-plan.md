@@ -8,7 +8,19 @@ from the existing source-build route. The implementation now lives in
 `tools/shinka_launcher.py`, `tools/setup_core.py`, `tools/setup_prepare.py`,
 `tools/package_setup_sdk.py`, `tools/build_installer.py` and `packaging/shinka.iss`.
 
-## Current preview: 0.1.4 (November 19)
+## Current preview: 0.1.5 (November 19)
+
+Launcher-only branding refresh: the full SHINKA title artwork replaces the plain
+text heading, with no subtitle. The image is bundled with the frozen launcher;
+the expanded import controls fit the existing 780-pixel window height. This
+reuses the validated game SDK from 0.1.4; game preparation is unchanged.
+
+Local installer:
+`output/installer-logo-20261119/package/release/Shinka-Setup-0.1.5-preview-windows-x64.exe`
+(21,511,404 bytes). SHA-256:
+`341ca41ebb5d26bae79afd0d63a6d9079a7c4933f2f2e39ae46a84e44138c026`.
+
+### 0.1.4 preparation and installer validation
 
 Refreshed from game revision `1c1a41a`, including the widened field visibility
 fixes and new 125% idle / 200% action animation defaults. The local package is

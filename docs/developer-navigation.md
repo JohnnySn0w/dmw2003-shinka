@@ -201,6 +201,9 @@ The recipe assumes a fresh boot with an imported card, as in installer tests.
 It accepts the language/movie screens, returns without input if already at Load,
 and rejects gameplay or an ambiguous title-menu starting point. Unexpected
 transitions/timeouts stop input; `--capture` records the stopped screen too.
+Startup captures use the existing `present_shot` API and wait for its completion,
+so they include host-drawn artwork and the final aspect ratio. The ordinary
+`shot` command remains a raw guest-framebuffer diagnostic.
 
 `lab` is a read-only, single-command snapshot of the physical or portable lab:
 root lifecycle/phase, selected party slot, rookie indices in the three slots,

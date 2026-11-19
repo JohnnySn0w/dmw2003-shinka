@@ -189,10 +189,18 @@ class Navigator:
             time.sleep(1)
         return self.where()
 
-    def screenshot(self, path):
+    def screenshot(self, path, *, presented=False):
         path = Path(path).resolve()
         path.parent.mkdir(parents=True, exist_ok=True)
-        self.call(dict(cmd='screenshot_file', path=str(path)))
+        if presented:
+            sequence = self.call(dict(cmd='present_shot_seq'))['seq']
+            self.call(dict(cmd='present_shot', path=str(path)))
+            result = self.until(lambda: self.call(dict(cmd='present_shot_seq')),
+                                lambda s: s['seq'] != sequence, 'presentation capture')
+            if not result['wrote']:
+                raise RuntimeError('Presentation capture completed without writing an image')
+        else:
+            self.call(dict(cmd='screenshot_file', path=str(path)))
         return {'path': str(path)}
 
     def boot_continue(self):
@@ -317,7 +325,7 @@ def main(argv=None):
                 result = nav.boot_continue()
             finally:
                 if args.capture:
-                    nav.screenshot(args.capture)
+                    nav.screenshot(args.capture, presented=True)
         elif cmd == 'where':
             result = nav.refresh() if args.refresh else nav.where()
         elif cmd == 'mark':

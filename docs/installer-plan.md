@@ -31,6 +31,11 @@ Source SDK SHA-256:
 - Ten source Tk recovery checks passed: missing runtime components, relocated
   disc repair, missing/restored save folders and fresh setup. These are fixture
   checks, not a substitute for the complete packaged failure/recovery matrix.
+- A separate frozen-launcher check rejected a CUE referencing a missing BIN,
+  disabled Play and displayed the missing filename with recovery guidance.
+  The failed attempt preserved settings and card hashes. After repairing that
+  test CUE's reference, Save setup returned to Ready to play with the same
+  runtime, save profile and unchanged card. This tested retry, not the file picker.
 - Installer path assertions now compare the actual `--disc` argument as a path,
   preserving Windows case-insensitive semantics. The earlier literal-string
   checks falsely rejected differently capitalized names of the same directory.
@@ -45,8 +50,10 @@ for later installer smoke checks rather than manually timing the two Start press
 
 Still required: a clean Windows standard-user machine and reboot test, the full
 packaged failure/recovery matrix, broader save discovery/import cases, and
-signing/release decisions. The prepared-runtime title captures also omit the
-logo despite its PNG being present; check title-rendering parity before release.
+signing/release decisions. The apparent missing title logo was a capture error:
+raw `screenshot_file` images exclude the host-drawn artwork. A `present_shot`
+capture of this same prepared runtime confirms the logo displays correctly;
+no renderer or installer change was needed. Startup evidence now uses that API.
 No Windows Sandbox, Hyper-V, VirtualBox, VMware or
 QEMU environment was available during this pass. The preview remains unsigned
 and local; the public site still directs players to the source-build route.

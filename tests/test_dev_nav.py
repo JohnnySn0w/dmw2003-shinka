@@ -10,6 +10,21 @@ from dev_nav import Navigator, load_points, validate_route
 
 
 class NavTests(unittest.TestCase):
+    def test_present_capture_waits_for_completion_and_checks_write_result(self):
+        for wrote in (0, 1):
+            nav = Navigator()
+            with tempfile.TemporaryDirectory() as temp, \
+                    patch.object(nav, 'call', side_effect=[dict(seq=4), dict(staged=True),
+                        dict(seq=4, wrote=1), dict(seq=5, wrote=wrote)]) as call, \
+                    patch('dev_nav.time.sleep'):
+                path = Path(temp)/'title.png'
+                if wrote:
+                    self.assertEqual(nav.screenshot(path, presented=True), dict(path=str(path.resolve())))
+                else:
+                    with self.assertRaisesRegex(RuntimeError, 'without writing'):
+                        nav.screenshot(path, presented=True)
+                self.assertEqual(call.call_args_list[1].args[0], dict(cmd='present_shot', path=str(path.resolve())))
+
     def test_boot_continue_waits_between_the_two_start_presses(self):
         nav = Navigator()
         def state(mode):

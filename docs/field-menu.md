@@ -86,9 +86,13 @@ savestates. The original text setters allocate and copy each encoded label.
 The ordinary root keeps its original encoded help text and colored controller
 button glyphs. Settings supplies its own contextual header, then returns to the
 stock hint on exit; spelled-out "Triangle" prompts were a prototype replacement.
-The Settings header uses the native left/right arrow glyphs (`01 1d`, `01 1e`)
-instead of spelling out the directions. The original font renders both icons;
-no replacement texture is required.
+The Settings header encodes the native left/right arrows (`01 1d`, `01 1e`)
+instead of spelling out the directions. In this header only, the renderer gives
+them the resident Cross button's original grey outline, face and shadow, with
+dark-grey directional symbols. The artwork and palette come from the loaded
+game font; no image file or guest VRAM modification is required. Both ordinary
+sprites and animated menu quads use the same replacement after positioning,
+including in 4:3 and 16:9. Other native arrows and face buttons are unchanged.
 
 The background renderer receives a small dynamically constructed sprite
 descriptor. It copies six tile definitions from the loaded game resource and

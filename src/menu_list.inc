@@ -18,6 +18,11 @@ extern void shinka_rewards_activate(void);
 static uint32_t text_scratch;
 static uint32_t panel_scratch;
 
+int shinka_menu_settings_active(void) {
+    return enabled && shinka_menu_root_active()
+        && READ(wide_menu_root + 0xa0) == 1 && !(READ(wide_menu_root + 0xa4) & 1);
+}
+
 static int expanded(uint32_t p) {
     return object(p, QUICK_MENU) && READ(p + 0x20) == 0x2d;
 }

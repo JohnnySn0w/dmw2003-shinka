@@ -2,7 +2,8 @@
 
 Status: independent 1x, 1.25x, 1.5x and 2x Idle poses, Action poses and
 experimental Pause pace controls in **SETTINGS > Battle motion**, 2026-10-09.
-All default to original speed and persist separately. The game menu displays
+Defaults are 125% Idle, 200% Action and 100% Pause pace (updated 2026-11-19).
+Each persists separately; existing saved choices are preserved. The game menu displays
 100%, 125%, 150% and 200%.
 The [battle geometry optimization](performance.md) reduces
 execution cost independently of these animation rates.

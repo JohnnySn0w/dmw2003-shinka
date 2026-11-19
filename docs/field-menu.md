@@ -58,7 +58,7 @@ story checks to pass. **Travel not added here** describes an unsupported source;
 do not necessarily mean a story event is blocking progress. Use the current
 [destination list](menu-map.md) rather than assuming every visible icon is enabled.
 
-**Battle motion** offers **100%, 125%, 150% or 200%** for each category, all defaulting to 100% (original speed).
+**Battle motion** offers **100%, 125%, 150% or 200%** for each category. Defaults are **125% Idle**, **200% Action** and **100% Pause pace**; existing saved choices are preserved.
 Idle follows each combatant's own default pose. Action includes attacks,
 reactions, entrances and victory poses; the rates replace one another, never
 multiply. **Pause pace** separately shortens deliberate script waits: at 200%,

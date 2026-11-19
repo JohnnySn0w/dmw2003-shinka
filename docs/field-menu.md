@@ -86,6 +86,9 @@ savestates. The original text setters allocate and copy each encoded label.
 The ordinary root keeps its original encoded help text and colored controller
 button glyphs. Settings supplies its own contextual header, then returns to the
 stock hint on exit; spelled-out "Triangle" prompts were a prototype replacement.
+The Settings header uses the native left/right arrow glyphs (`01 1d`, `01 1e`)
+instead of spelling out the directions. The original font renders both icons;
+no replacement texture is required.
 
 The background renderer receives a small dynamically constructed sprite
 descriptor. It copies six tile definitions from the loaded game resource and

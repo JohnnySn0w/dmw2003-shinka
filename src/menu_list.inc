@@ -88,7 +88,11 @@ static uint32_t encode(const char* text) {
     out = text_scratch + 4;
     while (*text && out < text_scratch + 250) {
         unsigned char c = (unsigned char)*text++;
-        if (c >= '0' && c <= '9') {
+        if (c == 1 && *text) {
+            /* Preserve native extended-font icons in custom instructions. */
+            psx_mod_write_byte(out++, 1);
+            psx_mod_write_byte(out++, (uint8_t)*text++);
+        } else if (c >= '0' && c <= '9') {
             psx_mod_write_byte(out++, c - '0' + 4);
         } else if (c == ' ' || c == ':' || c == '%') {
             psx_mod_write_byte(out++, 1);
@@ -111,7 +115,7 @@ void shinka_menu_text(CPUState* cpu) {
         label = READ(p + 0xa4) & 1 ? "Settings save failed" : READ(p + 0xa0) == 4
             ? "Pause pace is experimental" : READ(p + 0xa0) == 6
             ? "Field test: Blank edges" : READ(p + 0xa0) == 1
-            ? (shinka_music_palette_get() && !shinka_music_available() ? "Music pack missing" : "SETTINGS: Left Right")
+            ? (shinka_music_palette_get() && !shinka_music_available() ? "Music pack missing" : "SETTINGS: \x01\x1d \x01\x1e")
             : NULL; /* retain the stock hint, including its colored button glyph */
     } else if (cpu->gpr[31] == 0x80012938) {
         row = READ(p + 0x18);

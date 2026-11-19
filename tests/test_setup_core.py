@@ -174,16 +174,28 @@ class SetupTests(unittest.TestCase):
 
     def test_bad_import_and_failed_commit_keep_active_install(self):
         state = setup.activate(self.root, self.prepared('first'))
+        card = Path(state['profile'])/'card1.mcd'
+        card.write_bytes(b'player progress')
+        preferences = Path(state['runtime'])/'settings.toml'
+        preferences.write_text('player preferences')
         second = self.prepared('second')
         bad = self.root/'bad.mcd'
         bad.write_bytes(b'bad')
         with self.assertRaises(ValueError):
             setup.activate(self.root, second, bad)
         self.assertEqual(setup.read_settings(self.root), state)
+
         with patch.object(setup.os, 'replace', side_effect=OSError('disk error')):
             with self.assertRaises(OSError):
                 setup.activate(self.root, second)
         self.assertEqual(setup.read_settings(self.root), state)
+        self.assertEqual(card.read_bytes(), b'player progress')
+        self.assertEqual(preferences.read_text(), 'player preferences')
+        updated = setup.activate(self.root, second)
+        self.assertEqual(updated['runtime'], second['runtime'])
+        self.assertEqual(updated['profile'], state['profile'])
+        self.assertEqual(card.read_bytes(), b'player progress')
+        self.assertEqual((Path(second['runtime'])/'settings.toml').read_text(), 'player preferences')
 
     def test_import_new_profile_preserves_original(self):
         card = self.root/'source.mcd'

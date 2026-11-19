@@ -1,7 +1,9 @@
 from pathlib import Path
 import io
+import hashlib
 import json
 import os
+import subprocess
 import sys
 import tempfile
 import threading
@@ -14,6 +16,79 @@ import setup_prepare as setup
 
 
 class PreparationTests(unittest.TestCase):
+    def test_failed_download_can_retry_without_changing_active_data(self):
+        payload = io.BytesIO()
+        with zipfile.ZipFile(payload, 'w') as archive:
+            for name in ('bin/cmake.exe', 'bin/clang.exe', 'bin/clang++.exe', 'bin/ninja.exe', 'python/python.exe'):
+                archive.writestr(name, 'verified tool')
+        data = payload.getvalue()
+        config = dict(version='test', bytes=len(data), sha256=hashlib.sha256(data).hexdigest(),
+                      url='https://example.invalid/tools.zip')
+
+        class Disconnected(io.BytesIO):
+            def read(self, size=-1):
+                if self.tell():
+                    raise ConnectionResetError('connection lost')
+                return super().read(20)
+
+        for fault in ('disconnect', 'truncated', 'corrupt', 'oversized'):
+            with self.subTest(fault=fault), tempfile.TemporaryDirectory() as directory:
+                root = Path(directory)
+                installed = root/'toolchains/test'
+                installed.mkdir(parents=True)
+                (installed/'old-tool').write_bytes(b'previous tools')
+                preserved = {root/'launcher.json': b'active settings', root/'card1.mcd': b'player save'}
+                for path, contents in preserved.items():
+                    path.write_bytes(contents)
+                response = {
+                    'disconnect': Disconnected(data), 'truncated': io.BytesIO(data[:-1]),
+                    'corrupt': io.BytesIO(b'!' + data[1:]), 'oversized': io.BytesIO(data + b'!'),
+                }[fault]
+                with patch.object(setup, 'TOOLCHAIN', config), \
+                        patch.object(setup.urllib.request, 'urlopen', return_value=response):
+                    with self.assertRaises((ConnectionResetError, ValueError)):
+                        setup.ensure_toolchain(root, threading.Event(), lambda *args: None)
+                self.assertEqual((installed/'old-tool').read_bytes(), b'previous tools')
+                self.assertFalse(list((root/'cache').iterdir()))
+                with patch.object(setup, 'TOOLCHAIN', config), \
+                        patch.object(setup.urllib.request, 'urlopen', return_value=io.BytesIO(data)):
+                    self.assertEqual(setup.ensure_toolchain(root, threading.Event(), lambda *args: None), installed)
+                self.assertEqual((installed/'bin/clang.exe').read_text(), 'verified tool')
+                for path, contents in preserved.items():
+                    self.assertEqual(path.read_bytes(), contents)
+
+    def test_failed_build_reports_stage_and_can_retry(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            with (root/'build.log').open('w', encoding='utf-8') as log:
+                with self.assertRaisesRegex(RuntimeError, 'Building game failed'):
+                    setup.run([sys.executable, '-c', 'raise SystemExit(7)'], root, os.environ.copy(),
+                              threading.Event(), log, lambda *args: None, 'Building game')
+                setup.run([sys.executable, '-c', 'print("retry succeeded")'], root, os.environ.copy(),
+                          threading.Event(), log, lambda *args: None, 'Building game')
+            self.assertIn('retry succeeded', (root/'build.log').read_text())
+
+    def test_running_build_cancellation_waits_for_process_exit(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            cancel = threading.Event()
+            processes = []
+            real_popen = subprocess.Popen
+
+            def start(*args, **kwargs):
+                process = real_popen(*args, **kwargs)
+                processes.append(process)
+                # Cancel after the actual build process starts, not before Popen.
+                cancel.set()
+                return process
+
+            with (root/'build.log').open('w', encoding='utf-8') as log, \
+                    patch.object(setup.subprocess, 'Popen', side_effect=start):
+                with self.assertRaises(setup.Cancelled):
+                    setup.run([sys.executable, '-c', 'import time; time.sleep(60)'], root,
+                              os.environ.copy(), cancel, log, lambda *args: None, 'Building game')
+            self.assertIsNotNone(processes[0].poll())
+
     def test_incomplete_activated_build_is_not_reused_or_overwritten(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)

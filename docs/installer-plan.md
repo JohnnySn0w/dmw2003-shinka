@@ -1,6 +1,6 @@
 # Windows installer and first-run setup
 
-Status: local installer preview refreshed November 19, 2026; not publicly released.
+Status: 0.1.5-preview release drafted November 19, 2026; not publicly released.
 The user requested a setup experience requiring only their own supported disc
 dump, with installer behavior discussed before implementation. The public
 [getting-started page](../website/dist/get-started.html) distinguishes this plan
@@ -19,6 +19,34 @@ Local installer:
 `output/installer-logo-20261119/package/release/Shinka-Setup-0.1.5-preview-windows-x64.exe`
 (21,511,404 bytes). SHA-256:
 `341ca41ebb5d26bae79afd0d63a6d9079a7c4933f2f2e39ae46a84e44138c026`.
+
+### Preview recovery checks (November 19)
+
+The release scope is recovery checks followed by an unsigned Windows preview.
+Clean-Windows/reboot testing, broader DuckStation discovery/import coverage and
+alternate soundtrack setup are deferred at the user's request; they are not
+gates for this preview. These limits must remain visible in the release notes.
+
+- All 26 focused setup tests pass. New fault-injection cases cover a connection
+  reset, truncated download, incorrect checksum and oversized download. Every
+  case rejects the input, removes the partial download, preserves active data
+  and successfully retries with a verified archive.
+- An actual failed subprocess reports its preparation stage and can retry.
+  Cancelling a running subprocess waits for it to exit. This new check covers
+  the direct build process, not every possible compiler descendant.
+- A simulated failed atomic activation preserves the active configuration,
+  preferences and card bytes; a subsequent successful activation retains the
+  same profile and preferences.
+- The tested `setup_core.py` and `setup_prepare.py` match the bundled source SDK
+  byte for byte. No launcher/runtime fix or replacement installer was needed.
+  The installer SHA-256 was rechecked against the value above.
+- The complete Python suite passes (260 tests), and Ruff passes for tools/tests.
+  Local test output: `output/installer-logo-20261119/recovery-tests.log`.
+
+These automated checks complement the packaged missing-BIN/retry test and
+install/reinstall/uninstall checks below. They are not a claim that every failure
+was reproduced through the installed UI. The user's GitHub release draft uses
+tag `v0.1.5-preview`; attach the installer and its matching `.sha256` file.
 
 ### 0.1.4 preparation and installer validation
 
@@ -60,9 +88,10 @@ Logs, hashes and copied profiles remain under `output/installer-20261119/`.
 Use the repeatable [startup command](developer-navigation.md#repeatable-startup-with-an-imported-card)
 for later installer smoke checks rather than manually timing the two Start presses.
 
-Still required: a clean Windows standard-user machine and reboot test, the full
-packaged failure/recovery matrix, broader save discovery/import cases, and
-signing/release decisions. The apparent missing title logo was a capture error:
+Additional coverage remains outside this preview: a clean Windows standard-user
+machine and reboot, the full packaged failure/recovery matrix, and broader save
+discovery/import cases. This release is intentionally unsigned.
+The apparent missing title logo was a capture error:
 raw `screenshot_file` images exclude the host-drawn artwork. A `present_shot`
 capture of this same prepared runtime confirms the logo displays correctly;
 no renderer or installer change was needed. Startup evidence now uses that API.
@@ -363,31 +392,28 @@ The runtime currently writes some settings beside the executable and shares
 ownership explicit before packaging; an installer cannot simply change folder
 names and assume persistence still works.
 
-## Remaining release checks
+## Preview release checklist
 
 The portable toolchain, source-only SDK, setup/repair launcher and per-user
 installer are implemented. They replace the developer prerequisites for the
 installer route; the source-build instructions remain available separately.
 
-Before publishing a download:
+- [x] Verify recovery behavior and record automated versus packaged coverage.
+- [x] Recheck the release artifact's integrity hash and matching preparation code.
+- [x] Choose an unsigned preview with explicit limitations.
+- [x] Draft `v0.1.5-preview` on GitHub (user confirmed).
+- [ ] Publish the draft with the installer and checksum attached.
+- [ ] Verify the public download, then add the download link to the website.
 
-- Test in a clean Windows x64 environment without developer tools or maintainer
-  paths, using a standard user account. Reboot, reinstall and check the installed
-  shortcut with retained settings and cards.
-- Exercise missing/incorrect dumps, relocated discs, interrupted downloads and
-  builds, low disk space and update recovery through the packaged UI. Unit tests
-  cover several of these cases; they do not replace the installed-app checks.
-- Broaden DuckStation discovery checks: no installation, redirected and custom
-  folders, external card paths, duplicate candidates, denied access and a card
-  changing during import.
-- Decide signing and publish the exact version, integrity hashes, supported
-  Windows versions and notices. The installer currently targets Windows 10 1903
-  or later, x64.
+The installer targets Windows 10 1903 or later, x64. Deferred for now: clean-PC
+and reboot checks, expanded DuckStation discovery/import cases, alternate music
+setup, and the rest of the packaged failure matrix. These are not preview
+release blockers. Do not describe the current coverage as clean-machine testing.
 
 Keep game-derived code/assets, retail BIOS, music packs and player saves outside
 public release inputs. Package only the explicit source allowlist. The prepared
 runtime has battle/movie native units and interpreter fallback elsewhere; do not
 promise the development build's complete native-overlay coverage.
 
-Only add a download button when the release checks pass. Until then, describe
-the installer as in local testing and retain the source-build guide.
+Only add a download button once the asset is publicly available and verified.
+Retain the source-build guide as an alternative after publishing.

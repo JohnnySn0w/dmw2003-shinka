@@ -7,7 +7,10 @@ static uint8_t memory[8388608],raw[20480],rle[21000];
 static int wide=1,started=1;
 static unsigned writes;
 static uint32_t next_alloc=0x80600000,latest_alloc;
-static unsigned off(uint32_t a) { CHECK((a&0x1fffffff)<sizeof(memory));return a&0x1fffffff; }
+static unsigned off(uint32_t a) {
+    if(a>=0x1f800000 && a<0x1f800400) return sizeof(memory)-1024+(a&1023);
+    CHECK((a&0x1fffffff)<sizeof(memory));return a&0x1fffffff;
+}
 uint8_t psx_mod_read_byte(uint32_t a) { return memory[off(a)]; }
 uint32_t psx_mod_read_word(uint32_t a) { uint32_t v;memcpy(&v,memory+off(a),4);return v; }
 void psx_mod_write_word(uint32_t a,uint32_t v) { memcpy(memory+off(a),&v,4);++writes; }
@@ -95,7 +98,7 @@ int main(void) {
     uint64_t generation;CHECK(shinka_field_texture(0,&generation)!=NULL);
     writes=0;shinka_field_prepare();CHECK(writes==0); /* no duplicate OT links */
     W(0x8004de44,1);shinka_field_prepare();CHECK(shinka_field_stat(2)==3);
-    CHECK((R(0x800b101c)&0xffffff)==(arena&0xffffff)+2048+40);
+    CHECK((R(0x800b101c)&0xffffff)==(arena&0xffffff)+8192+40);
     /* A reused prefetch buffer must refresh its private texture generation. */
     uint64_t previous=generation;
     W(0x80100030,0x12340000);W(0x800b001c,0xffffff);W(0x8004de44,0);
@@ -114,5 +117,42 @@ int main(void) {
     }
     fixture();W(0x800c006c,0);shinka_field_prepare();CHECK(shinka_field_stat(2)==2);
     fixture();W(0x800a0020,0);writes=0;shinka_field_prepare();CHECK(!writes);
+    /* Widen only the scenery caller's returned rectangle, never its camera. */
+    fixture();W(0x800abe68,0x8001e0c8);W(0x800d0000,38u<<16|288);
+    W(0x800d0004,0x00f00140);writes=0;
+    shinka_field_visible_rect(0x800abd40,0x800d0000,0x80089120);
+    CHECK(R(0x800d0000)==(38u<<16|235) && R(0x800d0004)==0x00f001aa);
+    CHECK(writes==2);
+    W(0x1f8003c4,38u<<16|288);W(0x1f8003c8,0x00f00140);
+    shinka_field_visible_rect(0x800abd40,0x1f8003c4,0x80089120);
+    CHECK(R(0x1f8003c4)==(38u<<16|235) && R(0x1f8003c8)==0x00f001aa);
+    writes=0;shinka_field_visible_rect(0x800abd40,0x800d0000,0x80089120);
+    CHECK(!writes); /* already widened: no cumulative drift */
+    W(0x800d0004,0x00f00140);writes=0;
+    shinka_field_visible_rect(0x800abd40,0x800d0000,0x80089124);CHECK(!writes);
+    wide=0;shinka_field_visible_rect(0x800abd40,0x800d0000,0x80089120);CHECK(!writes);
+    /* Ready RAM cell inside the stock window, with no native VRAM drawing yet. */
+    fixture();W(0x800c0058,2);
+    uint32_t sink=shinka_field_cover(0x800abd40,256,0,0x800865d8,0x800b0000);
+    CHECK(sink!=0x800b0000 && R(sink)==0xffffff);
+    CHECK(shinka_field_tile_head(0x800abd40,256,0,0x800b001c)==sink);
+    CHECK(shinka_field_tile_head(0x800abd40,384,0,0x800b001c)==0x800b001c);
+    shinka_field_prepare();CHECK(shinka_field_stat(2)==3);
+    shinka_field_gpu_source((latest_alloc&0xffffff)+4);CHECK(shinka_field_texture_slot()==0);
+    /* The fallback applies to this submitted frame only. */
+    W(0x8004de44,1);shinka_field_prepare();CHECK(shinka_field_stat(2)==2);
+    /* A freshly assigned VRAM slot also uses the ready RAM copy while fading. */
+    fixture();W(0x800c0058,2);
+    CHECK(shinka_field_cover(0x800abd40,256,0,0x80086544,0x800b0000)!=0x800b0000);
+    shinka_field_prepare();CHECK(shinka_field_stat(2)==3);
+    for(unsigned scenario=0;scenario<5;++scenario) {
+        fixture();W(0x800c0058,2);
+        if(scenario==0) W(0x800c006c,0); /* incomplete RAM tile retains cover */
+        if(scenario==1) wide=0;
+        if(scenario==2) W(0x800862fc,0);
+        if(scenario==3) W(0x80100000,0); /* undecodable tile retains cover */
+        CHECK(shinka_field_cover(0x800abd40,256,0,
+            scenario==4?0x80086d50:0x800865d8,0x800b0000)==0x800b0000);
+    }
     puts("Field container bounds, private tile packets, scene guards and restore behavior passed.");
 }

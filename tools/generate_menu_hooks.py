@@ -35,6 +35,25 @@ def shard(code, number):
         declarations.append('extern void shinka_menu_text_quad(CPUState*);'
                             if number == '03' else 'extern void shinka_menu_sprite_quad(CPUState*);')
     if number == '04':
+        sites = [
+            ('    PGXP_STORE(0xA4A20006u, _pgxa, cpu->gpr[2]); }  /* 0x8001E114: 0xA4A20006 */',
+             '    shinka_field_visible_rect(cpu->gpr[4], cpu->gpr[5], cpu->gpr[31]);'),
+            ('    PGXP_ALU(0x00451021u, cpu->gpr[2], _pgx1, _pgx2); }  /* 0x8001DFC8: 0x00451021 */',
+             '    if (cpu->gpr[31] == 0x800860b8u) cpu->gpr[2] = shinka_field_cover('
+             'cpu->gpr[16], (int32_t)cpu->gpr[30], '
+             '(int32_t)cpu->read_word(cpu->gpr[29]+0x48), '
+             'cpu->read_word(cpu->gpr[29]+0x3c), cpu->gpr[2]);\n'
+             '    if (cpu->gpr[31] == 0x80086ed4u) cpu->gpr[2] = shinka_field_tile_head('
+             'cpu->read_word(cpu->gpr[29]+0x4c), (int32_t)cpu->read_word(cpu->gpr[29]+0x50), '
+             '(int32_t)cpu->read_word(cpu->gpr[29]+0x54), cpu->gpr[2]);'),
+        ]
+        for needle, hook in sites:
+            if code.count(needle) != 1:
+                raise ValueError('Review field visibility/loading-cover accessor')
+            code = code.replace(needle, needle + '\n' + hook)
+        declarations += ['extern void shinka_field_visible_rect(uint32_t,uint32_t,uint32_t);',
+                         'extern uint32_t shinka_field_cover(uint32_t,int,int,uint32_t,uint32_t);',
+                         'extern uint32_t shinka_field_tile_head(uint32_t,int,int,uint32_t);']
         needle = '    debug_server_log_call_entry(0x8001D504u);'
         if code.count(needle) != 1:
             raise ValueError('Review resident frame submission entry')

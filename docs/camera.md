@@ -45,7 +45,7 @@ game-side culling need coverage across more battles.
 | Scene | Preference and current behavior |
 | --- | --- |
 | Ordinary battles | **Battle**; wider arena view, side-anchored HUD and full-width bottom dialogue. **Battle zoom** is independent. |
-| Overworld and interiors | **Field**; extra preloaded scenery where available. Authored map edges and object culling still limit coverage. |
+| Overworld and interiors | **Field**; extra preloaded scenery, wider scenery visibility checks and ready-tile handoff during texture-slot changes. Authored map edges and untested object types still limit coverage. |
 | Title / Start / Continue | **Field**; circuit-board backdrop fills the width; logo, choices and credits remain centered at native proportions. |
 | Memory-card save/load | **Field**; repeated square backdrop, wider file sheet, intact information/party columns and aligned progress/confirmation controls. |
 | Both expanded Start roots | **Field**; party panels and menu/ribbon anchors follow the wider canvas, including return from a submenu. |
@@ -354,7 +354,7 @@ dual rendering retain the earlier preview without supplemental textures.
 `SHINKA_FIELD_TILES=0` disables supplementation for comparisons. The read-only
 debug operation `shinka_nav` / `field-tiles` reports owner, cumulative prepared
 frames, last-frame packet count and missing-cell count (cells outside the stock
-window, including cells successfully filled).
+window or needing a loading-cover replacement, including cells successfully filled).
 
 Live copied-save checks filled Central Park's 21-pixel strip, including its
 overlapping wall cap, and two additional edge tiles while moving through Wire
@@ -373,6 +373,48 @@ and rejection in unrelated scenes. Local evidence is in
 `output/field-stream-02/`. Coverage remains limited: untested tile formats,
 NPC/object culling, native camera clamps, map boundaries and transition effects
 still need investigation. Authored empty space in small interiors is preserved.
+
+### Field edge visibility and tile handoff — 2026-11-19
+
+Asuka City's entrance reproduced two independent edge problems. The scenery
+visibility rectangle remained 320 pixels wide, and tiles already prefetched in
+RAM could show blue loading covers while the native twelve VRAM slots were
+reassigned. Increasing the native four-column draw loop would overrun its stack
+list and would not create additional texture slots.
+
+`src/field_tiles.c` now widens the returned visibility rectangle by 53 pixels on
+each side for FIELDSTG's scenery caller (`0x80089120`). The temporary rectangle
+can live on the scratchpad stack, as observed at `0x1f8003c4`; both that bounded
+region and ordinary RAM are accepted. The camera itself, map clamps and
+interaction bounds are unchanged.
+
+For a fully loaded, successfully decoded tile, the native loading-cover draw and
+its still-settling VRAM draw are directed to a detached ordering-table head.
+The existing private-texture renderer supplies that cell at its original layer
+depth until the handoff is complete. The full-scene transition cover and genuinely
+unready or unsupported tiles retain their native path. This uses the existing
+30 prefetch buffers without changing disc scheduling or guest texture ownership.
+The double-buffered supplemental packet arena now allows all fifteen visible
+cells at their maximum fifteen pieces each. Hooks are confined to verified
+resident accessor completion sites and verified FIELDSTG callers; 4:3 and
+non-OpenGL paths retain their native behavior.
+
+Copied-save validation recorded 180 consecutive frames each while walking across
+Asuka's entrance and Central Park. The Asuka baseline contained the blue cover's
+distinctive `(0,0,66)` pixel value in 17 frames (maximum 9,606 pixels); the same
+walk after the fix contained none. Central Park's final capture also contained
+none. This is a scene-specific pixel scan, supported by visual frame review,
+not a general artifact detector. The missing Asuka banner and statue details
+also remained visible in the expanded margins. Switching to 4:3 produced
+320-pixel output, and switching back plus restoring the copied checkpoint worked.
+Evidence: `output/field-culling-20261119/` (local, ignored).
+
+Native regression checks cover scratchpad rectangles, caller/scene guards,
+unchanged 4:3, incomplete/invalid tiles, detached cover and stale-texture draws,
+and frame-local fallback consumption. Generator checks reject missing, changed
+or duplicated accessor sites. Coverage is limited to these traversals: other
+object renderers, authored empty map edges and genuinely unavailable scenery
+can still need separate work.
 
 ### Gym, shop and Start-menu layouts — 2026-09-11
 

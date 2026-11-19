@@ -10,6 +10,9 @@ typedef struct {
 } ShinkaFieldTile;
 int shinka_field_decode(const uint8_t*, size_t, ShinkaFieldTile*);
 void shinka_field_prepare(void);
+void shinka_field_visible_rect(uint32_t camera,uint32_t rect,uint32_t caller);
+uint32_t shinka_field_cover(uint32_t camera,int x,int y,uint32_t caller,uint32_t head);
+uint32_t shinka_field_tile_head(uint32_t camera,int x,int y,uint32_t head);
 void shinka_field_reset(void);
 void shinka_field_gpu_source(uint32_t);
 int shinka_field_texture_slot(void);

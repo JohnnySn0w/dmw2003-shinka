@@ -5,8 +5,8 @@
 #include <stdlib.h>
 #define R psx_mod_read_word
 #define W psx_mod_write_word
-#define BANK 2048u
-#define PACKETS 96u
+#define BANK 8192u
+#define PACKETS 225u
 #define MAGIC 0x53485446u
 typedef struct {
     uint32_t source, cell, file, hash, size;
@@ -18,6 +18,8 @@ static uint64_t serial;
 static uint32_t owner, arena;
 static int slots[2][PACKETS], source_slot=-1, graphics;
 static uint32_t prepared,drawn,missing;
+static uint32_t fallback[15], fallback_owner;
+static unsigned fallback_count;
 uint32_t shinka_field_stat(unsigned i) { return i==0 ? owner : i==1 ? prepared : i==2 ? drawn : missing; }
 
 static int ram(uint32_t p, uint32_t size) {
@@ -37,6 +39,7 @@ void shinka_field_reset(void) {
     memset(cache,0,sizeof(cache));
     for(unsigned b=0;b<2;++b) for(unsigned i=0;i<PACKETS;++i) slots[b][i]=-2;
     owner=0;source_slot=-1;
+    fallback_count=0;fallback_owner=0;
 }
 int shinka_field_texture_slot(void) { return source_slot; }
 const ShinkaFieldTile* shinka_field_texture(unsigned i, uint64_t* generation) {
@@ -82,7 +85,81 @@ static const ShinkaFieldTile* get_tile(unsigned index,uint32_t p,uint32_t file,u
     return &c->tile;
 }
 
-/* Prepend only missing cells to their original layer buckets. The game's
+static int field_scene(void) {
+    return active() && !R(0x8004b3fc) && R(0x800862fc)==0x27bdfea0
+        && R(0x80086e30)==0x27bdffb8 && R(0x800869c8)==0x27bdffd0;
+}
+static int allocate_packets(void) {
+    if(arena && R(arena+2*BANK)==MAGIC) return 1;
+    arena=psx_mod_alloc_gpu_dma_memory(2*BANK+8,4);
+    if(!arena) return 0;
+    W(arena+2*BANK,MAGIC);
+    for(unsigned b=0;b<2;++b) for(unsigned i=0;i<PACKETS;++i) slots[b][i]=-2;
+    return 1;
+}
+
+/* FIELDSTG's animated scenery uses this rectangle only for visibility tests.
+ * Widen its returned copy, not the camera, camera clamps or interaction bounds. */
+void shinka_field_visible_rect(uint32_t camera,uint32_t rect,uint32_t caller) {
+    /* FIELDSTG puts its temporary rectangle on the PSX scratchpad stack. */
+    int output_ok=ram(rect,8) || (!(rect&3) && rect>=0x1f800000 && rect<=0x1f8003f8);
+    if(caller!=0x80089120 || !field_scene() || camera!=R(0x8004de78)
+        || !ram(camera,0x164) || R(camera+0x128)!=0x8001e0c8
+        || !output_ok || R(rect+4)!=0x00f00140) return;
+    uint32_t xy=R(rect);
+    W(rect,(xy&0xffff0000u)|(uint16_t)((int16_t)xy-53));
+    W(rect+4,0x00f001aau);
+}
+
+/* Native tiles recycle twelve VRAM slots. A ready RAM tile can briefly lose
+ * its VRAM slot while still visible in 16:9. Route ONLY those loading-cover
+ * packets to a detached OT head; prepare() supplies the missing tile at its
+ * original depth. The full-scene transition cover keeps its native path. */
+uint32_t shinka_field_cover(uint32_t camera,int x,int y,uint32_t caller,uint32_t head) {
+    const char* control=getenv("SHINKA_FIELD_TILES");
+    if((control && !strcmp(control,"0")) || !field_scene()
+        || (caller!=0x80086544 && caller!=0x800865d8)
+        || camera!=R(0x8004de78) || x<0 || y<0 || (x&127) || (y&127)) return head;
+    uint32_t p=find_owner();
+    if(!ram(p,0x134) || R(p+0x20)!=31) return head;
+    uint32_t cols=R(p+0x68),rows=R(p+0x6c),children=R(p+0x24),file=R(p+0x64);
+    if(!cols || cols>256 || !rows || rows>256 || (unsigned)x/128>=cols
+        || (unsigned)y/128>=rows || !ram(children,124)) return head;
+    uint32_t cell=(unsigned)y/128*cols+(unsigned)x/128;
+    for(unsigned i=0;i<30;++i) {
+        uint32_t child=R(children+(i+1)*4);
+        if(!ram(child,0x254) || !object(child,0x800872e4) || R(child+0x58)!=cell) continue;
+        if(!get_tile(i,child,file,cell) || !allocate_packets()) return head;
+        if(fallback_owner!=p) { fallback_owner=p;fallback_count=0; }
+        {
+            unsigned j=0;
+            while(j<fallback_count && fallback[j]!=cell) ++j;
+            if(j==fallback_count) {
+                if(fallback_count==15) return head;
+                fallback[fallback_count++]=cell;
+            }
+        }
+        W(arena+2*BANK+4,0x00ffffff);
+        return arena+2*BANK+4;
+    }
+    return head;
+}
+
+uint32_t shinka_field_tile_head(uint32_t camera,int x,int y,uint32_t head) {
+    if(!fallback_count || !field_scene() || camera!=R(0x8004de78)
+        || !ram(fallback_owner,0x134) || x<0 || y<0 || (x&127) || (y&127)) return head;
+    uint32_t cell=(unsigned)y/128*R(fallback_owner+0x68)+(unsigned)x/128;
+    for(unsigned i=0;i<fallback_count;++i) if(fallback[i]==cell) {
+        /* Avoid drawing a newly assigned/stale VRAM slot over the private
+         * copy. Native upload and slot bookkeeping still run normally. */
+        W(arena+2*BANK+4,0x00ffffff);
+        return arena+2*BANK+4;
+    }
+    return head;
+}
+
+/* Prepend missing cells and ready loading-cover replacements to their original
+ * layer buckets. The game's
  * working set, resource requests, twelve VRAM slots and physics are untouched.
  * Enhancement primitives live in a separately allocated, double-buffered DMA
  * arena. Their textures are sampled from private GL textures, never guest VRAM. */
@@ -107,12 +184,7 @@ void shinka_field_prepare(void) {
     if(!ram(children,124) || cols<1 || cols>256 || rows<1 || rows>256
         || x<0 || y<0 || x>=(int)cols*128 || y>=(int)rows*128
         || R(owner+0x58)!=(uint32_t)x || R(owner+0x5c)!=(uint32_t)y) return;
-    if(!arena || R(arena+2*BANK)!=MAGIC) {
-        arena=psx_mod_alloc_gpu_dma_memory(2*BANK+4,4);
-        if(!arena) return;
-        W(arena+2*BANK,MAGIC);
-        for(unsigned b=0;b<2;++b) for(unsigned i=0;i<PACKETS;++i) slots[b][i]=-2;
-    }
+    if(!allocate_packets()) return;
     for(unsigned l=0;l<3;++l) {
         uint32_t offset=(R(ot+layers[l]*4)&0xffffff)-(arena&0xffffff);
         if(offset<2*BANK) return; /* already prepared; never link a cycle */
@@ -126,7 +198,10 @@ void shinka_field_prepare(void) {
     stock_left=x<32 ? 0 : (x-32)/128;stock_top=y<8 ? 0 : (y-8)/128;
     for(int cy=top;cy<=bottom;++cy) for(int cx=left;cx<=right;++cx) {
         uint32_t cell=cy*cols+cx;
-        if(cx>=stock_left && cx<stock_left+4 && cy>=stock_top && cy<stock_top+3) continue;
+        int cover=0;
+        if(fallback_owner==owner) for(unsigned i=0;i<fallback_count;++i)
+            if(fallback[i]==cell) { cover=1;break; }
+        if(!cover && cx>=stock_left && cx<stock_left+4 && cy>=stock_top && cy<stock_top+3) continue;
         ++missing;
         for(unsigned i=0;i<30;++i) {
             uint32_t p=R(children+(i+1)*4);
@@ -155,4 +230,5 @@ void shinka_field_prepare(void) {
         }
     }
     drawn=n;
+    fallback_count=0;
 }

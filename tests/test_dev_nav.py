@@ -10,6 +10,34 @@ from dev_nav import Navigator, load_points, validate_route
 
 
 class NavTests(unittest.TestCase):
+    def test_boot_continue_waits_between_the_two_start_presses(self):
+        nav = Navigator()
+        def state(mode):
+            return dict(schema=1, mode=mode, queued=0)
+        with patch.object(nav, 'where', side_effect=[state(0x1600), state(0xe02), state(0xe02),
+                state(0xe00), state(0xe00), state(0xe00), state(0xc00), state(0xc00)]), \
+                patch.object(nav, 'press') as press, patch('dev_nav.time.sleep') as sleep:
+            self.assertEqual(nav.boot_continue()['mode'], 0xc00)
+        self.assertEqual([c.args for c in press.call_args_list],
+                         [('start', 8), ('start', 8), ('start', 8), ('cross', 8)])
+        self.assertEqual([c.args for c in sleep.call_args_list], [(2,), (3,), (2,), (1,)])
+
+    def test_boot_continue_never_drives_gameplay_or_an_ambiguous_title(self):
+        for mode in (0x21d, 0x600, 0xe00):
+            nav = Navigator()
+            with patch.object(nav, 'where', return_value=dict(mode=mode, queued=0)), \
+                    patch.object(nav, 'press') as press:
+                with self.assertRaisesRegex(RuntimeError, 'fresh language/movie'):
+                    nav.boot_continue()
+                press.assert_not_called()
+
+    def test_boot_continue_is_already_done_at_the_load_screen(self):
+        nav = Navigator()
+        with patch.object(nav, 'where', return_value=dict(mode=0xc00, queued=0)), \
+                patch.object(nav, 'press') as press:
+            self.assertEqual(nav.boot_continue()['mode'], 0xc00)
+            press.assert_not_called()
+
     def test_transport_errors_are_not_success(self):
         nav = Navigator(transport=lambda *_: {'ok': False, 'err': 'busy'})
         with self.assertRaisesRegex(RuntimeError, 'busy'):

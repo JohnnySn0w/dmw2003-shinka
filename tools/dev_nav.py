@@ -195,6 +195,42 @@ class Navigator:
         self.call(dict(cmd='screenshot_file', path=str(path)))
         return {'path': str(path)}
 
+    def boot_continue(self):
+        """Open the load screen from a fresh boot with an imported card.
+
+        The title's mode precedes its input-ready animation. Short presses with
+        a real pause are essential: holding Start across the movie/title seam
+        or confirming with Cross too early loses the second activation.
+        """
+        state = self.where()
+        if not state['queued'] and state['mode'] == 0xc00:
+            return state
+        if state['queued'] or state['mode'] not in (0x1600, 0xe02):
+            raise RuntimeError('Boot Continue needs a fresh language/movie screen '
+                               'and an imported card; it will not drive an arbitrary menu.')
+        if state['mode'] == 0x1600:
+            self.press('start', 8)
+            state = self.until(self.where, lambda s: not s['queued'] and s['mode'] in (0xe02, 0xe00),
+                               'intro or title after language selection')
+        if state['mode'] == 0xe02:
+            # Movie ownership changes before the decoder accepts skip input.
+            time.sleep(2)
+            check_mode(self.where(), 0xe02)
+            self.press('start', 8)
+            self.until(self.where, lambda s: not s['queued'] and s['mode'] == 0xe00, 'title screen')
+        time.sleep(3)
+        check_mode(self.where(), 0xe00)
+        self.press('start', 8)
+        time.sleep(2)
+        check_mode(self.where(), 0xe00)
+        self.press('cross', 8)
+        self.until(self.where, lambda s: not s['queued'] and s['mode'] == 0xc00,
+                   'memory-card load screen')
+        time.sleep(1)  # Let the outgoing title fade finish before evidence capture.
+        state = self.where()
+        check_mode(state, 0xc00)
+        return state
+
     def route(self, recipe):
         steps = validate_route(recipe)  # validate the whole route before input
         log = []
@@ -238,6 +274,8 @@ def main(argv=None):
     parser.add_argument('--bookmarks', type=Path, default=ROOT/'output/dev-nav-points.json')
     sub = parser.add_subparsers(dest='command', required=True)
     sub.add_parser('points')
+    boot = sub.add_parser('boot-continue', help='Fresh boot with a copied imported card: language, movie, delayed Start, Continue')
+    boot.add_argument('--capture', type=Path, help='Capture the load screen, or the stopped screen on failure')
     where = sub.add_parser('where')
     where.add_argument('--refresh', action='store_true')
     mark = sub.add_parser('mark')
@@ -274,6 +312,12 @@ def main(argv=None):
         cmd = args.command
         if cmd == 'points':
             result = load_points(args.bookmarks)
+        elif cmd == 'boot-continue':
+            try:
+                result = nav.boot_continue()
+            finally:
+                if args.capture:
+                    nav.screenshot(args.capture)
         elif cmd == 'where':
             result = nav.refresh() if args.refresh else nav.where()
         elif cmd == 'mark':

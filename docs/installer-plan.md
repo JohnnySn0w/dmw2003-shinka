@@ -1,12 +1,55 @@
 # Windows installer and first-run setup
 
-Status: local installer prototype built October 8, 2026; not publicly released.
+Status: local installer preview refreshed November 19, 2026; not publicly released.
 The user requested a setup experience requiring only their own supported disc
 dump, with installer behavior discussed before implementation. The public
 [getting-started page](../website/dist/get-started.html) distinguishes this plan
 from the existing source-build route. The implementation now lives in
 `tools/shinka_launcher.py`, `tools/setup_core.py`, `tools/setup_prepare.py`,
 `tools/package_setup_sdk.py`, `tools/build_installer.py` and `packaging/shinka.iss`.
+
+## Current preview: 0.1.4 (November 19)
+
+Refreshed from game revision `1c1a41a`, including the widened field visibility
+fixes and new 125% idle / 200% action animation defaults. The local package is
+`output/installer-20261119/package/release/Shinka-Setup-0.1.4-preview-windows-x64.exe`
+(21,165,618 bytes). SHA-256:
+`195ee62085b4077c50218a90bb893bd7cc1f8a722f524f6ad5bb4c1f4260cedf`.
+Source SDK SHA-256:
+`c87c0fee345e0f989594dff89cc29e4f2fbf8187d7857af39a8c21e8e7026ce0`.
+
+- Fresh preparation succeeded using only the pinned portable toolchain and
+  Windows directories on PATH. The previously downloaded official archive was
+  hash-checked and unpacked into a fresh data directory; no toolchain override
+  or staged source edits were used. This was a local test, **not a clean VM**.
+- The installer installed, reinstalled and uninstalled in a dedicated test
+  directory. All three returned success. The separate launcher settings and
+  imported test card retained their exact SHA-256 hashes after uninstall.
+- The installed frozen launcher's first-run screen and cancelled disc picker
+  were inspected. Its prepared-profile Play button launched the new runtime
+  with Windows-only PATH. PE imports contain only Windows system libraries.
+- Ten source Tk recovery checks passed: missing runtime components, relocated
+  disc repair, missing/restored save folders and fresh setup. These are fixture
+  checks, not a substitute for the complete packaged failure/recovery matrix.
+- Installer path assertions now compare the actual `--disc` argument as a path,
+  preserving Windows case-insensitive semantics. The earlier literal-string
+  checks falsely rejected differently capitalized names of the same directory.
+- All 256 Python tests and Ruff passed, including guarded startup automation.
+  A fresh process reached the load screen with the scripted delays, read the
+  copied 59:53:06 card save and returned to Pelche Oasis (`0x249`, story 20).
+  This pass tested loading, not a new save/write roundtrip.
+
+Logs, hashes and copied profiles remain under `output/installer-20261119/`.
+Use the repeatable [startup command](developer-navigation.md#repeatable-startup-with-an-imported-card)
+for later installer smoke checks rather than manually timing the two Start presses.
+
+Still required: a clean Windows standard-user machine and reboot test, the full
+packaged failure/recovery matrix, broader save discovery/import cases, and
+signing/release decisions. The prepared-runtime title captures also omit the
+logo despite its PNG being present; check title-rendering parity before release.
+No Windows Sandbox, Hyper-V, VirtualBox, VMware or
+QEMU environment was available during this pass. The preview remains unsigned
+and local; the public site still directs players to the source-build route.
 
 ## Implemented prototype
 

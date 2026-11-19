@@ -183,6 +183,25 @@ python tools/dev_nav.py load 8
 `save` overwrites that slot in the running profile. `load` restores it. Port
 selection precedes the command: `python tools/dev_nav.py --port 4381 where`.
 
+### Repeatable startup with an imported card
+
+Launch a fresh process with a copied imported card and a **unique** `--debug-port`.
+Check that the listener belongs to that process before driving it; two game
+instances using the default port are not a reliable target.
+
+```powershell
+python tools/dev_nav.py --port 4497 boot-continue --capture output/startup-load.png
+```
+
+This selects the default language, waits for movie input, skips the movie with
+Start, waits three seconds at the title, presses Start again, then confirms the
+default Continue selection after two seconds. It verifies arrival at the native
+memory-card load screen (`0x0c00`); it does not select a card slot or a save.
+The recipe assumes a fresh boot with an imported card, as in installer tests.
+It accepts the language/movie screens, returns without input if already at Load,
+and rejects gameplay or an ambiguous title-menu starting point. Unexpected
+transitions/timeouts stop input; `--capture` records the stopped screen too.
+
 `lab` is a read-only, single-command snapshot of the physical or portable lab:
 root lifecycle/phase, selected party slot, rookie indices in the three slots,
 and action-menu phase/row. It rejects other overlays and invalid owner chains.

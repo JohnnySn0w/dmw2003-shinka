@@ -170,7 +170,7 @@ class SetupTests(unittest.TestCase):
         self.assertEqual(repaired['runtime'], state['runtime'])
         self.assertEqual(repaired['profile'], state['profile'])
         self.assertEqual(card.read_bytes(), b'player progress')
-        self.assertIn(str(moved/self.cue.name), command)
+        self.assertEqual(Path(command[command.index('--disc') + 1]), moved/self.cue.name)
 
     def test_bad_import_and_failed_commit_keep_active_install(self):
         state = setup.activate(self.root, self.prepared('first'))
@@ -197,7 +197,7 @@ class SetupTests(unittest.TestCase):
         state = setup.activate(self.root, self.prepared('runtime'))
         with patch.object(setup, 'DISC_SHA1', state['disc']['sha1']):
             command = setup.launch_command(state)
-            self.assertIn(str(self.cue), command)
+            self.assertEqual(Path(command[command.index('--disc') + 1]), self.cue)
             self.assertIn(state['profile'], command)
             Path(state['profile']).rmdir()
             with self.assertRaisesRegex(FileNotFoundError, 'blank replacement'):

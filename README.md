@@ -39,13 +39,15 @@ The [publishing guide](docs/website-publishing.md) covers GitHub Pages and custo
 ## Build and play
 
 Start with the [website setup guide](website/dist/get-started.html) for disc files,
-launching, controls and existing saves. A guided Windows installer is
-[in local testing](docs/installer-plan.md); there is no public installer download yet.
+launching, controls and existing saves. The unsigned [Windows installer preview 0.1.5](https://github.com/JohnnySn0w/dmw2003-shinka/releases/tag/v0.1.5-preview)
+lets you select your disc and optionally copy a DuckStation memory card. It downloads
+its own preparation tools; no separate developer-tool installation is needed.
+Clean-PC testing and broader import coverage are deferred for this preview.
 
-Follow the [Windows build and launch guide](docs/windows-baseline.md). You need
+To build from source instead, follow the [Windows build and launch guide](docs/windows-baseline.md). You need
 Windows x64, the C++ build tools and your own supported disc data. The guide pins
 the external framework and explains optional BIOS, overlay and native-unit builds.
-This is not yet a standalone downloadable game package.
+Game files are prepared locally from your disc; they are not bundled in the download.
 
 - [Enable the expanded menu and configure features](docs/field-menu.md).
 - [Import a DuckStation memory card or choose a save profile](docs/save-profiles.md).
@@ -53,7 +55,7 @@ This is not yet a standalone downloadable game package.
 - [Browse the documentation](docs/README.md).
 
 Fresh configurations retain original EXP and soundtrack settings until enabled.
-The expanded menu is opt-in: add `-EvolutionJournal` to the launch command to
+The installer enables the expanded menu. For source builds, add `-EvolutionJournal` to the launch command to
 enable DIGIVOLUTIONS and SETTINGS. Gameplay options are saved when changed
 through SETTINGS. Alternate soundtracks require a [locally built music pack](docs/music-live.md#local-build).
 

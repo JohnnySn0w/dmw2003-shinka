@@ -1,8 +1,9 @@
 # Shinka website
 
 `dist/get-started.html` is the player setup guide: supported disc files, the
-current build/launch route, save import, controls and common startup failures.
-It marks the Windows installer as in local testing, with no placeholder download button.
+Windows installer preview, save import, controls and common startup failures.
+It links the verified 0.1.5-preview installer, checksum and release notes; the
+source-build guide remains available as an alternative.
 Implementation and release checks are in [installer-plan.md](../docs/installer-plan.md).
 
 A scrolling feature showcase with the user's title artwork. All gameplay stills,

@@ -1,6 +1,7 @@
 # Windows installer and first-run setup
 
-Status: 0.1.5-preview release drafted November 19, 2026; not publicly released.
+Status: [0.1.5-preview published November 19, 2026](https://github.com/JohnnySn0w/dmw2003-shinka/releases/tag/v0.1.5-preview).
+Both public assets were downloaded and verified against the local installer and checksum.
 The user requested a setup experience requiring only their own supported disc
 dump, with installer behavior discussed before implementation. The public
 [getting-started page](../website/dist/get-started.html) distinguishes this plan
@@ -97,7 +98,7 @@ capture of this same prepared runtime confirms the logo displays correctly;
 no renderer or installer change was needed. Startup evidence now uses that API.
 No Windows Sandbox, Hyper-V, VirtualBox, VMware or
 QEMU environment was available during this pass. The preview remains unsigned
-and local; the public site still directs players to the source-build route.
+in this first public release; the source-build route remains available separately.
 
 ## Implemented prototype
 
@@ -402,8 +403,9 @@ installer route; the source-build instructions remain available separately.
 - [x] Recheck the release artifact's integrity hash and matching preparation code.
 - [x] Choose an unsigned preview with explicit limitations.
 - [x] Draft `v0.1.5-preview` on GitHub (user confirmed).
-- [ ] Publish the draft with the installer and checksum attached.
-- [ ] Verify the public download, then add the download link to the website.
+- [x] Publish the draft with the installer and checksum attached.
+- [x] Verify the public download, then add the download link to the website.
+- [ ] Publish the updated setup page through the manual GitHub Pages workflow.
 
 The installer targets Windows 10 1903 or later, x64. Deferred for now: clean-PC
 and reboot checks, expanded DuckStation discovery/import cases, alternate music
